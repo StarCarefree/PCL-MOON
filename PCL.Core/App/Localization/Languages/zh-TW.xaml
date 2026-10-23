@@ -3988,7 +3988,7 @@ IPv6 優先：-Djava.net.preferIPv6Stack=true</sys:String>
     <sys:String x:Key="Tools.Test.Dependency.Later">稍後</sys:String>
     <sys:String x:Key="Tools.Test.Dependency.MissingMessage">目前系統環境缺失軟體執行所需依賴&quot;{0}&quot;
 
-點擊確定開啟微軟應用商店安裝</sys:String>
+點擊確定開啟微軟官網下載安裝</sys:String>
     <sys:String x:Key="Tools.Test.Dependency.Title">依賴檢查</sys:String>
     <sys:String x:Key="Tools.Test.Error.OperationFailed">測試工具操作失敗。請檢視錯誤詳情。</sys:String>
     <sys:String x:Key="Tools.Test.LaunchCount.Message">PCL-MOON 已經為你啟動了 {0} 次遊戲了。</sys:String>

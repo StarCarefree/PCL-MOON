@@ -3992,7 +3992,7 @@ Additionally, you must also agree to the PCL-MOON lobby privacy policy and the N
     <sys:String x:Key="Tools.Test.Dependency.Later">Later</sys:String>
     <sys:String x:Key="Tools.Test.Dependency.MissingMessage">Required dependency '{0}' is missing.
 
-Click OK to open Microsoft Store.</sys:String>
+Click OK to open the Microsoft download page.</sys:String>
     <sys:String x:Key="Tools.Test.Dependency.Title">Dependency check</sys:String>
     <sys:String x:Key="Tools.Test.Error.OperationFailed">A test utility operation failed. See the details below.</sys:String>
     <sys:String x:Key="Tools.Test.LaunchCount.Message">PCL-MOON has launched games for you {0} times.</sys:String>

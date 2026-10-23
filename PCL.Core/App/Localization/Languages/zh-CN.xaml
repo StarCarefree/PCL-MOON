@@ -3489,7 +3489,7 @@
     <sys:String x:Key="Tools.Test.Crash.Title">崩溃测试</sys:String>
     <sys:String x:Key="Tools.Test.Dependency.Checking">开始环境检查……</sys:String>
     <sys:String x:Key="Tools.Test.Dependency.Later">稍后</sys:String>
-    <sys:String x:Key="Tools.Test.Dependency.MissingMessage">当前系统环境缺失软件运行所需依赖"{0}"&#xA;&#xA;点击确定打开微软应用商店安装</sys:String>
+    <sys:String x:Key="Tools.Test.Dependency.MissingMessage">当前系统环境缺失软件运行所需依赖"{0}"&#xA;&#xA;点击确定打开微软官网下载安装</sys:String>
     <sys:String x:Key="Tools.Test.Dependency.Title">依赖检查</sys:String>
     <sys:String x:Key="Tools.Test.Error.OperationFailed">测试工具操作失败。请查看错误详情。</sys:String>
     <sys:String x:Key="Tools.Test.LaunchCount.Message">PCL-MOON 已经为你启动了 {0} 次游戏了。</sys:String>
