@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PCL.Core.UI.WebHost;
@@ -64,46 +62,6 @@ public sealed class WebHostCompatibilityTest
         Assert.IsTrue(SystemWebView2Plan.IgnoresCustomFolder(@"C:\FixedRuntime"));
         Assert.IsFalse(SystemWebView2Plan.PlatformCanHost(WebHostOs.MacOS));
         Assert.IsTrue(SystemWebView2Plan.PlatformCanHost(WebHostOs.Windows));
-    }
-
-    [TestMethod]
-    public void LocatorFindsWindowsChromeAndIgnoresEdge()
-    {
-        var root = @"D:\Apps";
-        var chrome = Path.Combine(root, @"Google\Chrome\Application\chrome.exe");
-        var edge = @"C:\Program Files\Microsoft\Edge\Application\msedge.exe";
-        var found = SystemChromeLocator.Find(
-            WebHostOs.Windows,
-            new Dictionary<string, string?>
-            {
-                ["LocalAppData"] = root
-            },
-            path => path == chrome,
-            registryPath: edge);
-
-        Assert.AreEqual(chrome, found);
-    }
-
-    [TestMethod]
-    public void LocatorFindsMacChrome()
-    {
-        var home = "/Users/me";
-        var chrome = Path.Combine(home, "Applications", "Google Chrome.app", "Contents", "MacOS", "Google Chrome");
-        var found = SystemChromeLocator.Find(
-            WebHostOs.MacOS,
-            new Dictionary<string, string?>(),
-            path => path == chrome,
-            home: home);
-
-        Assert.AreEqual(chrome, found);
-    }
-
-    [TestMethod]
-    public void HttpUsesChromeWhenInstalledAndProtocolsDoNot()
-    {
-        Assert.AreEqual(ExternalBrowser.SystemChrome, ChromeLinkPlan.Choose("https://github.com/PCL-Community/PCL-CE", true));
-        Assert.AreEqual(ExternalBrowser.ShellDefault, ChromeLinkPlan.Choose("https://example.test", false));
-        Assert.AreEqual(ExternalBrowser.Rejected, ChromeLinkPlan.Choose("minecraft://launch", true));
     }
 
     [TestMethod]

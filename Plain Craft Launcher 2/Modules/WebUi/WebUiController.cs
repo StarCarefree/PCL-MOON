@@ -358,8 +358,9 @@ internal sealed partial class WebUiController : IDisposable
     private static string? ReadString(JsonObject message, string name) => message[name] is JsonValue value && value.TryGetValue<string>(out var text) ? text : null;
     private static void OpenExternal(string? url)
     {
-        if (string.IsNullOrWhiteSpace(url) || !ChromeLinkPlan.IsHttp(url)) return;
-        if (!SystemChromeLink.TryOpenHttp(url)) ModBase.OpenWebsite(url);
+        if (string.IsNullOrWhiteSpace(url) ||
+            !(url.StartsWith("https://", StringComparison.OrdinalIgnoreCase) || url.StartsWith("http://", StringComparison.OrdinalIgnoreCase))) return;
+        ModBase.OpenWebsite(url);
     }
 
     private void OnClosed(object? sender, EventArgs e) => Dispose();

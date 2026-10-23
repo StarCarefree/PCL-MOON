@@ -675,7 +675,7 @@ internal sealed class LauncherLibrary : IDisposable
             _phase = "请在版本列表选择 " + minecraft;
             ModMain.MyMsgBox("将打开 " + offer.Name + " 的 Modrinth 页面。请选择 Minecraft " + minecraft + " 的文件，下载 mrpack 后用启动器导入。导入完成后再回到服务器页一键进入。",
                 "下载推荐整合包", "打开 Modrinth", "取消");
-            if (!SystemChromeLink.TryOpenHttp(offer.Modrinth)) ModBase.OpenWebsite(offer.Modrinth);
+            ModBase.OpenWebsite(offer.Modrinth);
         }
         throw new InvalidOperationException("这个推荐整合包没有可直接安装的文件。");
     }
