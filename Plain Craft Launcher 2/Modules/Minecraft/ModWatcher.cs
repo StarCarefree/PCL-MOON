@@ -45,14 +45,22 @@ public static class ModWatcher
     {
         ModLaunch.McLaunchLog("[全局] 出现运行中的 Minecraft");
         hasRunningMinecraft = true;
-        ModMain.frmMain.BtnExtraShutdown.ShowRefresh();
+        ModBase.RunInUi(() =>
+        {
+            ModMain.frmLaunchLeft?.RefreshShutdown();
+            ModMain.frmMain.BtnExtraShutdown.ShowRefresh();
+        });
     }
 
     private static void MinecraftStop(bool triggerLauncherShutdown)
     {
         ModLaunch.McLaunchLog("[全局] 已无运行中的 Minecraft");
         hasRunningMinecraft = false;
-        ModMain.frmMain.BtnExtraShutdown.ShowRefresh();
+        ModBase.RunInUi(() =>
+        {
+            ModMain.frmLaunchLeft?.RefreshShutdown();
+            ModMain.frmMain.BtnExtraShutdown.ShowRefresh();
+        });
         // 音乐播放
         if (Config.Preference.Music.StopInGame)
             ModBase.RunInUi(() =>

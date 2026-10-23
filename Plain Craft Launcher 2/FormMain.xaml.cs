@@ -2280,7 +2280,9 @@ public partial class FormMain
     }
 
     // 关闭 Minecraft
-    private void BtnExtraShutdown_Click(object sender, MouseButtonEventArgs e)
+    private void BtnExtraShutdown_Click(object sender, MouseButtonEventArgs e) => ShutdownMinecraft();
+
+    internal void ShutdownMinecraft()
     {
         try
         {
@@ -2303,7 +2305,7 @@ public partial class FormMain
 
     public bool BtnExtraShutdown_ShowCheck()
     {
-        return ModWatcher.hasRunningMinecraft;
+        return ModWatcher.hasRunningMinecraft && ModMain.frmLaunchLeft?.BtnShutdown.IsVisible != true;
     }
 
     // 游戏日志

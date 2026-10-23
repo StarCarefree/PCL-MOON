@@ -55,8 +55,15 @@ public partial class PageLaunchLeft
         BtnLaunch.Loaded += (_, _) => RefreshButtonsUI();
         BtnCancel.Click += BtnCancel_Click;
         BtnMore.Click += BtnMore_Click;
+        RefreshShutdown();
+        BtnShutdown.IsVisibleChanged += (_, _) => ModMain.frmMain?.BtnExtraShutdown.ShowRefresh();
         Unloaded += (_, _) => _updatePulse?.Stop();
     }
+
+    // 强制关闭 Minecraft
+    private void BtnShutdown_Click(object sender, RoutedEventArgs e) => ModMain.frmMain?.ShutdownMinecraft();
+
+    internal void RefreshShutdown() => BtnShutdown.Visibility = ModWatcher.hasRunningMinecraft ? Visibility.Visible : Visibility.Collapsed;
     private static void OnLanguageChanged(PageLaunchLeft page) => ModBase.RunInUi(page.RefreshButtonsUI);
 
     public void PageLaunchLeft_Loaded(object sender, RoutedEventArgs e)
