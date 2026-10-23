@@ -2848,6 +2848,8 @@ public static partial class ModLaunch
         startInfo.Arguments = mcLaunchArgument;
         StartupAgentLaunch.Prepare(startInfo, mcLaunchJavaSelected.Installation.MajorVersion,
             mcLaunchJavaSelected.Installation.Is64Bit);
+        FrameGenerationLaunch.Prepare(startInfo, mcLaunchJavaSelected.Installation.MajorVersion,
+            mcLaunchJavaSelected.Installation.Is64Bit);
         _launchSession.Value?.Presentation?.PrepareProcess(startInfo, LaunchingInstance.Info.HasFabric || LaunchingInstance.Info.HasQuilt);
         var gameLink = GameLinkLaunch.Prepare(startInfo, LaunchingInstance);
         gameProcess.StartInfo = startInfo;

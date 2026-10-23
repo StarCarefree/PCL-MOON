@@ -140,11 +140,18 @@
         <EmbeddedResource Include="..\tools\multiplayer-agent\build\pcl-moon-multiplayer-agent.jar">
             <LogicalName>PCL.GameLink.agent.jar</LogicalName>
         </EmbeddedResource>
+        <EmbeddedResource Include="..\tools\framegen-agent\build\pcl-moon-framegen-agent.jar">
+            <LogicalName>PCL.FrameGeneration.agent.jar</LogicalName>
+        </EmbeddedResource>
         <Content Include="LICENCE" />
     </ItemGroup>
     <Target Name="BuildMultiplayerAgent" BeforeTargets="PrepareForBuild"
             Inputs="@(GameLinkAgentSource)" Outputs="$(MSBuildProjectDirectory)\..\tools\multiplayer-agent\build\pcl-moon-multiplayer-agent.jar">
         <Exec Command="pwsh -NoProfile -File &quot;$(MSBuildProjectDirectory)\..\tools\multiplayer-agent\build.ps1&quot;" />
+    </Target>
+    <Target Name="BuildFrameGenerationAgent" BeforeTargets="PrepareForBuild"
+            Inputs="@(FrameGenerationAgentSource)" Outputs="$(MSBuildProjectDirectory)\..\tools\framegen-agent\build\pcl-moon-framegen-agent.jar">
+        <Exec Command="python -X utf8 &quot;$(MSBuildProjectDirectory)\..\tools\framegen-agent\build.py&quot;" />
     </Target>
     <!-- ReadyToRun only our own assemblies; third-party libraries stay IL to keep the single exe small. -->
     <Target Name="LimitReadyToRunToOwnAssemblies" BeforeTargets="_PrepareForReadyToRunCompilation" Condition="'$(PublishReadyToRun)' == 'true'">
@@ -155,5 +162,6 @@
     </Target>
     <ItemGroup>
         <GameLinkAgentSource Include="..\tools\multiplayer-agent\src\**\*.java;..\tools\multiplayer-agent\MANIFEST.MF;..\tools\multiplayer-agent\build.ps1" />
+        <FrameGenerationAgentSource Include="..\tools\framegen-agent\src\**\*.java;..\tools\framegen-agent\build.py;..\tools\framegen-agent\THIRD-PARTY-NOTICES.md" />
     </ItemGroup>
 </Project>

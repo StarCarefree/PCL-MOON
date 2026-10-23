@@ -2758,6 +2758,10 @@
     <sys:String x:Key="Setup.Launch.Advanced.DisableLF.ToolTip">PCL-MOON 會在啟動 1.5.x 及以下版本時使用 LegacyFix 來改善舊版本遊戲體驗和修復相容性問題。</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.LockMemory">鎖定記憶體分配（-Xms = -Xmx）</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.LockMemory.ToolTip">啟用後，啟動器會額外追加 -Xms 參數並令其等於最大堆 -Xmx，從而固定堆大小。這會隱式停用堆記憶體歸還（Uncommit），減少作業系統取消對映/重新分配記憶體頁帶來的延遲抖動，也有利於 ZGC 的回收預測。代價是遊戲全程會佔用接近最大分配的記憶體。</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.FrameGeneration">實驗性遊戲畫面插幀（2×，目標 60 FPS）</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.FrameGeneration.ToolTip">下次啟動生效。以通用 OpenGL 3.2 雙向區塊比對產生中間影格，無 NVIDIA 專屬相依。目標呈現 60 FPS、實際算繪約 30 FPS，會增加延遲及顯卡負擔，HUD 也參與插值。建議遊戲影格上限不低於 60；過慢、失焦或超出預算時跳過。無法消除 GC/主執行緒停頓。不支援 Vulkan；1.16.5–26.3 尚未逐版本及顯卡實測。</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.FrameDiagnostics">記錄遊戲長影格診斷（定位瞬間 0 FPS）</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.FrameDiagnostics.ToolTip">下次啟動生效，可獨立於插幀啟用。偵測超過 250ms 的呈現間隔，在啟動日誌輸出 [PCL FrameTime]、GC 時間變化與算繪執行緒堆疊。僅取樣，不自動修改 JVM 或遊戲設定；載入與切換視窗亦可能產生長間隔。</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.DisableLwjglUnsafeAgent">停用 LWJGL Unsafe Agent</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.DisableLwjglUnsafeAgent.ToolTip">Minecraft 26.1 使用了 LWJGL 3.4.1，LWJGL 3.4.1 使用了 FFM API 以在 JDK 25+ 上存取原生記憶體。由於 JDK 最佳化能力限制，某些情況下這會產生嚴重的效能問題。&#xA;PCL-MOON 會使用 LWJGL Unsafe Agent 修復這個問題，以解決可能存在的效能問題。&#xA;一般情況下沒有停用該選項的必要，但如果你遇到了額外問題，也可以嘗試暫時停用該選項以排查錯誤。&#xA;&#xA;該功能僅會在 LWJGL 版本為 3.4.1 時生效。</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.PrefetchFiles">啟動前預讀遊戲檔案</sys:String>

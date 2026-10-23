@@ -313,6 +313,10 @@
                                           ToolTip="{DynamicResource Setup.Launch.Advanced.DisableCrashAnalysis.ToolTip}" />
                         <local:MyCheckBox Height="28" Text="{DynamicResource Setup.Launch.Advanced.LockMemory}" x:Name="CheckAdvanceLockMemory" Tag="LaunchAdvanceLockMemory" Change="CheckBoxChange"
                                           ToolTip="{DynamicResource Setup.Launch.Advanced.LockMemory.ToolTip}" />
+                        <local:MyCheckBox Height="28" Text="{DynamicResource Setup.Launch.Advanced.FrameGeneration}" x:Name="CheckFrameGeneration" Tag="LaunchFrameGeneration" Change="CheckBoxChange"
+                                          ToolTip="{DynamicResource Setup.Launch.Advanced.FrameGeneration.ToolTip}" />
+                        <local:MyCheckBox Height="28" Text="{DynamicResource Setup.Launch.Advanced.FrameDiagnostics}" x:Name="CheckFrameDiagnostics" Tag="LaunchFrameDiagnostics" Change="CheckBoxChange"
+                                          ToolTip="{DynamicResource Setup.Launch.Advanced.FrameDiagnostics.ToolTip}" />
                     </StackPanel>
                     <local:MyHint Text="{DynamicResource Setup.Launch.Advanced.MoreInInstanceSetup}" Margin="0,5,0,10" Theme="Blue" Grid.Row="9"
                                   Grid.ColumnSpan="2"

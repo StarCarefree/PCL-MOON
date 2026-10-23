@@ -499,6 +499,12 @@ public static partial class Config
         /// </summary>
         [ConfigItem<bool>("LaunchAdvanceLockMemory", false, ConfigSource.Local)] public partial bool LockMemory { get; set; }
 
+        /// <summary>实验性 OpenGL 运动补偿插帧，默认关闭；不代表提高真实渲染帧率。</summary>
+        [ConfigItem<bool>("LaunchFrameGeneration", false, ConfigSource.Local)] public partial bool FrameGeneration { get; set; }
+
+        /// <summary>独立记录超过 250ms 的呈现间隔和渲染线程栈，不自动修改 JVM 参数。</summary>
+        [ConfigItem<bool>("LaunchFrameDiagnostics", false, ConfigSource.Local)] public partial bool FrameDiagnostics { get; set; }
+
         /// <summary>
         /// 优先 IP 协议栈。
         /// </summary>

@@ -353,3 +353,7 @@ Plain Craft Launcher 2/Resources/pcl-moon-startup-helper-*.jar
 
 # Local secrets for single-exe publish
 scripts/secrets.local.ps1
+
+# Optional frame generation agent (rebuilt by MSBuild)
+tools/framegen-agent/build/
+pcl-framegen-helper-*.jar
