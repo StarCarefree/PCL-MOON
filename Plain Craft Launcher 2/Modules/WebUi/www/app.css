@@ -573,7 +573,23 @@ main { display: grid; gap: 24px; }
 .source-tabs button[aria-selected="true"] { background: var(--button); border-color: var(--gold-deep); color: var(--button-ink); }
 select:disabled { opacity: .55; }
 input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--gold); }
-select { width: 100%; min-width: 0; min-height: 36px; padding: 8px; font: inherit; color: var(--ink); background: #101010; border: 1px solid var(--line-strong); border-radius: var(--radius); }
+select { width: 100%; min-width: 0; min-height: 36px; padding: 8px 32px 8px 10px; font: inherit; color: var(--ink); background: #101010 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%23a39e96' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 10px center / 12px 12px; border: 1px solid var(--line-strong); border-radius: var(--radius); appearance: none; cursor: pointer; transition: border-color 100ms ease, background-color 100ms ease; }
+select:hover:not(:disabled) { border-color: #6a5434; background-color: #1c1a17; }
+select option { background: #1a1a1a; color: var(--ink); }
+@supports (appearance: base-select) {
+  select, ::picker(select) { appearance: base-select; }
+  select { display: flex; align-items: center; gap: 8px; padding-right: 10px; background-image: none; }
+  select::picker-icon { content: ""; width: 12px; height: 12px; margin-left: auto; background: var(--muted); -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat; transition: rotate 160ms ease, background-color 100ms ease; }
+  select:open { border-color: var(--gold); background-color: #1c1a17; }
+  select:open::picker-icon { rotate: 180deg; background: var(--gold); }
+  ::picker(select) { margin-block: 6px; padding: 6px; max-height: min(320px, 60vh); overflow-y: auto; color: var(--ink); background: #1a1a1a; border: 1px solid var(--line-strong); border-radius: 10px; box-shadow: 0 14px 32px #00000080, inset 0 1px 0 #ffffff08; opacity: 0; translate: 0 -4px; transition: opacity 120ms ease, translate 120ms ease, display 120ms allow-discrete, overlay 120ms allow-discrete; }
+  ::picker(select):popover-open { opacity: 1; translate: 0 0; }
+  @starting-style { ::picker(select):popover-open { opacity: 0; translate: 0 -4px; } }
+  select option { display: flex; align-items: center; gap: 8px; min-height: 32px; padding: 6px 10px; border-radius: 6px; font-size: 12px; color: var(--muted); background: transparent; cursor: pointer; }
+  select option:hover, select option:focus-visible { background: #2a241c; color: var(--ink); outline: none; }
+  select option:checked { background: #30281b; color: #f5c987; font-weight: 600; }
+  select option::checkmark { order: 1; margin-left: auto; content: "✓"; color: var(--gold); }
+}
 select:focus-visible { outline: 2px solid #f3d7a2; outline-offset: 2px; }
 .catalog-caption, .pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; color: var(--muted); font-size: 12px; }
 .source-status { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; padding: 12px 16px; background: var(--raised); border: 1px solid var(--line); border-radius: var(--radius); color: var(--muted); }
@@ -692,7 +708,7 @@ select:focus-visible { outline: 2px solid #f3d7a2; outline-offset: 2px; }
 .explorer-option input { width: 14px; height: 14px; }
 .filters { gap: 12px; }
 .filters label { flex-basis: 128px; }
-.filters select { background: #171717; }
+.filters select { background-color: #171717; }
 .filters button { min-height: 36px; }
 .filter-help { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: -8px; }
 #category-help { max-width: none; }

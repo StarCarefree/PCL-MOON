@@ -109,7 +109,7 @@ public partial class PageLaunchRight
                 heading.FontWeight = FontWeights.SemiBold;
                 heading.Margin = new Thickness(0, 6, 0, 8);
                 panel.Children.Add(heading);
-                panel.Children.Add(DashboardText("愿今天的灵感，都在方块世界里实现。", 12, true));
+                panel.Children.Add(DashboardText("愿今天的方块世界，为你带来美好心情！", 12, true));
                 var date = DashboardText(DateTime.Now.ToString("yyyy.MM.dd  ·  dddd"), 11, true);
                 date.Margin = new Thickness(0, 18, 0, 0);
                 panel.Children.Add(date);

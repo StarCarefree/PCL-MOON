@@ -214,7 +214,7 @@ public partial class PageLaunchRight
                 content.Margin = new Thickness(0);
                 if (HeroCard.Parent is null) content.Content = HeroCard;
                 if (PanRunning.Parent is Panel previous && previous != panel) previous.Children.Remove(PanRunning);
-                PanRunning.Margin = new Thickness(16, 0, 16, 16);
+                PanRunning.Margin = new Thickness(16, 12, 16, 16);
                 RunningInstanceCards.Arrange(PanRunning);
             }
             else content.Content = CreateDashboardContent(widget);

@@ -52,7 +52,48 @@
                                 <Image Width="16" Height="16" Source="{Binding Icon}" HorizontalAlignment="Left" VerticalAlignment="Center"
                                        RenderOptions.BitmapScalingMode="NearestNeighbor" IsHitTestVisible="False" />
                                 <StackPanel x:Name="VersionText" Grid.Column="1" Margin="0,0,26,0">
-                                    <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" FontSize="12" />
+                                    <Grid>
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" FontSize="12" />
+                                        <Border Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="6,0,0,0" Padding="5,0" Background="#242629" CornerRadius="8" IsHitTestVisible="False">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding RunningCount}" Value="0">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <Grid>
+                                                <TextBlock Text="{Binding RunningCount}" FontSize="10" Foreground="{StaticResource Hybrid.Accent}" HorizontalAlignment="Center">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                                <TextBlock Text="{Binding RunningLabel}" FontSize="10" Foreground="{StaticResource Hybrid.Accent}" HorizontalAlignment="Center">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Visible" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </Grid>
+                                        </Border>
+                                    </Grid>
                                     <TextBlock Text="{Binding Description}" TextTrimming="CharacterEllipsis" FontSize="10" Opacity="0.65" Margin="0,3,0,0" />
                                     <TextBlock Text="{Binding PlayText}" TextTrimming="CharacterEllipsis" FontSize="10" Opacity="0.55" Margin="0,2,0,0">
                                         <TextBlock.Style>
@@ -67,44 +108,6 @@
                                         </TextBlock.Style>
                                     </TextBlock>
                                 </StackPanel>
-                                <Border Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,26,0" Background="#242629" CornerRadius="8" Padding="6,1" IsHitTestVisible="False">
-                                    <Border.Style>
-                                        <Style TargetType="Border">
-                                            <Setter Property="Visibility" Value="Visible" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding RunningCount}" Value="0">
-                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Border.Style>
-                                    <Grid>
-                                        <TextBlock Text="{Binding RunningCount}" FontSize="10" Foreground="{StaticResource Hybrid.Accent}" HorizontalAlignment="Center">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="Visibility" Value="Visible" />
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
-                                                            <Setter Property="Visibility" Value="Collapsed" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
-                                        <TextBlock Text="{Binding RunningLabel}" FontSize="10" Foreground="{StaticResource Hybrid.Accent}" HorizontalAlignment="Center">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
-                                                            <Setter Property="Visibility" Value="Visible" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
-                                    </Grid>
-                                </Border>
                                 <Button Grid.Column="1" Style="{StaticResource Hybrid.VersionGear}" ToolTip="{DynamicResource Hybrid.VersionSettings}"
                                         PreviewMouseLeftButtonDown="VersionSettings_PreviewMouseDown">
                                     <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE713;" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" />

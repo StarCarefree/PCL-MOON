@@ -40,19 +40,20 @@ public partial class HybridLaunchWindow : Window
         // Do not assign Owner: minimizing the launcher must not minimize this window.
         if (!IsVisible)
         {
-            PrepareEntrance();
+            var generation = PrepareEntrance();
             Show();
-            if (_entranceGeneration == 1) PlayEntrance();
+            // 未准备入场动画，或 Show 期间已被停止时不再播放
+            if (generation > 0 && generation == _entranceGeneration && Shell.RenderTransform is TransformGroup) PlayEntrance();
         }
         Screen.SetPresentationSuspended(WindowState == WindowState.Minimized);
     }
 
-    private void PrepareEntrance()
+    private int PrepareEntrance()
     {
         if (!SystemParameters.ClientAreaAnimation || WindowState == WindowState.Minimized)
         {
             StopEntrance();
-            return;
+            return 0;
         }
         Opacity = 0;
         Shell.RenderTransformOrigin = new Point(0.5, 0.62);
@@ -64,8 +65,8 @@ public partial class HybridLaunchWindow : Window
                 new TranslateTransform(0, EntranceOffset)
             }
         };
-        _entranceGeneration = 1;
         SystemParameters.StaticPropertyChanged += AnimationSettingChanged;
+        return ++_entranceGeneration;
     }
 
     private void PlayEntrance()
