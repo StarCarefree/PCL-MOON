@@ -2,6 +2,8 @@ package net.minecraft;
 
 /** Synthetic 1.21.11 intermediary run loop. Not a Minecraft class. */
 public class class_310 {
+    public static int field_1738 = 123;
+    public int method_47599() { return field_1738; }
     public int ticks;
     public int renders;
     public boolean threw;

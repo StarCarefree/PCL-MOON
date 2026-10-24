@@ -26,12 +26,13 @@ public final class NativeGameHarness {
         check(patchedRun != null && patchedLimit != null, "confirmed layout patched");
         check(transformer.transform(loader, "net/minecraft/class_310", null, null, patchedRun) == null, "no duplicate frame hook");
         check(transformer.transform(loader, "com/mojang/blaze3d/systems/RenderSystem", null, null, patchedLimit) == null, "no duplicate limiter hook");
-        final int[] hooks = new int[3];
+        final int[] hooks = new int[4];
         new ClassReader(patchedRun).accept(new ClassVisitor(Opcodes.ASM9) {
             public MethodVisitor visitMethod(int access, final String name, String desc, String sig, String[] exceptions) {
                 return new MethodVisitor(Opcodes.ASM9) {
                     public void visitMethodInsn(int op, String owner, String method, String desc, boolean iface) {
                         if (!owner.equals("pclmoon/framegen/bridge/NativeGameHooks")) return;
+                        if (method.equals("displayFps")) { hooks[3]++; return; }
                         if (!name.equals("method_1523")) hooks[2]++;
                         else if (method.equals("frameStart")) hooks[0]++;
                         else if (method.equals("frameEnd")) hooks[1]++;
@@ -40,6 +41,7 @@ public final class NativeGameHarness {
             }
         }, 0);
         check(hooks[0] == 1 && hooks[1] == 1 && hooks[2] == 0, "only the per-frame method is sampled, not outer run/tick");
+        check(hooks[3] == 1, "display-only FPS getter adapted exactly once");
         ProbeLoader isolated = new ProbeLoader(loader);
         Class<?> game = isolated.define("net.minecraft.class_310", patchedRun);
         Class<?> system = isolated.define("com.mojang.blaze3d.systems.RenderSystem", patchedLimit);
@@ -78,6 +80,18 @@ public final class NativeGameHarness {
         try { game.getMethod("method_1514").invoke(instance); throw new AssertionError("exception swallowed"); }
         catch (java.lang.reflect.InvocationTargetException expected) { check(expected.getCause() instanceof IllegalStateException, "original exception preserved"); }
         check(FrameMetrics.snapshot().nativeHook.contains("限帧已接入") && FrameMetrics.snapshot().nativeHook.contains("单帧采样已接入"), "partial adapters reported accurately");
+        FrameMetrics.reset(); NativeGameHooks.setWindowActive(true); FrameSettings.setGeneration(true);
+        long start = System.nanoTime() - 900000000L;
+        for (int i = 0; i < 20; i++) {
+            FrameMetrics.realPresented(start + i * 40000000L);
+            FrameMetrics.generatedPresented(start + i * 40000000L + 20000000L);
+        }
+        int displayed = ((Number) game.getMethod("method_47599").invoke(instance)).intValue();
+        check(Math.abs(displayed - FrameMetrics.snapshot().presentedFps) <= 1, "native HUD equals actual real + generated submissions");
+        check(game.getField("field_1738").getInt(null) == 123, "original native FPS field remains unchanged");
+        FrameSettings.setGeneration(false);
+        check(((Number) game.getMethod("method_47599").invoke(instance)).intValue() == 123, "disable restores original FPS display");
+        NativeGameHooks.setWindowActive(false);
         NativeGameHooks.setPresentationActive(false);
         System.out.println("PASS native game transformer: per-frame location/limit/restore/tick/exception/idempotence");
     }

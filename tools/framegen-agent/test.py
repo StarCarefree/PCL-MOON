@@ -56,16 +56,17 @@ def main():
         with zipfile.ZipFile(fake_jar, 'w') as archive:
             for source in renderer.rglob('*.class'):
                 agent_build.put(archive, source.relative_to(renderer).as_posix(), source.read_bytes())
-        modes = ('disabled', 'diagnostics-only', 'no-context', 'unfocused', 'missing-renderer', 'generate', 'render-failure', 'native-failure', 'budget', 'long-gap', 'stall-diagnostics', 'runtime-settings', 'overlay-unavailable', 'triple', 'quadruple', 'slow-input', 'standalone-cap', 'combined-cap', 'low-cap')
+        modes = ('disabled', 'diagnostics-only', 'no-context', 'unfocused', 'missing-renderer', 'generate', 'render-failure', 'native-failure', 'budget', 'long-gap', 'stall-diagnostics', 'runtime-settings', 'overlay-unavailable', 'triple', 'quadruple', 'slow-input', 'standalone-cap', 'combined-cap', 'low-cap', 'gpu-pending', 'latency-cap')
         for mode in modes:
-            flags = ['-Xms16m', '-Xmx128m', '-XX:ReservedCodeCacheSize=64m', '-Dpclmoon.framegen.outputFps=30']
+            flags = ['-Xms16m', '-Xmx128m', '-XX:ReservedCodeCacheSize=64m', '-Dpclmoon.framegen.outputFps=240']
             if mode == 'disabled': flags += ['-Dpclmoon.framegen.disabled=true']
             if mode == 'overlay-unavailable': flags += ['-Dpclmoon.framegen.overlay=true']
             if mode == 'triple': flags += ['-Dpclmoon.framegen.multiplier=3']
             if mode == 'quadruple': flags += ['-Dpclmoon.framegen.multiplier=4']
             if mode == 'slow-input': flags += ['-Dpclmoon.framegen.outputFps=240']
-            if mode in ('standalone-cap', 'combined-cap'): flags += ['-Dpclmoon.framegen.fpsLimit=30']
-            if mode == 'standalone-cap': flags += ['-Dpclmoon.framegen.enabled=false']
+            if mode == 'standalone-cap': flags += ['-Dpclmoon.framegen.enabled=false', '-Dpclmoon.framegen.fpsLimit=30']
+            if mode == 'combined-cap': flags += ['-Dpclmoon.framegen.fpsLimit=240']
+            if mode == 'latency-cap': flags += ['-Dpclmoon.framegen.outputFps=60']
             if mode == 'low-cap': flags += ['-Dpclmoon.framegen.fpsLimit=29']
             if mode in ('diagnostics-only', 'stall-diagnostics'): flags += ['-Dpclmoon.framegen.enabled=false', '-Dpclmoon.framegen.diagnostics=true']
             target = work / 'missing.jar' if mode == 'missing-renderer' else fake_jar
@@ -83,7 +84,7 @@ def main():
                         str(native_fixture) + os.pathsep + str(fixture) + os.pathsep + fixture_cp,
                         'pclmoon.framegen.test.NativeGameHarness'], check=True, timeout=20, cwd=work)
         print('PASS:', len(modes), 'agent integration scenarios + pacing/counter/native-cap regressions')
-        for harness in ('FramePacingHarness', 'TelemetryHarness', 'ProfilesHarness'):
+        for harness in ('FramePacingHarness', 'LatencyHarness', 'TelemetryHarness', 'ProfilesHarness'):
             subprocess.run([args.java, '-Xms16m', '-Xmx128m', '-cp', os.pathsep.join(map(str, (fixture, helper))),
                             'pclmoon.framegen.test.' + harness, str(work / 'profiles')], check=True, timeout=40, cwd=work)
         if args.overlay:
@@ -109,6 +110,8 @@ def main():
                                 '-Dpcl.framegen.test.glMinor=' + str(minor), '-Dpcl.framegen.test.shift=' + str(shift),
                                 '-Dpcl.framegen.test.quality=' + str(quality), '-cp', str(gpu) + os.pathsep + cp,
                                 'pclmoon.framegen.render.GlInterpolatorSmoke'], check=True, timeout=60, cwd=work)
+            subprocess.run([args.java, '-Xms16m', '-Xmx192m', '-cp', str(gpu) + os.pathsep + cp,
+                            'pclmoon.framegen.render.GlSceneRegression'], check=True, timeout=45, cwd=work)
             if args.overlay:
                 subprocess.run([args.java, '-Xms16m', '-Xmx128m', '-XX:ReservedCodeCacheSize=64m',
                                 '-Dpclmoon.framegen.overlay=true', '-Dpclmoon.framegen.enabled=false',

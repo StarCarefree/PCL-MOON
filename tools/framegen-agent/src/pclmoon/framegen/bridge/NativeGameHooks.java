@@ -16,6 +16,12 @@ public final class NativeGameHooks {
     }
     public static void setPresentationActive(boolean active) { presentationActive = active; }
     public static void setWindowActive(boolean active) { windowActive = active; }
+    /** Display getter only: never writes Minecraft's simulation clock or native frame counter. */
+    public static int displayFps(int original) {
+        if (!windowActive || !FrameSettings.generation()) return original;
+        int submitted = FrameMetrics.presentedFpsForDisplay();
+        return submitted < 0 ? original : submitted;
+    }
     public static int limitFps(int original) {
         if (!presentationActive || !FrameSettings.generation() || !FrameSettings.nativeFrameControl()) return original;
         int ceiling = FrameSettings.outputFps();

@@ -35,9 +35,11 @@ public final class AgentHarness {
             } else if (mode.equals("triple") || mode.equals("quadruple")) {
                 int factor = FrameSettings.multiplier();
                 GLFW.glfwSwapBuffers(1);
-                check(GLFW.swaps == factor + 1 && Probe.intermediates == factor - 1, "all generated frames must actually be submitted");
-                for (int i = 0; i < factor - 1; i++) check(Math.abs(Probe.alphas[i] - (i + 1) / (float) factor) < 0.0001,
-                    "each multiplier frame needs a distinct interpolation time");
+                check(Probe.intermediates >= 1 && Probe.intermediates < factor && GLFW.swaps == Probe.intermediates + 2,
+                    "latency-budgeted generation count equals actual successful submissions");
+                int plannedFactor = Math.round(1f / Probe.alphas[0]);
+                for (int i = 0; i < Probe.intermediates; i++) check(Math.abs(Probe.alphas[i] - (i + 1) / (float) plannedFactor) < 0.0001,
+                    "each effective multiplier frame needs a distinct interpolation time");
                 FrameMetrics.Snapshot measured = FrameMetrics.snapshot();
                 check(Math.abs(measured.presentedFps - measured.renderFps - measured.generatedFps) < 0.001,
                     "presented count equals successful true + generated submissions");
@@ -96,17 +98,28 @@ public final class AgentHarness {
             } else if (mode.equals("overlay-unavailable")) {
                 GLFW.glfwSwapBuffers(1);
                 check(Probe.captures == 2 && Probe.intermediates == 1, "optional UI failure must not disable generation");
+            } else if (mode.equals("gpu-pending")) {
+                Probe.gpuPending = true;
+                GLFW.glfwSwapBuffers(1);
+                check(Probe.captures == 1 && Probe.intermediates == 0 && Probe.resets == 1, "busy GPU must not receive another generation batch");
+                Probe.gpuPending = false;
+                GLFW.glfwSwapBuffers(1);
+                check(Probe.captures == 2 && Probe.intermediates == 0, "backpressure resumes with cold history");
+            } else if (mode.equals("latency-cap")) {
+                Thread.sleep(40);
+                GLFW.glfwSwapBuffers(1);
+                check(Probe.intermediates == 0 && GLFW.swaps == 2, "60 FPS ceiling must not force real frames down to 30 for generation");
             } else if (mode.equals("standalone-cap") || mode.equals("combined-cap")) {
                 boolean combined = mode.equals("combined-cap");
                 for (int i = 0; i < 3; i++) GLFW.glfwSwapBuffers(1);
                 check(combined ? Probe.intermediates == 3 : Probe.captures == 0, "independent cap must not force generation");
                 for (int i = 1; i < GLFW.swaps; i++)
-                    check(GLFW.submissions[i] - GLFW.submissions[i - 1] >= 31000000L, "every actual presentation respects cap");
+                    check(GLFW.submissions[i] - GLFW.submissions[i - 1] >= (combined ? 3900000L : 31000000L), "every actual presentation respects cap");
                 check(GLFW.swaps == (combined ? 7 : 4), "capped presentation counters reflect submitted frames");
                 FrameSettings.setGeneration(false); FrameSettings.setShowFps(false);
                 long last = GLFW.submissions[GLFW.swaps - 1];
                 GLFW.glfwSwapBuffers(1);
-                check(GLFW.submissions[GLFW.swaps - 1] - last >= 31000000L, "cap survives hidden HUD and disabled FG");
+                check(GLFW.submissions[GLFW.swaps - 1] - last >= (combined ? 3900000L : 31000000L), "cap survives hidden HUD and disabled FG");
                 PacingSettings.setFpsLimit(0);
             } else if (mode.equals("low-cap")) {
                 GLFW.glfwSwapBuffers(1);
@@ -125,12 +138,13 @@ public final class AgentHarness {
         System.out.println("PASS " + mode);
     }
     private static void testTiming() {
-        FramePacer pacer = new FramePacer(60);
+        FramePacer pacer = new FramePacer(240);
         check(!pacer.canGenerate(100), "no previous real frame");
         pacer.presented(1000000000L);
-        check(pacer.canGenerate(1001000000L), "on-time frame");
-        check(pacer.midpoint() == 1016666666L && pacer.realDeadline() == 1033333332L, "absolute evenly spaced deadlines");
-        check(pacer.canGenerate(1040000000L), "adaptive pacing accepts slower input without accumulating a catch-up queue");
+        check(pacer.plan(1001000000L), "on-time frame fits low latency budget");
+        check(pacer.midpoint() == 1004166666L && pacer.realDeadline() == 1008333332L, "absolute evenly spaced bounded deadlines");
+        check(pacer.plan(1040000000L) && pacer.realDeadline() - 1040000000L <= 10000000L,
+            "slower input must not accumulate another input-sized wait");
         FramePacer fixed = new FramePacer(60, 2, false, 150);
         fixed.presented(1000000000L);
         check(!fixed.canGenerate(1040000000L), "fixed pacing remains an explicit option");

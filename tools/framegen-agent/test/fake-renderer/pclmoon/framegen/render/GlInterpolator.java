@@ -18,6 +18,7 @@ public final class GlInterpolator {
         if (Probe.failIntermediate) throw new IllegalStateException("synthetic GL failure");
     }
     public boolean ready() { return frames >= 2; }
+    public boolean hasPendingWork() { return Probe.gpuPending; }
     public double lastGpuMillis() { return 1; }
     public void drawCurrent() { Probe.currents++; }
     public void resetHistory() { Probe.resets++; frames = 0; }

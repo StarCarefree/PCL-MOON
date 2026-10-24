@@ -8,6 +8,8 @@ public final class FramePacer {
     private final boolean adaptive;
     private final long staleNanos;
     private long lastReal, firstDeadline, slotPeriod;
+    private int plannedGenerated;
+    private static final long MAX_EXTRA_DELAY = 10000000L;
     private boolean primed;
     public FramePacer(int outputFps) { this(outputFps, 2, true, 150); }
     public FramePacer(int outputFps, int multiplier, boolean adaptive, int staleMs) {
@@ -23,7 +25,7 @@ public final class FramePacer {
         slotPeriod = minimumPeriod;
         primed = true;
     }
-    public void reset() { primed = false; }
+    public void reset() { primed = false; plannedGenerated = 0; }
     public boolean historyExpired(long now) { return primed && now - lastReal >= staleNanos; }
     public boolean canGenerate(long now) {
         long elapsed = now - lastReal;
@@ -31,17 +33,23 @@ public final class FramePacer {
             && (adaptive || elapsed <= minimumPeriod + minimumPeriod / 2);
     }
     public boolean plan(long now) {
+        plannedGenerated = 0;
         if (!canGenerate(now)) return false;
-        long inputWork = Math.max(0, now - lastReal);
-        slotPeriod = adaptive ? Math.max(minimumPeriod, inputWork / multiplier) : minimumPeriod;
+        slotPeriod = minimumPeriod;
         firstDeadline = Math.max(now, lastReal + slotPeriod);
-        return true;
+        // Never stretch a slow input period and then hold the newest image for that period again.
+        for (int count = multiplier - 1; count >= 1; count--) {
+            long real = firstDeadline + slotPeriod * count;
+            if (real - now <= MAX_EXTRA_DELAY) { plannedGenerated = count; return true; }
+        }
+        return false;
     }
-    /** Index 0 is the first generated frame; multiplier-1 is the current true frame. */
-    public long deadline(int index) { return firstDeadline + slotPeriod * Math.max(0, Math.min(multiplier - 1, index)); }
+    public int generatedCount() { return plannedGenerated; }
+    /** Index 0 is the first generated frame; generatedCount is the current true frame. */
+    public long deadline(int index) { return firstDeadline + slotPeriod * Math.max(0, Math.min(plannedGenerated, index)); }
     public long periodNanos() { return slotPeriod; }
-    public long midpoint() { return deadline(0); }
-    public long realDeadline() { return deadline(multiplier - 1); }
+    public long midpoint() { return firstDeadline; }
+    public long realDeadline() { return plannedGenerated == 0 ? lastReal : deadline(plannedGenerated); }
     public static boolean await(long deadline) {
         if (deadline - System.nanoTime() > 100000000L) return false;
         return HybridWait.await(deadline, PacingSettings.waitMode());

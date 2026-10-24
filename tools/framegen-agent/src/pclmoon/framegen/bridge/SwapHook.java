@@ -75,7 +75,7 @@ public final class SwapHook {
         boolean overlayPolled;
         Object renderer;
         URLClassLoader rendererLoader;
-        Method capture, intermediate, current, reset, dispose, overBudget, configureRenderer, gpuTime, rendererReady;
+        Method capture, intermediate, current, reset, dispose, overBudget, configureRenderer, gpuTime, rendererReady, pendingWork;
         int cooldown;
         boolean initialised;
 
@@ -190,6 +190,7 @@ public final class SwapHook {
             dispose = method(type, "close"); overBudget = method(type, "isOverBudget");
             configureRenderer = method(type, "configure", int.class, int.class, float.class, float.class);
             gpuTime = method(type, "lastGpuMillis"); rendererReady = method(type, "ready");
+            pendingWork = method(type, "hasPendingWork");
             call(configureRenderer, renderer, effectiveFlow, quality, 0.22f, (float) gpuBudget);
             System.err.println("[PCL FrameGen] motion-compensated presentation enabled; target ceiling=" + outputFps
                 + " FPS, multiplier=" + multiplier + "; adaptive pacing=" + adaptive + "; generation adds latency");
@@ -217,6 +218,10 @@ public final class SwapHook {
                         FrameMetrics.skip("长帧恢复：丢弃旧历史");
                     }
                     if (cooldown > 0) { cooldown--; pacer.reset(); FrameMetrics.skip("GPU 保护冷却"); }
+                    else if (FrameSettings.lowFpsProtection() && (Boolean) call(pendingWork, renderer)) {
+                        call(reset, renderer); pacer.reset();
+                        FrameMetrics.skip("GPU 尚未完成：优先真帧，不追加生成队列");
+                    }
                     else if (FrameSettings.lowFpsProtection() && (Boolean) call(overBudget, renderer)) {
                         int lower = Math.max(80, effectiveFlow * 3 / 4);
                         cooldown = lower < effectiveFlow ? 2 : 30;
@@ -236,7 +241,7 @@ public final class SwapHook {
                         if (ready) generate();
                         else FrameMetrics.status("预热 / 调整缓冲");
                     }
-                    NativeGameHooks.setPresentationActive(cooldown == 0 && (Boolean) call(rendererReady, renderer));
+                    NativeGameHooks.setPresentationActive(true); // Final presentation cap also owns warm-up/protection frames.
                 } else {
                     if (renderer != null) { call(reset, renderer); pacer.reset(); }
                     NativeGameHooks.setPresentationActive(false);
@@ -258,7 +263,9 @@ public final class SwapHook {
         }
         void presentNative() { presentNative(0L); }
         void presentNative(long deadline) {
-            try { presentationLimiter.await(frameActive ? PacingSettings.fpsLimit() : 0, PacingSettings.waitMode(), deadline); }
+            int cap = PacingSettings.fpsLimit();
+            if (enabled && renderer != null && FrameSettings.generation()) cap = cap > 0 ? Math.min(cap, outputFps) : outputFps;
+            try { presentationLimiter.await(frameActive ? cap : 0, PacingSettings.waitMode(), deadline); }
             catch (RuntimeException unavailable) { presentationLimiter.reset(); FrameMetrics.status("独立限帧回退"); }
             nativeCall(swap, window); // A failed native swap is outside the pacing catch: never retry it.
         }
@@ -274,14 +281,15 @@ public final class SwapHook {
         }
         void generate() throws Throwable {
             long now = System.nanoTime();
-            if (!pacer.plan(now)) { FrameMetrics.skip("真帧过期 / 固定节奏未赶上"); return; }
+            if (!pacer.plan(now)) { FrameMetrics.skip("低延迟保护：优先新真帧，不为倍率追加等待"); return; }
             boolean touched = false, nativeFailed = false;
             int submitted = 0;
             try {
-                for (int i = 0; i < multiplier - 1; i++) {
+                int count = pacer.generatedCount();
+                for (int i = 0; i < count; i++) {
                     if (System.nanoTime() > pacer.realDeadline()) break;
                     touched = true;
-                    call(intermediate, renderer, (i + 1) / (float) multiplier);
+                    call(intermediate, renderer, (i + 1) / (float) (pacer.generatedCount() + 1));
                     if (System.nanoTime() > pacer.realDeadline()) break;
                     presentNative(pacer.deadline(i));
                     FrameMetrics.generatedPresented(System.nanoTime());
@@ -299,7 +307,7 @@ public final class SwapHook {
             }
             if (submitted > 0) {
                 realPresentationDeadline = pacer.realDeadline();
-                FrameMetrics.status("运行中 " + multiplier + "× · 运动场 " + effectiveFlow);
+                FrameMetrics.status("生成 " + submitted + " 张 · 低延迟预算 10ms · 运动场 " + effectiveFlow);
             } else FrameMetrics.skip("生成错过预算：优先新真帧");
         }
         void disable(Throwable error) {

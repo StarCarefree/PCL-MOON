@@ -25,6 +25,9 @@ public final class OverlayHarness {
         if (Boolean.getBoolean("java.awt.headless")) throw new IllegalStateException("OverlayHarness requires a display");
         check("false".equals(System.getProperty("pclmoon.framegen.overlay", "false")), "overlay is only constructed explicitly");
 
+        Method millis = GameSettingsOverlay.class.getDeclaredMethod("fmtMillis", double.class);
+        millis.setAccessible(true);
+        check("N/A".equals(millis.invoke(null, -1.0)), "unavailable render timing must not advertise zero cost");
         final JFrame game = new JFrame("overlay-harness-game");
         game.setName("pcl-framegen-fake-game");
         SwingUtilities.invokeAndWait(new Runnable() {
@@ -158,6 +161,10 @@ public final class OverlayHarness {
             Window hud = waitWindow("pcl-framegen-hud", true);
             check(!hud.isFocusableWindow(), "FPS HUD must not take game focus");
             check(hud.getX() >= game.getX() - 4 && hud.getY() >= game.getY() - 4, "HUD follows game bounds");
+            check(hud.getX() + hud.getWidth() <= game.getX() + game.getWidth() + 4
+                && hud.getY() + hud.getHeight() <= game.getY() + game.getHeight() + 4,
+                "narrow HUD stays inside the game window");
+            check(hud.getWidth() <= 280 && hud.getWidth() < game.getWidth() / 2, "HUD width is bounded, not forced wide");
             String presented = text(hud, "pcl-framegen-hud-presented");
             String render = text(hud, "pcl-framegen-hud-render");
             String generated = text(hud, "pcl-framegen-hud-generated");
@@ -168,6 +175,35 @@ public final class OverlayHarness {
             check(text(hud, "pcl-framegen-hud-caption").contains("呈现提交"), "HUD labels presented submits");
             check(text(hud, "pcl-framegen-hud-reason").contains("gpu-budget"), "HUD shows the skip reason");
             check(text(hud, "pcl-framegen-hud-native").contains("未接入"), "HUD does not pretend the native hook is attached");
+            check(!text(hud, "pcl-framegen-hud-status").contains("运行中"), "no-generation diagnosis must not say running");
+            check(text(hud, "pcl-framegen-hud-status").contains("未开启") || text(hud, "pcl-framegen-hud-status").contains("插帧关"),
+                "HUD says generation is off rather than a healthy running state");
+            AbstractButton details = button(hud, "pcl-framegen-hud-details");
+            check(details != null, "HUD detail toggle is present");
+            click(details);
+            SwingUtilities.invokeAndWait(new Runnable() { public void run() { } });
+            check(text(hud, "pcl-framegen-hud-low").contains("1%low") && text(hud, "pcl-framegen-hud-gpu").contains("GPU"),
+                "detail expansion keeps stats reachable");
+            check(text(hud, "pcl-framegen-hud-cpu").contains("N/A") && text(hud, "pcl-framegen-hud-gpu-use").contains("N/A"),
+                "unavailable hardware stays N/A");
+            check(labelFullyInside(hud, "pcl-framegen-hud-caption") && labelFullyInside(hud, "pcl-framegen-hud-presented")
+                && labelFullyInside(hud, "pcl-framegen-hud-reason") && labelFullyInside(hud, "pcl-framegen-hud-native")
+                && labelFullyInside(hud, "pcl-framegen-hud-status"),
+                "HUD labels are not clipped by the card");
+            final Window previewHud = hud;
+            if (previewPath != null) SwingUtilities.invokeAndWait(new Runnable() {
+                public void run() {
+                    java.awt.image.BufferedImage image = new java.awt.image.BufferedImage(
+                        Math.max(1, previewHud.getWidth()), Math.max(1, previewHud.getHeight()),
+                        java.awt.image.BufferedImage.TYPE_INT_ARGB);
+                    java.awt.Graphics2D graphics = image.createGraphics();
+                    try {
+                        previewHud.printAll(graphics);
+                        javax.imageio.ImageIO.write(image, "png", new java.io.File(previewPath + ".hud.png"));
+                    } catch (java.io.IOException failure) { throw new AssertionError(failure); }
+                    finally { graphics.dispose(); }
+                }
+            });
             check(FrameSettings.showFps(), "FPS button enables showFps");
             click(fpsToggle);
             waitHidden(hud);
@@ -344,5 +380,30 @@ public final class OverlayHarness {
         SwingUtilities.invokeAndWait(new Runnable() {
             public void run() { window.dispose(); }
         });
+    }
+
+    private static boolean labelFullyInside(final Window root, final String name) throws Exception {
+        final Component found = find(root, name);
+        check(found != null, "missing " + name);
+        final boolean[] ok = new boolean[1];
+        SwingUtilities.invokeAndWait(new Runnable() {
+            public void run() {
+                if (!found.isVisible()) { ok[0] = false; return; }
+                Rectangle local = SwingUtilities.convertRectangle(found.getParent(), found.getBounds(), root);
+                ok[0] = local.x >= -1 && local.y >= -1
+                    && local.x + local.width <= root.getWidth() + 1
+                    && local.y + local.height <= root.getHeight() + 1
+                    && local.width >= 8 && local.height >= 8;
+                if (found instanceof javax.swing.JLabel) {
+                    javax.swing.JLabel label = (javax.swing.JLabel) found;
+                    String text = label.getText();
+                    if (text != null && text.indexOf("<html>") < 0 && text.length() > 0) {
+                        int need = label.getFontMetrics(label.getFont()).stringWidth(text);
+                        ok[0] = ok[0] && label.getWidth() + 2 >= need;
+                    }
+                }
+            }
+        });
+        return ok[0];
     }
 }

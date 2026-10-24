@@ -103,12 +103,15 @@ public final class GameSettingsOverlay implements AutoCloseable {
     private JLabel hudLow;
     private JLabel hudGpu;
     private JLabel hudReason;
-     private JLabel hudNative;
-     private JLabel hudCpu;
-     private JLabel hudProcess;
-     private JLabel hudGpuUse;
-     private JLabel hudGpuTemp;
-     private JLabel hudCpuTemp;
+    private JLabel hudNative;
+    private JLabel hudCpu;
+    private JLabel hudProcess;
+    private JLabel hudGpuUse;
+    private JLabel hudGpuTemp;
+    private JLabel hudCpuTemp;
+    private JButton hudDetailsButton;
+    private JPanel hudDetails;
+    private boolean hudDetailsOpen;
     private boolean open;
     private boolean built;
     private boolean syncing;
@@ -418,41 +421,72 @@ public final class GameSettingsOverlay implements AutoCloseable {
     }
 
     private void buildHud() {
-        hudPresented = metricLabel("pcl-framegen-hud-presented");
-        hudRender = metricLabel("pcl-framegen-hud-render");
-        hudGenerated = metricLabel("pcl-framegen-hud-generated");
-        hudLow = metricLabel("pcl-framegen-hud-low");
-        hudGpu = metricLabel("pcl-framegen-hud-gpu");
-        hudReason = metricLabel("pcl-framegen-hud-reason");
-         hudNative = metricLabel("pcl-framegen-hud-native");
-         hudCpu = metricLabel("pcl-framegen-hud-cpu");
-         hudProcess = metricLabel("pcl-framegen-hud-process");
-         hudGpuUse = metricLabel("pcl-framegen-hud-gpu-use");
-         hudGpuTemp = metricLabel("pcl-framegen-hud-gpu-temp");
-         hudCpuTemp = metricLabel("pcl-framegen-hud-cpu-temp");
-         JLabel caption = label("FPS · 呈现提交（不是物理显示器帧数）", 11, MUTED);
+        hudPresented = metricLabel("pcl-framegen-hud-presented", 26, INK);
+        hudRender = metricLabel("pcl-framegen-hud-render", 12, MUTED);
+        hudGenerated = metricLabel("pcl-framegen-hud-generated", 12, MUTED);
+        hudLow = metricLabel("pcl-framegen-hud-low", 12, INK);
+        hudGpu = metricLabel("pcl-framegen-hud-gpu", 12, INK);
+        hudReason = metricLabel("pcl-framegen-hud-reason", 12, MUTED);
+        hudNative = metricLabel("pcl-framegen-hud-native", 12, MUTED);
+        hudCpu = metricLabel("pcl-framegen-hud-cpu", 12, INK);
+        hudProcess = metricLabel("pcl-framegen-hud-process", 12, INK);
+        hudGpuUse = metricLabel("pcl-framegen-hud-gpu-use", 12, INK);
+        hudGpuTemp = metricLabel("pcl-framegen-hud-gpu-temp", 12, INK);
+        hudCpuTemp = metricLabel("pcl-framegen-hud-cpu-temp", 12, MUTED);
+        JLabel caption = label("呈现提交", 11, MUTED);
         caption.setName("pcl-framegen-hud-caption");
-        caption.setToolTipText("计数的是成功提交到呈现队列的次数，不是物理显示器刷新帧数。停顿时会如实降到 0，不用目标 FPS×倍率伪造。");
+        caption.setToolTipText("计数的是成功提交到呈现队列的次数，不是物理显示器刷新帧数。停顿时会如实降到 0，不用目标 FPS×倍率伪造。合成帧不改善真实渲染或输入延迟。");
+        JLabel statusLine = metricLabel("pcl-framegen-hud-status", 12, ACCENT);
+        hudDetailsButton = textButton("详情", "pcl-framegen-hud-details");
+        hudDetailsButton.setToolTipText("展开或收起 1%low、帧时间、原生状态与硬件。信息不丢弃，只是默认收起以免占满画面。");
+        hudDetailsButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent event) {
+                hudDetailsOpen = !hudDetailsOpen;
+                if (hudDetails != null) hudDetails.setVisible(hudDetailsOpen);
+                hudDetailsButton.setText(hudDetailsOpen ? "收起" : "详情");
+                fitHud();
+            }
+        });
+
+        JPanel split = row();
+        split.add(hudRender);
+        split.add(Box.createHorizontalStrut(10));
+        split.add(hudGenerated);
+        split.add(Box.createHorizontalGlue());
+
+        JPanel head = row();
+        head.add(caption);
+        head.add(Box.createHorizontalGlue());
+        head.add(hudDetailsButton);
+
+        hudDetails = new JPanel();
+        hudDetails.setLayout(new BoxLayout(hudDetails, BoxLayout.Y_AXIS));
+        hudDetails.setOpaque(false);
+        hudDetails.setAlignmentX(Component.LEFT_ALIGNMENT);
+        hudDetails.setName("pcl-framegen-hud-detail-panel");
+        add(hudDetails, hudLow);
+        add(hudDetails, hudGpu);
+        add(hudDetails, hudNative);
+        add(hudDetails, hudCpu);
+        add(hudDetails, hudProcess);
+        add(hudDetails, hudGpuUse);
+        add(hudDetails, hudGpuTemp);
+        add(hudDetails, hudCpuTemp);
+        hudDetails.setVisible(false);
 
         JPanel body = new JPanel();
         body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
         body.setOpaque(false);
         body.setBorder(new EmptyBorder(8, 10, 8, 10));
-        add(body, caption);
+        body.setName("pcl-framegen-hud-body");
+        add(body, head);
         add(body, hudPresented);
-        add(body, hudRender);
-        add(body, hudGenerated);
-        add(body, hudLow);
-        add(body, hudGpu);
-         add(body, hudReason);
-         add(body, hudNative);
-         add(body, hudCpu);
-         add(body, hudProcess);
-         add(body, hudGpuUse);
-         add(body, hudGpuTemp);
-         add(body, hudCpuTemp);
+        add(body, split);
+        add(body, statusLine);
+        add(body, hudReason);
+        add(body, hudDetails);
 
-         JPanel card = card();
+        JPanel card = card();
         card.add(body);
         hud = new JDialog((Window) null);
         hud.setName("pcl-framegen-hud");
@@ -462,18 +496,43 @@ public final class GameSettingsOverlay implements AutoCloseable {
         hud.setType(Window.Type.UTILITY);
         hud.setBackground(new Color(0, 0, 0, 0));
         hud.setContentPane(card);
+        fitHud();
+        metricsTimer = new javax.swing.Timer(250, new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent event) {
+                if (closed.get()) { ((javax.swing.Timer) event.getSource()).stop(); return; }
+                boolean panelVisible = panel != null && panel.isVisible();
+                boolean hudVisible = hud != null && hud.isVisible();
+                if (panelVisible) syncControls();
+                if (hudVisible) refreshHud();
+            }
+        });
+        metricsTimer.start();
+    }
+
+    /** Prefer a compact card; never wider than the game window or 280px. */
+    private void fitHud() {
+        if (hud == null) return;
         hud.pack();
-        hud.setSize(Math.max(220, hud.getPreferredSize().width), hud.getPreferredSize().height);
-         metricsTimer = new javax.swing.Timer(250, new java.awt.event.ActionListener() {
-             public void actionPerformed(java.awt.event.ActionEvent event) {
-                 if (closed.get()) { ((javax.swing.Timer) event.getSource()).stop(); return; }
-                 boolean panelVisible = panel != null && panel.isVisible();
-                 boolean hudVisible = hud != null && hud.isVisible();
-                 if (panelVisible) syncControls();
-                 if (hudVisible) refreshHud();
-             }
-         });
-         metricsTimer.start();
+        int cap = 280;
+        if (width > 0) cap = Math.max(160, Math.min(280, width - 20));
+        int preferred = hud.getPreferredSize().width;
+        int w = Math.max(160, Math.min(cap, Math.max(preferred, 200)));
+        int h = Math.max(hud.getPreferredSize().height, hud.getHeight());
+        hud.setSize(w, h);
+        applyHudWrap(w);
+        hud.pack();
+        h = hud.getPreferredSize().height;
+        if (height > 40) h = Math.min(h, Math.max(48, height - 20));
+        hud.setSize(w, h);
+    }
+
+    private void applyHudWrap(int cardWidth) {
+        int inner = Math.max(120, cardWidth - 28);
+        wrap(hudReason, inner);
+        wrap(hudNative, inner);
+        wrap(hudGpuUse, inner);
+        Component statusLine = findNamed(hud, "pcl-framegen-hud-status");
+        if (statusLine instanceof JLabel) wrap((JLabel) statusLine, inner);
     }
 
     private JButton iconButton(final String name, String tip, final boolean gearIcon) {
@@ -576,6 +635,7 @@ public final class GameSettingsOverlay implements AutoCloseable {
             hide(hud);
             return;
         }
+        fitHud();
         refreshHud();
         Rectangle bounds = gameBounds();
         Dimension size = hud.getSize();
@@ -669,32 +729,47 @@ public final class GameSettingsOverlay implements AutoCloseable {
             + "<br>不改 options.txt · 不取消 tick/物理 · 统计实际提交</div></html>");
     }
 
-     private void refreshHud() {
-         FrameMetrics.Snapshot snap = FrameMetrics.snapshot();
+    private void refreshHud() {
+        FrameMetrics.Snapshot snap = FrameMetrics.snapshot();
+        setMetric(hudPresented, fmt(snap.presentedFps));
+        setMetric(hudRender, "真帧 " + fmt(snap.renderFps));
+        setMetric(hudGenerated, "生成 " + fmt(snap.generatedFps));
+        setMetric(hudLow, "1%low " + fmt(snap.onePercentLow) + " · P95 " + fmtMillis(snap.p95Millis) + " ms");
+        setMetric(hudGpu, "GPU 生成 " + fmtMillis(snap.gpuMillis) + " ms · 原生 " + fmtMillis(snap.nativeRenderMillis) + " ms");
+        String reason = snap.reason == null || snap.reason.length() == 0 ? "无" : snap.reason;
+        setMetric(hudReason, "跳过 " + snap.skippedFrames + " · " + reason);
+        String hook = snap.nativeHook == null || snap.nativeHook.length() == 0 ? "未接入" : snap.nativeHook;
+        setMetric(hudNative, "原生 " + hook);
+        Component statusLine = findNamed(hud, "pcl-framegen-hud-status");
+        if (statusLine instanceof JLabel) setMetric((JLabel) statusLine, diagnosis(snap));
+        if (PacingSettings.telemetry() && hud != null && hud.isVisible()) {
+            try { FrameTelemetry.request(PacingSettings.rendererName()); }
+            catch (Throwable ignored) { }
+        }
+        FrameTelemetry.Snapshot hardware = FrameTelemetry.snapshot();
+        boolean fresh = PacingSettings.telemetry() && hardware != null && hardware.sampleNanos != 0
+            && System.nanoTime() - hardware.sampleNanos >= 0 && System.nanoTime() - hardware.sampleNanos <= 3000000000L;
+        setMetric(hudCpu, "系统 CPU " + pct(fresh ? hardware.cpuPercent : Double.NaN));
+        setMetric(hudProcess, "进程 CPU " + pct(fresh ? hardware.processCpuPercent : Double.NaN));
+        String gpuName = fresh && hardware.gpuName != null ? hardware.gpuName : "";
+        setMetric(hudGpuUse, "GPU " + pct(fresh ? hardware.gpuPercent : Double.NaN)
+            + (gpuName.length() > 0 ? " · " + gpuName : ""));
+        if (hudGpuUse != null) hudGpuUse.setToolTipText(gpuName.length() > 0 ? gpuName : "GPU 名称不可用");
+        setMetric(hudGpuTemp, "GPU 温度 " + temp(fresh ? hardware.gpuTempC : Double.NaN));
+        setMetric(hudCpuTemp, "CPU 温度 " + temp(fresh ? hardware.cpuTempC : Double.NaN));
+        if (hud != null && hud.isVisible()) fitHud();
+    }
 
-         setMetric(hudPresented, "呈现提交 " + fmt(snap.presentedFps));
-         setMetric(hudRender, "真帧 " + fmt(snap.renderFps));
-         setMetric(hudGenerated, "生成 " + fmt(snap.generatedFps));
-         setMetric(hudLow, "1%low " + fmt(snap.onePercentLow) + "  P95 " + fmtMillis(snap.p95Millis) + " ms");
-         setMetric(hudGpu, "GPU " + fmtMillis(snap.gpuMillis) + " ms  原生渲染 " + fmtMillis(snap.nativeRenderMillis) + " ms");
-         String reason = snap.reason == null || snap.reason.length() == 0 ? "无" : snap.reason;
-         setMetric(hudReason, "跳过 " + snap.skippedFrames + " · " + reason);
-         String hook = snap.nativeHook == null || snap.nativeHook.length() == 0 ? "未接入" : snap.nativeHook;
-         setMetric(hudNative, "原生 " + hook);
-         if (PacingSettings.telemetry() && hud != null && hud.isVisible()) {
-             try { FrameTelemetry.request(PacingSettings.rendererName()); }
-             catch (Throwable ignored) { }
-         }
-         FrameTelemetry.Snapshot hardware = FrameTelemetry.snapshot();
-         boolean fresh = PacingSettings.telemetry() && hardware != null && hardware.sampleNanos != 0
-             && System.nanoTime() - hardware.sampleNanos >= 0 && System.nanoTime() - hardware.sampleNanos <= 3000000000L;
-         setMetric(hudCpu, "系统 CPU " + pct(fresh ? hardware.cpuPercent : Double.NaN));
-         setMetric(hudProcess, "进程 CPU " + pct(fresh ? hardware.processCpuPercent : Double.NaN));
-         setMetric(hudGpuUse, "GPU " + pct(fresh ? hardware.gpuPercent : Double.NaN)
-             + (fresh && hardware.gpuName != null && hardware.gpuName.length() > 0 ? " · " + hardware.gpuName : ""));
-         setMetric(hudGpuTemp, "GPU 温度 " + temp(fresh ? hardware.gpuTempC : Double.NaN));
-         setMetric(hudCpuTemp, "CPU 温度 " + temp(fresh ? hardware.cpuTempC : Double.NaN));
-     }
+    /** Plain diagnosis. Never calls a zero-submit or disabled session "运行中". */
+    private static String diagnosis(FrameMetrics.Snapshot snap) {
+        if (!FrameSettings.generation()) return "插帧未开启 · 仅统计实际提交";
+        if (snap.presentedFps <= 0 && snap.renderFps <= 0 && snap.generatedFps <= 0) {
+            String why = snap.reason == null || snap.reason.length() == 0 ? "等待画面" : snap.reason;
+            return "未在提交 · " + why;
+        }
+        if (snap.generatedFps <= 0) return "未生成 · 真帧不受合成改善";
+        return "正在提交 · 合成不改善输入";
+    }
 
      private static String pct(double value) {
          if (Double.isNaN(value) || Double.isInfinite(value) || value < 0) return "N/A";
@@ -716,7 +791,7 @@ public final class GameSettingsOverlay implements AutoCloseable {
     }
 
     private static String fmtMillis(double value) {
-        if (Double.isNaN(value) || Double.isInfinite(value) || value < 0) return "0.0";
+        if (Double.isNaN(value) || Double.isInfinite(value) || value < 0) return "N/A";
         return String.format(java.util.Locale.US, "%.1f", Double.valueOf(value));
     }
 
@@ -843,10 +918,44 @@ public final class GameSettingsOverlay implements AutoCloseable {
         return label;
     }
 
-    private static JLabel metricLabel(String name) {
-        JLabel label = label(" ", 12, INK);
+    private static JLabel metricLabel(String name, int size, Color color) {
+        JLabel label = label(" ", size, color);
         label.setName(name);
         return label;
+    }
+
+    private static void wrap(JLabel label, int width) {
+        if (label == null) return;
+        String plain = plain(label.getText());
+        label.putClientProperty("pcl-plain", plain);
+        label.setText("<html><div style='width:" + width + "px'>" + escape(plain) + "</div></html>");
+    }
+
+    private static String plain(String text) {
+        if (text == null) return "";
+        int div = text.indexOf("'>");
+        int end = text.lastIndexOf("</div>");
+        if (text.startsWith("<html>") && div >= 0 && end > div) {
+            return text.substring(div + 2, end).replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&");
+        }
+        return text;
+    }
+
+    private static String escape(String text) {
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    }
+
+    private static Component findNamed(Component root, String name) {
+        if (root == null) return null;
+        if (name.equals(root.getName())) return root;
+        if (root instanceof java.awt.Container) {
+            Component[] children = ((java.awt.Container) root).getComponents();
+            for (int i = 0; i < children.length; i++) {
+                Component found = findNamed(children[i], name);
+                if (found != null) return found;
+            }
+        }
+        return null;
     }
 
     private static JPanel row() {
@@ -876,7 +985,15 @@ public final class GameSettingsOverlay implements AutoCloseable {
     }
 
     private static Font ui(int size) {
-        return new Font(Font.DIALOG, Font.PLAIN, size);
+        String family = Font.DIALOG;
+        String[] preferred = {"Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "SimHei"};
+        String[] available = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
+        for (int i = 0; i < preferred.length && family == Font.DIALOG; i++) {
+            for (int j = 0; j < available.length; j++) {
+                if (preferred[i].equalsIgnoreCase(available[j])) { family = available[j]; break; }
+            }
+        }
+        return new Font(family, size >= 20 ? Font.BOLD : Font.PLAIN, size);
     }
 
     private JComboBox<Integer> integerCombo(int[] values, String name) {

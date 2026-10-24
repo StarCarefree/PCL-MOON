@@ -65,6 +65,13 @@ public final class FrameMetrics {
         for (long value : timestamps) if (value != 0 && now >= value && now - value < WINDOW) count++;
         return count;
     }
+    /** Allocation-free display path; uses the same actual one-second submission window as the HUD. */
+    public static synchronized int presentedFpsForDisplay() {
+        if (first == 0) return -1;
+        long now = System.nanoTime();
+        double seconds = Math.max(0.25, Math.min(1, (now - first) / 1000000000.0));
+        return (int) Math.round((count(real, now) + count(generated, now)) / seconds);
+    }
     public static synchronized void reset() {
         Arrays.fill(real, 0); Arrays.fill(generated, 0); Arrays.fill(intervals, 0);
         realIndex = generatedIndex = intervalIndex = intervalCount = 0;

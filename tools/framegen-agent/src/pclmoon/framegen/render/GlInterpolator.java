@@ -9,6 +9,7 @@ import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL21;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL33;
+import org.lwjgl.opengl.GL32;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -93,22 +94,25 @@ public final class GlInterpolator {
     private static final String COMPOSE_FRAG =
             "#version 150\n" +
             "uniform sampler2D uPrev,uCur,uFwd,uBwd; uniform float uAlpha,uReject;\n" +
+            "uniform int uRefine;\n" +
             "in vec2 vUv; out vec4 fragColor;\n" +
             "void main() {\n" +
             "  float t=clamp(uAlpha,0.0,1.0);\n" +
             "  if(t<=0.0) { fragColor=texture(uPrev,vUv); return; }\n" +
             "  if(t>=1.0) { fragColor=texture(uCur,vUv); return; }\n" +
+            "  vec3 current=texture(uCur,vUv).rgb; vec3 stationary=abs(current-texture(uPrev,vUv).rgb);\n" +
+            "  if(max(max(stationary.r,stationary.g),stationary.b)<0.001) { fragColor=vec4(current,1); return; }\n" +
             "  vec2 pu=vUv,cu=vUv;\n" +
-            "  for(int i=0;i<3;i++) { pu=vUv-texture(uFwd,pu).xy*t; cu=vUv-texture(uBwd,cu).xy*(1.0-t); }\n" +
+            "  for(int i=0;i<3;i++) { if(i>=uRefine) break; pu=vUv-texture(uFwd,pu).xy*t; cu=vUv-texture(uBwd,cu).xy*(1.0-t); }\n" +
             "  vec4 f=texture(uFwd,pu),b=texture(uBwd,cu);\n" +
-            "  vec3 a=texture(uPrev,pu).rgb,c=texture(uCur,cu).rgb,cur=texture(uCur,vUv).rgb;\n" +
+            "  vec3 a=texture(uPrev,pu).rgb,c=texture(uCur,cu).rgb,cur=current;\n" +
             "  vec3 diff=abs(a-c); float photo=max(max(diff.r,diff.g),diff.b);\n" +
             "  vec2 px=1.0/vec2(textureSize(uFwd,0));\n" +
             "  bool inside=all(greaterThan(pu,vec2(0))) && all(lessThan(pu,vec2(1)))\n" +
             "    && all(greaterThan(cu,vec2(0))) && all(lessThan(cu,vec2(1)));\n" +
-            "  bool reject=!inside || photo>uReject || length(f.xy+b.xy)>max(0.015,3.0*length(px))\n" +
-            "    || max(f.z,b.z)>uReject;\n" +
-            "  fragColor=vec4(reject?cur:mix(a,c,t),1);\n" +
+            "  bool reject=!inside || photo>min(uReject,0.12) || length(f.xy+b.xy)>max(0.003,length(px))\n" +
+            "    || max(f.z,b.z)>min(uReject,0.12);\n" +
+            "  fragColor=vec4(reject?cur:c,1);\n" +
             "}\n";
 
     private static final String BLIT_FRAG =
@@ -130,6 +134,7 @@ public final class GlInterpolator {
     private int levels;
     private int framesCaptured;
     private int writeSlot;
+    private long completionFence;
     private boolean gl33;
     private boolean flowPrepared;
 
@@ -176,6 +181,7 @@ public final class GlInterpolator {
     private int locBwd;
     private int locAlpha;
     private int locReject;
+    private int locRefine;
     private int locBlit;
 
     private final IntBuffer widthBuf = ByteBuffer.allocateDirect(4).order(ByteOrder.nativeOrder()).asIntBuffer();
@@ -284,8 +290,11 @@ public final class GlInterpolator {
             bindUnit(3, flowTex[1], locBwd);
             if (locAlpha >= 0) GL20.glUniform1f(locAlpha, t);
             if (locReject >= 0) GL20.glUniform1f(locReject, cfgReject);
+            if (locRefine >= 0) GL20.glUniform1i(locRefine, cfgQuality == 2 ? 3 : 1);
             GL30.glBindVertexArray(vao);
             GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 3);
+            if (completionFence != 0) GL32.glDeleteSync(completionFence);
+            completionFence = GL32.glFenceSync(GL32.GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
             if (queryRunning) endBudgetQuery();
             pollBudget();
         } catch (RuntimeException ex) {
@@ -320,10 +329,18 @@ public final class GlInterpolator {
         framesCaptured = 0;
         writeSlot = 0;
         overBudget = false;
-        queryBusy = false;
         flowPrepared = false;
     }
 
+    /** Zero-timeout GPU backpressure; never waits for a busy GPU on the game thread. */
+    public boolean hasPendingWork() {
+        if (completionFence == 0 || closed || failed) return false;
+        int state = GL32.glClientWaitSync(completionFence, 0, 0);
+        if (state == GL32.GL_WAIT_FAILED) throw new IllegalStateException("frame-generation GPU fence failed");
+        if (state == GL32.GL_TIMEOUT_EXPIRED) return true;
+        GL32.glDeleteSync(completionFence); completionFence = 0;
+        return false;
+    }
     public boolean isOverBudget() {
         return gl33 && overBudget;
     }
@@ -408,6 +425,7 @@ public final class GlInterpolator {
             locBwd = GL20.glGetUniformLocation(composeProgram, "uBwd");
             locAlpha = GL20.glGetUniformLocation(composeProgram, "uAlpha");
             locReject = GL20.glGetUniformLocation(composeProgram, "uReject");
+            locRefine = GL20.glGetUniformLocation(composeProgram, "uRefine");
             locBlit = GL20.glGetUniformLocation(blitProgram, "uTex");
             frameTex[0] = alloc(width, height, GL11.GL_RGBA8, GL11.GL_UNSIGNED_BYTE, true);
             frameTex[1] = alloc(width, height, GL11.GL_RGBA8, GL11.GL_UNSIGNED_BYTE, true);
@@ -604,6 +622,8 @@ public final class GlInterpolator {
     }
 
     private void release() {
+        if (completionFence != 0) { GL32.glDeleteSync(completionFence); completionFence = 0; }
+        queryBusy = queryRunning = false;
         if (vao != 0) {
             GL30.glDeleteVertexArrays(vao);
             vao = 0;

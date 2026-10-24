@@ -28,7 +28,11 @@ public final class NativeGameTransformer implements ClassFileTransformer {
     public byte[] transform(ClassLoader loader, String name, Class<?> redefining,
                             ProtectionDomain domain, byte[] bytes) {
         if (redefining != null || bytes == null) return null;
-        if (MINECRAFT.equals(name)) return transformMinecraft(bytes);
+        if (MINECRAFT.equals(name)) {
+            byte[] display = FpsDisplayTransformer.transform(bytes);
+            byte[] frame = transformMinecraft(display == null ? bytes : display);
+            return frame == null ? display : frame;
+        }
         if (RENDER_SYSTEM.equals(name)) return transformRenderSystem(bytes);
         return null;
     }
