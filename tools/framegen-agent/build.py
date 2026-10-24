@@ -95,6 +95,9 @@ def build(output, javac, depdir):
             for source in sorted(classes.rglob('*.class')):
                 if '/bridge/' not in source.as_posix():
                     put(jar, source.relative_to(classes).as_posix(), relocate(source.read_bytes()))
+            for source in sorted((ROOT / 'resources').rglob('*')):
+                if source.is_file():
+                    put(jar, source.relative_to(ROOT / 'resources').as_posix(), source.read_bytes())
             with zipfile.ZipFile(deps[0]) as asm:
                 for name in sorted(asm.namelist()):
                     if name.startswith('org/objectweb/asm/') and name.endswith('.class'):

@@ -511,6 +511,9 @@ public static partial class Config
         /// <summary>允许不启用插帧/齿轮时仍加载独立节奏与实例配置；实际限帧默认关闭。</summary>
         [ConfigItem<bool>("LaunchFramePacing", false, ConfigSource.Local)] public partial bool FramePacing { get; set; }
 
+        /// <summary>实验性内部超分：降低世界渲染分辨率后由 GPU 重建，默认关闭；不代表当前适配器已生效。</summary>
+        [ConfigItem<bool>("LaunchSuperResolution", false, ConfigSource.Local)] public partial bool SuperResolution { get; set; }
+
         /// <summary>
         /// 优先 IP 协议栈。
         /// </summary>

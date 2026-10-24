@@ -46,6 +46,7 @@ public final class GameSettingsOverlay implements AutoCloseable {
      private static final String[] QUALITY = {"性能", "均衡", "画质"};
      private static final String[] WAIT_MODE = {"节能", "均衡", "精确"};
      private static final Integer[] FLOW = {Integer.valueOf(80), Integer.valueOf(120), Integer.valueOf(160), Integer.valueOf(240), Integer.valueOf(320)};
+    private static final Integer[] RENDER_SCALE = {Integer.valueOf(100), Integer.valueOf(77), Integer.valueOf(67), Integer.valueOf(59), Integer.valueOf(50)};
     private static final Color INK = new Color(232, 236, 241);
     private static final Color MUTED = new Color(168, 178, 190);
     private static final Color PANEL = new Color(28, 32, 38);
@@ -56,7 +57,7 @@ public final class GameSettingsOverlay implements AutoCloseable {
     private static final String BODY_HTML =
         "<html><div style='width:190px'>先按 Esc 释放鼠标。插帧会增加延迟，HUD、遮挡和快速运动可能出现伪影。"
          + "无法消除 GC、加载或驱动停顿。未保存的设置仅本次生效，不改 options.txt；原生未接入时会明确标明。"
-         + "独占全屏可能遮挡浮层。独立限帧与插帧目标分开，0 表示关闭。</div></html>";
+         + "独占全屏可能遮挡浮层。独立限帧与插帧目标分开，0 表示关闭。超分只降低世界渲染分辨率，HUD 与输入坐标保持原生；开启不等于当前适配器已生效。</div></html>";
 
     private final AtomicBoolean posted = new AtomicBoolean();
     private final AtomicBoolean closed = new AtomicBoolean();
@@ -97,6 +98,10 @@ public final class GameSettingsOverlay implements AutoCloseable {
      private JCheckBox telemetryBox;
      private JButton saveProfileButton;
      private JButton resetProfileButton;
+    private JCheckBox upscaleBox;
+    private JComboBox<Integer> renderScaleBox;
+    private JSpinner sharpnessSpinner;
+    private JLabel upscaleStatus;
     private JLabel hudPresented;
     private JLabel hudRender;
     private JLabel hudGenerated;
@@ -109,6 +114,7 @@ public final class GameSettingsOverlay implements AutoCloseable {
     private JLabel hudGpuUse;
     private JLabel hudGpuTemp;
     private JLabel hudCpuTemp;
+    private JLabel hudUpscale;
     private JButton hudDetailsButton;
     private JPanel hudDetails;
     private boolean hudDetailsOpen;
@@ -322,6 +328,36 @@ public final class GameSettingsOverlay implements AutoCloseable {
                  if (!syncing) PacingSettings.setTelemetry(telemetryBox.isSelected());
              }
          });
+        upscaleBox = box("超分辨率（内部渲染）", UpscaleSettings.enabled(), "pcl-framegen-upscale");
+        upscaleBox.setToolTipText("<html><div style='width:210px'>降低世界渲染分辨率，再由 GPU 重建到窗口大小。HUD 与鼠标坐标保持原生，不改 options.txt。当前首个适配路径是 1.21.11 intermediary OpenGL 3.3；未知版本/后端保持原生。勾选只是请求，不等于适配器已生效，会增加 GPU 开销并可能损失细节。</div></html>");
+        upscaleBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent event) {
+                if (!syncing) UpscaleSettings.setEnabled(upscaleBox.isSelected());
+                refreshStatus();
+            }
+        });
+        renderScaleBox = new JComboBox<Integer>(RENDER_SCALE);
+        styleCombo(renderScaleBox, "pcl-framegen-render-scale");
+        renderScaleBox.setToolTipText("<html><div style='width:210px'>内部渲染比例 50–100。预设 100/77/67/59/50，也可输入自定义值；越低越省渲染、细节损失越大。打开面板不会改写已有自定义比例。</div></html>");
+        renderScaleBox.setEditable(true);
+        selectInteger(renderScaleBox, UpscaleSettings.scalePercent(), true);
+        renderScaleBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent event) {
+                if (syncing) return;
+                Integer selected = integerItem(renderScaleBox.getSelectedItem());
+                if (selected != null) UpscaleSettings.setScalePercent(selected.intValue());
+                refreshStatus();
+            }
+        });
+        sharpnessSpinner = spinner(0, 100, UpscaleSettings.sharpnessPercent(), "pcl-framegen-upscale-sharpness");
+        sharpnessSpinner.setToolTipText("<html><div style='width:210px'>重建锐化 0–100，默认 20。越高边缘越硬，也可能放大伪影。</div></html>");
+        sharpnessSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent event) {
+                if (!syncing) UpscaleSettings.setSharpnessPercent(((Number) sharpnessSpinner.getValue()).intValue());
+            }
+        });
+        upscaleStatus = label("", 12, MUTED);
+        upscaleStatus.setName("pcl-framegen-upscale-status");
          saveProfileButton = textButton("保存当前实例", "pcl-framegen-save-instance");
          resetProfileButton = textButton("恢复默认", "pcl-framegen-reset-instance");
          saveProfileButton.addActionListener(new java.awt.event.ActionListener() {
@@ -377,6 +413,11 @@ public final class GameSettingsOverlay implements AutoCloseable {
          add(root, spinnerRow("独立限帧 FPS（0=关）", fpsLimitSpinner));
          add(root, comboRow("等待精度", waitModeBox));
          add(root, telemetryBox);
+         add(root, Box.createVerticalStrut(8));
+         add(root, upscaleBox);
+         add(root, comboRow("内部渲染比例", renderScaleBox));
+         add(root, spinnerRow("重建锐化", sharpnessSpinner));
+         add(root, upscaleStatus);
          add(root, profileButtons);
          add(root, profileStatus);
          add(root, Box.createVerticalStrut(6));
@@ -428,6 +469,8 @@ public final class GameSettingsOverlay implements AutoCloseable {
         hudGpu = metricLabel("pcl-framegen-hud-gpu", 12, INK);
         hudReason = metricLabel("pcl-framegen-hud-reason", 12, MUTED);
         hudNative = metricLabel("pcl-framegen-hud-native", 12, MUTED);
+        hudUpscale = metricLabel("pcl-framegen-hud-upscale", 12, MUTED);
+        hudUpscale.setToolTipText("显示请求状态与适配器实际输入/输出分辨率。开启不等于已生效；未知路径保持原生。");
         hudCpu = metricLabel("pcl-framegen-hud-cpu", 12, INK);
         hudProcess = metricLabel("pcl-framegen-hud-process", 12, INK);
         hudGpuUse = metricLabel("pcl-framegen-hud-gpu-use", 12, INK);
@@ -484,6 +527,7 @@ public final class GameSettingsOverlay implements AutoCloseable {
         add(body, split);
         add(body, statusLine);
         add(body, hudReason);
+        add(body, hudUpscale);
         add(body, hudDetails);
 
         JPanel card = card();
@@ -530,6 +574,7 @@ public final class GameSettingsOverlay implements AutoCloseable {
         int inner = Math.max(120, cardWidth - 28);
         wrap(hudReason, inner);
         wrap(hudNative, inner);
+        wrap(hudUpscale, inner);
         wrap(hudGpuUse, inner);
         Component statusLine = findNamed(hud, "pcl-framegen-hud-status");
         if (statusLine instanceof JLabel) wrap((JLabel) statusLine, inner);
@@ -680,10 +725,15 @@ public final class GameSettingsOverlay implements AutoCloseable {
              }
          }
          syncFlag(telemetryBox, PacingSettings.telemetry());
+         syncFlag(upscaleBox, UpscaleSettings.enabled());
+         if (renderScaleBox != null && !renderScaleBox.isPopupVisible() && !renderScaleEditing()) {
+             selectInteger(renderScaleBox, UpscaleSettings.scalePercent(), true);
+         }
+         syncSpinner(sharpnessSpinner, UpscaleSettings.sharpnessPercent());
          if (fpsButton != null) fpsButton.repaint();
          refreshStatus();
          refreshProfileStatus();
-     }
+    }
 
      private void refreshProfileStatus() {
          if (profileStatus == null) return;
@@ -706,7 +756,7 @@ public final class GameSettingsOverlay implements AutoCloseable {
          if (resetProfileButton != null) resetProfileButton.setEnabled(configured);
          profileStatus.setText("<html><div style='width:190px'>配置 " + state + "</div></html>");
          profileStatus.setToolTipText(configured ? path : "未配置实例路径");
-     }
+    }
 
     private void saveProfile() {
         if (saveProfileButton != null && !saveProfileButton.isEnabled()) return;
@@ -724,9 +774,12 @@ public final class GameSettingsOverlay implements AutoCloseable {
         if (status == null) return;
         FrameMetrics.Snapshot snap = FrameMetrics.snapshot();
         String hook = snap == null || snap.nativeHook == null || snap.nativeHook.length() == 0 ? "未接入" : snap.nativeHook;
+        String upscale = upscaleText();
         status.setText("<html><div style='width:190px'>本次会话 · 目标 " + FrameSettings.outputFps()
             + " · " + FrameSettings.multiplier() + "× · 原生 " + hook
+            + "<br>" + escape(upscale)
             + "<br>不改 options.txt · 不取消 tick/物理 · 统计实际提交</div></html>");
+        if (upscaleStatus != null) upscaleStatus.setText("<html><div style='width:190px'>" + escape(upscale) + "</div></html>");
     }
 
     private void refreshHud() {
@@ -740,6 +793,7 @@ public final class GameSettingsOverlay implements AutoCloseable {
         setMetric(hudReason, "跳过 " + snap.skippedFrames + " · " + reason);
         String hook = snap.nativeHook == null || snap.nativeHook.length() == 0 ? "未接入" : snap.nativeHook;
         setMetric(hudNative, "原生 " + hook);
+        setMetric(hudUpscale, upscaleText());
         Component statusLine = findNamed(hud, "pcl-framegen-hud-status");
         if (statusLine instanceof JLabel) setMetric((JLabel) statusLine, diagnosis(snap));
         if (PacingSettings.telemetry() && hud != null && hud.isVisible()) {
@@ -758,6 +812,42 @@ public final class GameSettingsOverlay implements AutoCloseable {
         setMetric(hudGpuTemp, "GPU 温度 " + temp(fresh ? hardware.gpuTempC : Double.NaN));
         setMetric(hudCpuTemp, "CPU 温度 " + temp(fresh ? hardware.cpuTempC : Double.NaN));
         if (hud != null && hud.isVisible()) fitHud();
+    }
+
+    private boolean renderScaleEditing() {
+        if (renderScaleBox == null || !renderScaleBox.isEditable()) return false;
+        Component editor = renderScaleBox.getEditor().getEditorComponent();
+        return editor != null && editor.isFocusOwner();
+    }
+
+    private static Integer integerItem(Object item) {
+        if (item instanceof Integer) return (Integer) item;
+        if (item instanceof Number) return Integer.valueOf(((Number) item).intValue());
+        if (item == null) return null;
+        String text = String.valueOf(item).trim();
+        if (text.length() == 0) return null;
+        int value = 0;
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (c < '0' || c > '9') return null;
+            value = value * 10 + (c - '0');
+            if (value > 1000) return null;
+        }
+        return Integer.valueOf(value);
+    }
+
+    /** Requested settings plus observed adapter resolutions. Enabled never implies active. */
+    private static String upscaleText() {
+        UpscaleSettings.Info info = UpscaleSettings.info();
+        String state = UpscaleSettings.status();
+        if (state == null || state.length() == 0) state = "超分状态不可用";
+        String resolutions = info == null ? "分辨率未知" : info.inputWidth + "x" + info.inputHeight
+            + " → " + info.outputWidth + "x" + info.outputHeight;
+        String activity = info != null && info.active ? "适配器已重建" : "适配器未生效";
+        return "超分 " + (UpscaleSettings.enabled() ? "请求开启" : "请求关闭")
+            + " · " + activity + " · " + state
+            + " · 内部 " + UpscaleSettings.scalePercent() + "% · 锐化 " + UpscaleSettings.sharpnessPercent()
+            + " · " + resolutions;
     }
 
     /** Plain diagnosis. Never calls a zero-submit or disabled session "运行中". */

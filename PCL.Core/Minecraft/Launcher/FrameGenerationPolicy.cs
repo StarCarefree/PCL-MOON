@@ -10,9 +10,9 @@ namespace PCL.Core.Minecraft.Launcher;
 /// <summary>Opt-in presentation hook; GPU/backend support is checked inside the game, not inferred from a vendor name.</summary>
 public static class FrameGenerationPolicy
 {
-    public static bool ShouldInject(bool generation, bool diagnostics, int javaMajor, bool is64Bit, string arguments, bool settingsButton = false, bool independentPacing = false)
+    public static bool ShouldInject(bool generation, bool diagnostics, int javaMajor, bool is64Bit, string arguments, bool settingsButton = false, bool independentPacing = false, bool superResolution = false)
     {
-        if ((!generation && !diagnostics && !settingsButton && !independentPacing) || javaMajor < 8 || !is64Bit) return false;
+        if ((!generation && !diagnostics && !settingsButton && !independentPacing && !superResolution) || javaMajor < 8 || !is64Bit) return false;
         // Do not guess an ambiguous command line or duplicate a manually supplied agent.
         if (arguments.Count(ch => ch == '"') % 2 != 0 || arguments.Contains("\\\"", StringComparison.Ordinal)) return false;
         var tokens = Regex.Matches(arguments, """(?:[^\s"]|"[^"]*")+""")

@@ -46,6 +46,20 @@ public sealed class FrameGenerationPolicyTest
     }
 
     [TestMethod]
+    public void StandaloneSuperResolutionLoadsWithoutGenerationButRespectsForcedDisable()
+    {
+        Assert.IsTrue(FrameGenerationPolicy.ShouldInject(false, false, 21, true, "", superResolution: true));
+        Assert.IsTrue(FrameGenerationPolicy.ShouldInject(false, false, 8, true, "", superResolution: true));
+        Assert.IsFalse(FrameGenerationPolicy.ShouldInject(false, false, 7, true, "", superResolution: true));
+        Assert.IsFalse(FrameGenerationPolicy.ShouldInject(false, false, 21, false, "", superResolution: true));
+        Assert.IsFalse(FrameGenerationPolicy.ShouldInject(false, false, 21, true,
+            "-Dpclmoon.framegen.disabled=true", superResolution: true));
+        Assert.IsFalse(FrameGenerationPolicy.ShouldInject(false, false, 21, true,
+            "-javaagent:D:/pcl-framegen.jar", superResolution: true));
+        Assert.IsFalse(FrameGenerationPolicy.ShouldInject(false, false, 21, true, ""));
+    }
+
+    [TestMethod]
     public void ProfileIdentityIsInstanceBasedAndStableOnWindows()
     {
         var first = FrameGenerationPolicy.ProfileKey("D:/Game/versions/测试实例");

@@ -1,0 +1,4 @@
+# Preserve exact upstream AMD bytes and the documented SHA256 values.
+resources/pclmoon/framegen/render/fsr1/ffx_a.h -text whitespace=-blank-at-eol
+resources/pclmoon/framegen/render/fsr1/ffx_fsr1.h -text whitespace=-blank-at-eol
+resources/pclmoon/framegen/render/fsr1/LICENSE.txt -text

@@ -89,6 +89,7 @@ public partial class PageSetupLaunch
             CheckFrameDiagnostics.Checked = Config.Launch.FrameDiagnostics;
             CheckFrameSettingsButton.Checked = Config.Launch.FrameSettingsButton;
             CheckFramePacing.Checked = Config.Launch.FramePacing;
+            CheckSuperResolution.Checked = Config.Launch.SuperResolution;
             if (SystemInfo.IsArm64System)
             {
                 CheckAdvanceDisableJLW.Checked = true;

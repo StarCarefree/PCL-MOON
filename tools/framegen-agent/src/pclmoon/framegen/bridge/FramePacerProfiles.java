@@ -398,7 +398,7 @@ public final class FramePacerProfiles {
         return s.fpsLimit + "," + s.waitMode + "," + s.telemetry + "," + s.showFps + "," + s.generation
             + "," + s.outputFps + "," + s.multiplier + "," + s.quality + "," + s.flowWidth + "," + s.gpuBudgetMs
             + "," + s.stallThresholdMs + "," + s.adaptive + "," + s.lowFpsProtection + "," + s.nativeFrameControl
-            + "," + s.diagnostics;
+            + "," + s.diagnostics + "," + s.superResolution + "," + s.renderScale + "," + s.upscaleSharpness;
     }
 
     private static Snapshot parse(Map<String, String> globalKeys, Map<String, String> instanceKeys, Defaults defaults) {
@@ -417,6 +417,9 @@ public final class FramePacerProfiles {
         BoolValue low = BoolValue.missing();
         BoolValue nativeControl = BoolValue.missing();
         BoolValue diagnostics = BoolValue.missing();
+        BoolValue superResolution = BoolValue.missing();
+        IntValue renderScale = IntValue.missing();
+        IntValue sharpness = IntValue.missing();
         overlayCap(globalKeys, true, fps);
         overlayCap(instanceKeys, false, fps);
         mode = overlayMode(globalKeys, mode);
@@ -447,6 +450,12 @@ public final class FramePacerProfiles {
         nativeControl = overlayBool(instanceKeys, "native_frame_control", nativeControl);
         diagnostics = overlayBool(globalKeys, "diagnostics", diagnostics);
         diagnostics = overlayBool(instanceKeys, "diagnostics", diagnostics);
+        superResolution = overlayBool(globalKeys, "super_resolution", superResolution);
+        superResolution = overlayBool(instanceKeys, "super_resolution", superResolution);
+        renderScale = overlayInt(globalKeys, "render_scale", 50, 100, renderScale);
+        renderScale = overlayInt(instanceKeys, "render_scale", 50, 100, renderScale);
+        sharpness = overlayInt(globalKeys, "upscale_sharpness", 0, 100, sharpness);
+        sharpness = overlayInt(instanceKeys, "upscale_sharpness", 0, 100, sharpness);
         return new Snapshot(EPOCH.get(),
             fps.present ? fps.value : defaults.fpsLimit,
             mode.present ? mode.value : defaults.waitMode,
@@ -462,7 +471,10 @@ public final class FramePacerProfiles {
             adaptive.present ? adaptive.value : defaults.adaptive,
             low.present ? low.value : defaults.lowFpsProtection,
             nativeControl.present ? nativeControl.value : defaults.nativeFrameControl,
-            diagnostics.present ? diagnostics.value : defaults.diagnostics);
+            diagnostics.present ? diagnostics.value : defaults.diagnostics,
+            superResolution.present ? superResolution.value : defaults.superResolution,
+            renderScale.present ? renderScale.value : defaults.renderScale,
+            sharpness.present ? sharpness.value : defaults.upscaleSharpness);
     }
 
     private static void overlayCap(Map<String, String> keys, boolean global, IntValue target) {
@@ -565,10 +577,14 @@ public final class FramePacerProfiles {
         final boolean lowFpsProtection;
         final boolean nativeFrameControl;
         final boolean diagnostics;
+        final boolean superResolution;
+        final int renderScale;
+        final int upscaleSharpness;
 
         Snapshot(long epoch, int fpsLimit, int waitMode, boolean telemetry, boolean showFps, boolean generation,
                  int outputFps, int multiplier, int quality, int flowWidth, int gpuBudgetMs, int stallThresholdMs,
-                 boolean adaptive, boolean lowFpsProtection, boolean nativeFrameControl, boolean diagnostics) {
+                 boolean adaptive, boolean lowFpsProtection, boolean nativeFrameControl, boolean diagnostics,
+                 boolean superResolution, int renderScale, int upscaleSharpness) {
             this.epoch = epoch;
             this.fpsLimit = fpsLimit;
             this.waitMode = waitMode;
@@ -585,6 +601,9 @@ public final class FramePacerProfiles {
             this.lowFpsProtection = lowFpsProtection;
             this.nativeFrameControl = nativeFrameControl;
             this.diagnostics = diagnostics;
+            this.superResolution = superResolution;
+            this.renderScale = renderScale;
+            this.upscaleSharpness = upscaleSharpness;
         }
 
         void apply() {
@@ -601,6 +620,7 @@ public final class FramePacerProfiles {
             FrameSettings.setLowFpsProtection(lowFpsProtection);
             FrameSettings.setNativeFrameControl(nativeFrameControl);
             FrameSettings.setDiagnostics(diagnostics);
+            UpscaleSettings.apply(superResolution, renderScale, upscaleSharpness);
         }
     }
 
@@ -608,19 +628,24 @@ public final class FramePacerProfiles {
         static final String[] KEYS = {
             "fps_limit", "global_fps_limit", "pacing_mode", "telemetry", "hud", "generation",
             "output_fps", "multiplier", "quality", "flow_width", "gpu_budget_ms", "stall_threshold_ms",
-            "adaptive", "low_fps_protection", "native_frame_control", "diagnostics"
+            "adaptive", "low_fps_protection", "native_frame_control", "diagnostics",
+            "super_resolution", "render_scale", "upscale_sharpness"
         };
         static final String[] INSTANCE_KEYS = {
             "fps_limit", "pacing_mode", "telemetry", "hud", "generation",
             "output_fps", "multiplier", "quality", "flow_width", "gpu_budget_ms", "stall_threshold_ms",
-            "adaptive", "low_fps_protection", "native_frame_control", "diagnostics"
+            "adaptive", "low_fps_protection", "native_frame_control", "diagnostics",
+            "super_resolution", "render_scale", "upscale_sharpness"
         };
         final int fpsLimit, waitMode, outputFps, multiplier, quality, flowWidth, gpuBudgetMs, stallThresholdMs;
         final boolean telemetry, showFps, generation, adaptive, lowFpsProtection, nativeFrameControl, diagnostics;
+        final boolean superResolution;
+        final int renderScale, upscaleSharpness;
 
         Defaults(int fpsLimit, int waitMode, boolean telemetry, boolean showFps, boolean generation,
                  int outputFps, int multiplier, int quality, int flowWidth, int gpuBudgetMs, int stallThresholdMs,
-                 boolean adaptive, boolean lowFpsProtection, boolean nativeFrameControl, boolean diagnostics) {
+                 boolean adaptive, boolean lowFpsProtection, boolean nativeFrameControl, boolean diagnostics,
+                 boolean superResolution, int renderScale, int upscaleSharpness) {
             this.fpsLimit = fpsLimit;
             this.waitMode = waitMode;
             this.telemetry = telemetry;
@@ -636,14 +661,19 @@ public final class FramePacerProfiles {
             this.lowFpsProtection = lowFpsProtection;
             this.nativeFrameControl = nativeFrameControl;
             this.diagnostics = diagnostics;
+            this.superResolution = superResolution;
+            this.renderScale = renderScale;
+            this.upscaleSharpness = upscaleSharpness;
         }
 
+
         static Defaults capture() {
+            UpscaleSettings.Values upscale = UpscaleSettings.snapshot();
             return new Defaults(PacingSettings.fpsLimit(), PacingSettings.waitMode(), PacingSettings.telemetry(),
                 FrameSettings.showFps(), FrameSettings.generation(), FrameSettings.outputFps(), FrameSettings.multiplier(),
                 FrameSettings.quality(), FrameSettings.flowWidth(), FrameSettings.gpuBudgetMs(), FrameSettings.stallThresholdMs(),
                 FrameSettings.adaptivePacing(), FrameSettings.lowFpsProtection(), FrameSettings.nativeFrameControl(),
-                FrameSettings.diagnostics());
+                FrameSettings.diagnostics(), upscale.enabled, upscale.scalePercent, upscale.sharpnessPercent);
         }
 
         Map<String, String> toInstanceMap() {
@@ -663,13 +693,16 @@ public final class FramePacerProfiles {
             keys.put("low_fps_protection", lowFpsProtection ? "on" : "off");
             keys.put("native_frame_control", nativeFrameControl ? "on" : "off");
             keys.put("diagnostics", diagnostics ? "on" : "off");
+            keys.put("super_resolution", superResolution ? "on" : "off");
+            keys.put("render_scale", Integer.toString(renderScale));
+            keys.put("upscale_sharpness", Integer.toString(upscaleSharpness));
             return keys;
         }
 
         Snapshot toSnapshot(long epoch) {
             return new Snapshot(epoch, fpsLimit, waitMode, telemetry, showFps, generation, outputFps, multiplier,
                 quality, flowWidth, gpuBudgetMs, stallThresholdMs, adaptive, lowFpsProtection, nativeFrameControl,
-                diagnostics);
+                diagnostics, superResolution, renderScale, upscaleSharpness);
         }
     }
 

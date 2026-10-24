@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 import pclmoon.framegen.bridge.FramePacerProfiles;
 import pclmoon.framegen.bridge.FrameSettings;
 import pclmoon.framegen.bridge.PacingSettings;
+import pclmoon.framegen.bridge.UpscaleSettings;
 
 /** Deterministic temp-dir coverage for the profile overlay. Args: tempDir. */
 public final class ProfilesHarness {
@@ -26,6 +27,7 @@ public final class ProfilesHarness {
             limits(root.resolve("limits"));
             symlink(root.resolve("link"));
             reconfigure(root.resolve("re"));
+            superResolution(root.resolve("sr"));
         } finally {
             FramePacerProfiles.close();
         }
@@ -175,6 +177,46 @@ public final class ProfilesHarness {
         check(FramePacerProfiles.profilePath().length() == 0 && FramePacerProfiles.status().length() == 0, "close clears status");
     }
 
+    private static void superResolution(Path dir) throws Exception {
+        Files.createDirectories(dir);
+        Path global = dir.resolve("global.properties");
+        Path instance = dir.resolve("instance.properties");
+        write(global, "super_resolution=on\nrender_scale=77\nupscale_sharpness=15\n");
+        write(instance, "render_scale=59\nupscale_sharpness=maybe\nsuper_resolution=nope\n");
+        seed(6, 1, true, false, true, 60, 2, 1, 160, 8, 150, true, true, true, false);
+        UpscaleSettings.apply(true, 80, 40);
+        FramePacerProfiles.configure(global.toString(), instance.toString());
+        await(6, 1, true, false, true, 60, 2, 1, 160, 8, 150, true, true, true, false);
+        awaitUpscale(true, 59, 15);
+        write(instance, "super_resolution=off\nrender_scale=49\nupscale_sharpness=101\n");
+        awaitUpscale(false, 77, 15);
+        UpscaleSettings.apply(true, 50, 0);
+        FramePacerProfiles.saveInstance();
+        awaitStatus("已保存");
+        String saved = new String(Files.readAllBytes(instance), StandardCharsets.UTF_8);
+        check(saved.indexOf("super_resolution=on") >= 0 && saved.indexOf("render_scale=50") >= 0
+            && saved.indexOf("upscale_sharpness=0") >= 0, "save writes the SR group");
+        FramePacerProfiles.resetInstance();
+        awaitStatus("已重置");
+        awaitUpscale(true, 77, 15);
+        check(!Files.exists(instance), "SR reset removes only the instance file");
+    }
+
+    private static void awaitUpscale(boolean enabled, int scale, int sharpness) throws Exception {
+        long deadline = System.currentTimeMillis() + 4000L;
+        while (System.currentTimeMillis() < deadline) {
+            FramePacerProfiles.applyPending();
+            if (UpscaleSettings.enabled() == enabled && UpscaleSettings.scalePercent() == scale
+                && UpscaleSettings.sharpnessPercent() == sharpness) return;
+            Thread.sleep(40L);
+        }
+        FramePacerProfiles.applyPending();
+        check(UpscaleSettings.enabled() == enabled && UpscaleSettings.scalePercent() == scale
+            && UpscaleSettings.sharpnessPercent() == sharpness,
+            "SR overlay expected " + enabled + "/" + scale + "/" + sharpness + " got "
+                + UpscaleSettings.enabled() + "/" + UpscaleSettings.scalePercent() + "/" + UpscaleSettings.sharpnessPercent());
+    }
+
     private static void seed(int fps, int mode, boolean telemetry, boolean hud, boolean generation, int output, int multiplier,
                              int quality, int flow, int gpu, int stall, boolean adaptive, boolean low, boolean nativeControl,
                              boolean diagnostics) {
@@ -191,6 +233,7 @@ public final class ProfilesHarness {
         FrameSettings.setLowFpsProtection(low);
         FrameSettings.setNativeFrameControl(nativeControl);
         FrameSettings.setDiagnostics(diagnostics);
+        UpscaleSettings.apply(false, 67, 20);
     }
 
     private static void await(int fps, int mode, boolean telemetry, boolean hud, boolean generation, int output, int multiplier,

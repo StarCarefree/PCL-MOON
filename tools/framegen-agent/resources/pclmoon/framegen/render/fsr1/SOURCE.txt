@@ -1,0 +1,18 @@
+FidelityFX Super Resolution 1.0.2
+Source: https://github.com/GPUOpen-Effects/FidelityFX-FSR
+Commit: a21ffb8f6c13233ba336352bdff293894c706575 (tag content "FidelityFX FSR v1.0.2", 2021-11-15)
+License: MIT, Copyright (c) 2021 Advanced Micro Devices, Inc. See LICENSE.txt.
+
+SHA256 of the files copied verbatim from that commit:
+  license.txt  -> LICENSE.txt  db089274ce766da70f5b7d791029c3486f9f9e27c8c79c652689603d3192e802
+  ffx-fsr/ffx_a.h               f60e2722fcd13989523b9164d776ab382b3692791767f3bf8bb19967f763f3fb
+  ffx-fsr/ffx_fsr1.h            93c3922362ea7fc99cbcc698ca30c98de4f8c246d1fbb0b09e015ddef38ce3a5
+
+easu.frag, rcas.frag, fullscreen.vert and linear.frag are local GL 3.3 wrappers.
+They include the official headers unmodified. EASU gather4 is emulated with texelFetch
+because textureGather is not in the GL 3.3 core profile. linear.frag is a reference
+bilinear blit and is not part of FSR.
+
+For strict GLSL 3.30 compilers, the local include preprocessor changes unsigned
+constant zero initializers in the generated shader text from 0 to 0u. The
+vendored upstream headers themselves remain byte-for-byte unchanged.

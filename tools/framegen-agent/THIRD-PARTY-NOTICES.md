@@ -53,3 +53,27 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+## AMD FidelityFX Super Resolution 1.0.2 (MIT)
+
+The internal spatial super-resolution renderer includes the unmodified AMD
+`ffx_a.h` and `ffx_fsr1.h` headers (EASU and RCAS), plus local OpenGL 3.3 wrappers.
+Source: https://github.com/GPUOpen-Effects/FidelityFX-FSR
+Commit: `a21ffb8f6c13233ba336352bdff293894c706575` (FSR v1.0.2).
+Copyright (c) 2021 Advanced Micro Devices, Inc.
+
+The complete MIT license and source checksums are distributed in
+`pclmoon/framegen/render/fsr1/LICENSE.txt` and `SOURCE.txt` inside the agent JAR.
+SHA256 of verbatim upstream files:
+
+- `license.txt`: `db089274ce766da70f5b7d791029c3486f9f9e27c8c79c652689603d3192e802`
+- `ffx-fsr/ffx_a.h`: `f60e2722fcd13989523b9164d776ab382b3692791767f3bf8bb19967f763f3fb`
+- `ffx-fsr/ffx_fsr1.h`: `93c3922362ea7fc99cbcc698ca30c98de4f8c246d1fbb0b09e015ddef38ce3a5`
+
+The MIT permission and disclaimer reproduced above also apply to these files,
+with AMD's copyright notice above. This is spatial FSR1, not neural or temporal
+upscaling, and no model weights are included.
+
+The user-provided GWCT-main directory was inspected for reference. It implements
+window management, not an SR reconstruction algorithm. No GWCT source or binary
+is copied, executed, embedded or redistributed.

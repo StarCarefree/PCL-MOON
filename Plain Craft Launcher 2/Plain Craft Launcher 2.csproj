@@ -162,6 +162,6 @@
     </Target>
     <ItemGroup>
         <GameLinkAgentSource Include="..\tools\multiplayer-agent\src\**\*.java;..\tools\multiplayer-agent\MANIFEST.MF;..\tools\multiplayer-agent\build.ps1" />
-        <FrameGenerationAgentSource Include="..\tools\framegen-agent\src\**\*.java;..\tools\framegen-agent\build.py;..\tools\framegen-agent\THIRD-PARTY-NOTICES.md" />
+        <FrameGenerationAgentSource Include="..\tools\framegen-agent\src\**\*.java;..\tools\framegen-agent\resources\**\*;..\tools\framegen-agent\build.py;..\tools\framegen-agent\THIRD-PARTY-NOTICES.md" />
     </ItemGroup>
 </Project>

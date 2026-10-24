@@ -14,6 +14,7 @@ import javax.swing.SwingUtilities;
  import pclmoon.framegen.bridge.FrameSettings;
  import pclmoon.framegen.bridge.GameSettingsOverlay;
  import pclmoon.framegen.bridge.PacingSettings;
+ import pclmoon.framegen.bridge.UpscaleSettings;
 
 /** Real (non-headless) Swing smoke for the game settings chrome, run with test.py --overlay. */
 public final class OverlayHarness {
@@ -40,6 +41,7 @@ public final class OverlayHarness {
         });
         GameSettingsOverlay overlay = new GameSettingsOverlay();
         FrameSettings.setOutputFps(100); // Not a preset: opening the panel must not round it to 90.
+        UpscaleSettings.apply(false, 73, 20); // Custom internal scale must survive opening the panel.
         FrameSettings.setShowFps(false);
         FrameMetrics.reset();
         FrameMetrics.skip("gpu-budget"); // No presentations: every FPS readout must remain zero regardless of target/multiplier.
@@ -66,12 +68,17 @@ public final class OverlayHarness {
                  && find(panel, "pcl-framegen-fps-limit") != null && find(panel, "pcl-framegen-wait-mode") != null
                  && find(panel, "pcl-framegen-telemetry") != null && find(panel, "pcl-framegen-save-instance") != null
                  && find(panel, "pcl-framegen-reset-instance") != null && find(panel, "pcl-framegen-profile-status") != null
-                 && find(panel, "pcl-framegen-scroll") != null, "expanded controls are present");
+                 && find(panel, "pcl-framegen-scroll") != null
+                 && find(panel, "pcl-framegen-upscale") != null && find(panel, "pcl-framegen-render-scale") != null
+                 && find(panel, "pcl-framegen-upscale-sharpness") != null && find(panel, "pcl-framegen-upscale-status") != null,
+                 "expanded controls are present");
             String body = text(panel, "pcl-framegen-body");
             check(body.contains("无法消除") && text(panel, "pcl-framegen-status").contains("本次")
                 && body.contains("options.txt") && body.contains("未接入") && body.contains("Esc"),
                 "panel explains latency/HUD/GC, session-only scope, native state, and Esc");
             check(FrameSettings.outputFps() == 100, "opening panel must preserve a custom FPS value");
+            check(UpscaleSettings.scalePercent() == 73 && !UpscaleSettings.enabled() && UpscaleSettings.sharpnessPercent() == 20,
+                "opening panel must preserve a custom internal scale");
             final Window previewPanel = panel;
             final String previewPath = System.getProperty("pclmoon.framegen.test.preview");
             if (previewPath != null) SwingUtilities.invokeAndWait(new Runnable() {
@@ -153,6 +160,7 @@ public final class OverlayHarness {
             click(adaptive);
             click(protection);
             click(nativeControl);
+            exerciseUpscale(panel);
             waitSettings(!generationWas, true, 144, 3, 2, 240, 12, 200, !adaptiveWas, !protectionWas, !nativeWas);
             check(find("pcl-framegen-hud") == null || !find("pcl-framegen-hud").isVisible(),
                 "HUD stays hidden until showFps is enabled");
@@ -187,8 +195,8 @@ public final class OverlayHarness {
             check(text(hud, "pcl-framegen-hud-cpu").contains("N/A") && text(hud, "pcl-framegen-hud-gpu-use").contains("N/A"),
                 "unavailable hardware stays N/A");
             check(labelFullyInside(hud, "pcl-framegen-hud-caption") && labelFullyInside(hud, "pcl-framegen-hud-presented")
-                && labelFullyInside(hud, "pcl-framegen-hud-reason") && labelFullyInside(hud, "pcl-framegen-hud-native")
-                && labelFullyInside(hud, "pcl-framegen-hud-status"),
+                && labelFullyInside(hud, "pcl-framegen-hud-status")
+                && labelFullyInside(hud, "pcl-framegen-hud-upscale"),
                 "HUD labels are not clipped by the card");
             final Window previewHud = hud;
             if (previewPath != null) SwingUtilities.invokeAndWait(new Runnable() {
@@ -274,6 +282,48 @@ public final class OverlayHarness {
         }
          throw new AssertionError("FrameSettings did not follow the panel");
      }
+
+    private static void exerciseUpscale(final Window panel) throws Exception {
+        AbstractButton upscale = button(panel, "pcl-framegen-upscale");
+        check(upscale != null && !upscale.isSelected(), "upscale starts from the requested off state");
+        String tip = upscale.getToolTipText();
+        check(tip != null && tip.contains("1.21.11") && tip.contains("OpenGL 3.3") && tip.contains("不等于"),
+            "upscale tooltip explains first support and that enabled is not active");
+        String before = text(panel, "pcl-framegen-upscale-status");
+        check(before.contains("请求关闭") && before.contains("适配器未生效") && before.contains("0x0 → 0x0")
+            && !before.contains("适配器已重建"), "unknown status must not claim the adapter is active");
+        click(upscale);
+        JComboBox<?> scale = combo(panel, "pcl-framegen-render-scale");
+        SwingUtilities.invokeAndWait(select(scale, Integer.valueOf(50)));
+        JSpinner sharpness = spinner(panel, "pcl-framegen-upscale-sharpness");
+        SwingUtilities.invokeAndWait(spin(sharpness, Integer.valueOf(0)));
+        SwingUtilities.invokeAndWait(spin(sharpness, Integer.valueOf(100)));
+        waitUpscale(true, 50, 100);
+        UpscaleSettings.setScalePercent(40);
+        UpscaleSettings.setSharpnessPercent(140);
+        check(UpscaleSettings.scalePercent() == 50 && UpscaleSettings.sharpnessPercent() == 100, "setters clamp 50..100 and 0..100");
+        UpscaleSettings.runtime(false, "未知路径保持原生", 0, 0, 1920, 1080);
+        Thread.sleep(300L);
+        String unknown = text(panel, "pcl-framegen-status") + text(panel, "pcl-framegen-upscale-status");
+        check(unknown.contains("未知路径保持原生") && unknown.contains("0x0 → 1920x1080") && unknown.contains("适配器未生效"),
+            "status shows actual observed resolutions without claiming active");
+        UpscaleSettings.runtime(true, "内部渲染已重建", 960, 540, 1920, 1080);
+        Thread.sleep(300L);
+        Window hud = find("pcl-framegen-hud");
+        if (hud != null && hud.isVisible()) {
+            check(text(hud, "pcl-framegen-hud-upscale").contains("960x540 → 1920x1080"), "HUD shows actual adapter resolutions");
+        }
+    }
+
+    private static void waitUpscale(boolean enabled, int scale, int sharpness) throws Exception {
+        long deadline = System.currentTimeMillis() + 2000L;
+        while (System.currentTimeMillis() < deadline) {
+            if (UpscaleSettings.enabled() == enabled && UpscaleSettings.scalePercent() == scale
+                && UpscaleSettings.sharpnessPercent() == sharpness) return;
+            Thread.sleep(20L);
+        }
+        throw new AssertionError("UpscaleSettings did not follow the panel");
+    }
 
      private static void waitPacing(final int fpsLimit, final int waitMode, final boolean telemetry) throws Exception {
          long deadline = System.currentTimeMillis() + 2000;

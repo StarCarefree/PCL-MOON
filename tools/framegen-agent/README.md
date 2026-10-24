@@ -1,4 +1,4 @@
-# 实验性游戏帧生成 Agent
+# 实验性游戏帧生成与内部超分 Agent
 
 ## 使用
 
@@ -24,12 +24,27 @@
 | 等待精度 | 节能：不忙等；均衡（默认）：末段最多 100µs；精确：末段最多 1ms，会增加 CPU 占用 |
 | 硬件监控 | HUD 可见且此项开启时，后台至多每秒采样一次；缺失传感器显示 N/A |
 | 实例配置 | 保存当前设置供本实例下次使用，或恢复全局/启动默认值；不修改游戏配置 |
+| 内部超分辨率 | 默认关闭；FSR1 EASU 重建＋可选 RCAS 锐化，不是窗口拉伸或神经 DLSS |
+| 世界渲染比例 | 50–100%，默认 67%；支持 100/77/67/59/50 预设及自定义值 |
+| 超分锐化 | 0–100%，默认 20%；0 跳过 RCAS |
 
 未保存的设置只影响本次游戏，不覆盖启动器默认值。改变倍率/FPS 会重置节奏，改变质量/运动场会重建历史并预热。关闭插帧释放资源；如独立限帧仍开启，则继续约束呈现。关闭全部启动器开关后重新启动可移除 Agent；`-Dpclmoon.framegen.disabled=true` 始终强制禁用。单独使用配置/限帧可开启“独立限帧与实例配置支持”，该开关只负责加载组件，并不自动设置 FPS 上限。
 
 建议给 **2080 SUPER + Iris/Complementary** 先用 **2×、120 FPS 上限、均衡、160 宽运动场、8ms 预算**，打开 FPS HUD 后再比较生成数量、跳过原因和帧时间。不要一开始就用 4×/240 FPS 当作实际效果保证。
 
 齿轮/FPS HUD 跟随游戏窗口、失焦/最小化隐藏，游戏窗口销毁时清理，不依赖启动器保持打开。需要 `java.desktop`；独占全屏可能遮住工具层，建议窗口化/无边框。混合 DPI 多显示器尚未做矩阵测试。
+
+## 内部超分辨率
+
+在启动器高级设置开启“游戏内部超分辨率”后重启游戏，也可在已加载 Agent 的游戏齿轮面板中切换。可单独加载，不要求打开插帧。配置保存仍位于启动器数据目录，不修改游戏 `options.txt`、模组或存档。
+
+流水线为 **低分辨率世界 → GPU FSR1 EASU/RCAS → 原生分辨率 GUI/HUD → 原有 GLFW 呈现/补帧**。只在世界渲染作用域内替换主 framebuffer 返回值和 framebuffer 尺寸 getter，不改变真实窗口、输入尺寸、鼠标坐标、tick 或物理。退出作用域（含游戏异常）立即恢复；不会为回退重复渲染世界。纹理和程序缓存复用，比例/窗口尺寸改变时才重建，关闭/窗口销毁在渲染线程释放。改变超分设置会重置补帧历史。
+
+采用 AMD 官方 **FidelityFX FSR 1.0.2** 的 EASU（边缘自适应空间重建）与 RCAS（可选锐化），不是时域/神经网络超分，没有学习模型、运动向量或 DLSS。67% 约使用原像素量的 45%，但新增重建成本；CPU 受限、100% 比例或轻负载场景不保证提速。降低比例可能损失细线、远处细节，锐化也可能增加边缘噪声。HUD 只在重建完成后绘制，保持原生清晰度。
+
+**首版适配范围：Minecraft 1.21.11 Fabric intermediary 的已验证结构、OpenGL 3.3。开启 Iris 光影包时明确回退原生分辨率；未知映射/渲染布局、Vulkan、资源初始化失败也不降世界分辨率。** 其他版本、Sodium/其他渲染模组实机矩阵和完整 Minecraft 游玩 A/B 尚未验证。请求开关不等于生效：面板/HUD 显示实际状态及输入→输出尺寸。GPU 失败当帧尝试 blit 保全当前图像，后续使用原生渲染；修改设置或重新开关可重试。
+
+参考检查了 `G:/download/GWCT-main`，其实现为窗口管理而非超分算法；本模块不包含 GWCT 代码或二进制。FSR 官方文件、来源版本、校验和及 MIT 许可随 Agent 打包，见第三方声明。
 
 ## FPS 的准确含义
 
@@ -86,9 +101,12 @@ pacing_mode=balanced
 telemetry=on
 hud=on
 generation=off
+super_resolution=on
+render_scale=67
+upscale_sharpness=20
 ```
 
-`fps_limit=off` 或 `0` 关闭，非法上限按关闭处理；全局还接受 `global_fps_limit` 别名。精度为 `efficient/balanced/precise`。其余白名单：`output_fps`、`multiplier`、`quality`、`flow_width`、`gpu_budget_ms`、`stall_threshold_ms`、`adaptive`、`low_fps_protection`、`native_frame_control`、`diagnostics`；布尔值接受 `on/off/true/false`。配置读写不在渲染线程或 Swing EDT 执行。
+`fps_limit=off` 或 `0` 关闭，非法上限按关闭处理；全局还接受 `global_fps_limit` 别名。精度为 `efficient/balanced/precise`。其余白名单：`output_fps`、`multiplier`、`quality`、`flow_width`、`gpu_budget_ms`、`stall_threshold_ms`、`adaptive`、`low_fps_protection`、`native_frame_control`、`diagnostics`、`super_resolution`、`render_scale`（50–100）、`upscale_sharpness`（0–100）；布尔值接受 `on/off/true/false`。配置读写不在渲染线程或 Swing EDT 执行。
 
 CPU 使用率来自 JMX（系统和当前 Java 进程，不是线程配额）；GPU 只在 NVIDIA GL renderer 能唯一匹配时，通过系统/NVIDIA 官方目录中的 `nvidia-smi.exe` 后台查询，占用与温度超时/缺失显示 N/A。Intel/AMD GPU 和 CPU 温度暂无可靠后端，显示 N/A，不推测数值。HUD 隐藏后采样自动停止，超过 3 秒缓存不再显示为有效读数。
 
@@ -108,9 +126,11 @@ dotnet build "Plain Craft Launcher 2/Plain Craft Launcher 2.csproj" -c Release -
 已执行的验证：
 
 - 21 个真实 `-javaagent` 替身场景，新增 GPU 未完成不追加队列、低上限不强压真帧；覆盖实际提交、多倍率不同 alpha、停顿归零、预算降级、运行时设置、异常回退和窗口释放。
+- 内部超分 Agent 替身覆盖世界/HUD 作用域、原生输入与其他线程/窗口、资源缓存/重建、100% 奇数尺寸、原始异常不重试、未知 getter 回退及初始化/重建失败清理；只读核对真实 1.21.11 的三个转换点。
+- RTX 2080 SUPER / GL3.3 的官方 EASU/RCAS 编译与图像验证：与 Lanczos 位置参考的 MAE 约 0.00286；同区域最近邻基线约 0.00436。另覆盖纯色稳定性、32F 深度最近邻缩放、sRGB、外部 MRT/采样器/计时查询、失败 GPU blit、原生单像素 HUD、调整输出尺寸及重复释放。这里不是完整 Minecraft 画质或 FPS 提升基准。
 - 原生 transformer 的单帧位置、限帧协调/恢复、tick/异常不变、重复转换不叠加测试；并只读验证所提供实例的真实 intermediary 类可转换。
 - 可控时钟覆盖全部 1–999 FPS、三种末段精度、提前/延迟唤醒、中断、停顿不追帧与截止时间合并；UTF-8 配置继承/保存/恢复/等价变化和采样生命周期测试通过（符号链接用例跳过）。
-- 本机 NVIDIA 硬件采样确认能读取显卡占用和温度；启动器策略测试 21 项通过。
+- 本机 NVIDIA 硬件采样确认能读取显卡占用和温度；启动器策略测试 22 项通过。
 - 真实 Swing 设置/FPS HUD 交互和真实 GLFW 窗口附着、移动、最小化、销毁；不是完整 Minecraft 游玩测试。
 - RTX 2080 SUPER / NVIDIA 595.79 的 OpenGL 3.2/3.3 core 图像/GL 状态/MRT/query/cut/resize/close 回归。8 像素位移中点 MAE 约 0.0010；画质档 32 像素位移约 0.0305（原门槛 0.035 不变），并验证 1/4、1/2、3/4 位置；高频纹理＋独立前景＋固定 HUD 场景中固定 HUD 像素不变。真实光影下全部遮挡/运动画质尚未验证。
 - 启动器 Release 构建 0 错误；仓库仍有大量警告。
@@ -128,4 +148,4 @@ dotnet build "Plain Craft Launcher 2/Plain Craft Launcher 2.csproj" -c Release -
 
 研究了 Screamix1/FrameGen（深度重投影外推）和用户提供的 Squirrel-RIFE。后者主应用 GPLv3、RIFE 子目录 MIT；本地目录没有模型权重，也没有实时游戏 GPU 互操作链路，离线 Python/视频队列不能直接充当低延迟游戏后端。本模块独立实现通用多尺度匹配，不包含它们的源码、模型或神经推理后端。第三方依赖声明见 `THIRD-PARTY-NOTICES.md`。
 
-高级 JVM 属性前缀 `pclmoon.framegen.`：`enabled`、`diagnostics`、`overlay`、`showFps`、`outputFps`、`multiplier`、`quality`、`flowWidth`、`gpuBudgetMs`、`stallThresholdMs`、`adaptivePacing`、`lowFpsProtection`、`nativeFrameControl`、`fpsLimit`、`waitMode`（0/1/2）、`telemetry`、`profileGlobal`、`profile`；`disabled=true` 强制停用整个 Agent。手动加载 Agent 若要工具层，传 `-Dpclmoon.framegen.overlay=true`。
+高级 JVM 属性前缀 `pclmoon.framegen.`：`enabled`、`diagnostics`、`overlay`、`showFps`、`outputFps`、`multiplier`、`quality`、`flowWidth`、`gpuBudgetMs`、`stallThresholdMs`、`adaptivePacing`、`lowFpsProtection`、`nativeFrameControl`、`fpsLimit`、`waitMode`（0/1/2）、`telemetry`、`profileGlobal`、`profile`、`superResolution`、`renderScale`、`upscaleSharpness`；`disabled=true` 强制停用整个 Agent。手动加载 Agent 若要工具层，传 `-Dpclmoon.framegen.overlay=true`。

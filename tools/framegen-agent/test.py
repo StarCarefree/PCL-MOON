@@ -9,6 +9,7 @@ import subprocess
 import tempfile
 import zipfile
 import build as agent_build
+import test_super_resolution
 
 ROOT = Path(__file__).resolve().parent
 NATIVES = {
@@ -83,6 +84,7 @@ def main():
         subprocess.run([args.java, '-Xms16m', '-Xmx128m', '-cp',
                         str(native_fixture) + os.pathsep + str(fixture) + os.pathsep + fixture_cp,
                         'pclmoon.framegen.test.NativeGameHarness'], check=True, timeout=20, cwd=work)
+        test_super_resolution.run(args.java, args.javac, jar, helper, deps[0], work)
         print('PASS:', len(modes), 'agent integration scenarios + pacing/counter/native-cap regressions')
         for harness in ('FramePacingHarness', 'LatencyHarness', 'TelemetryHarness', 'ProfilesHarness'):
             subprocess.run([args.java, '-Xms16m', '-Xmx128m', '-cp', os.pathsep.join(map(str, (fixture, helper))),
@@ -112,6 +114,8 @@ def main():
                                 'pclmoon.framegen.render.GlInterpolatorSmoke'], check=True, timeout=60, cwd=work)
             subprocess.run([args.java, '-Xms16m', '-Xmx192m', '-cp', str(gpu) + os.pathsep + cp,
                             'pclmoon.framegen.render.GlSceneRegression'], check=True, timeout=45, cwd=work)
+            subprocess.run([args.java, '-Xms16m', '-Xmx192m', '-cp', str(gpu) + os.pathsep + cp,
+                            'pclmoon.framegen.render.SuperResolutionSmoke'], check=True, timeout=60, cwd=work)
             if args.overlay:
                 subprocess.run([args.java, '-Xms16m', '-Xmx128m', '-XX:ReservedCodeCacheSize=64m',
                                 '-Dpclmoon.framegen.overlay=true', '-Dpclmoon.framegen.enabled=false',

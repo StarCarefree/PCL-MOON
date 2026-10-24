@@ -321,6 +321,8 @@
                                           ToolTip="{DynamicResource Setup.Launch.Advanced.FrameSettingsButton.ToolTip}" />
                         <local:MyCheckBox Height="28" Text="{DynamicResource Setup.Launch.Advanced.FramePacing}" x:Name="CheckFramePacing" Tag="LaunchFramePacing" Change="CheckBoxChange"
                                           ToolTip="{DynamicResource Setup.Launch.Advanced.FramePacing.ToolTip}" />
+                        <local:MyCheckBox Height="28" Text="{DynamicResource Setup.Launch.Advanced.SuperResolution}" x:Name="CheckSuperResolution" Tag="LaunchSuperResolution" Change="CheckBoxChange"
+                                          ToolTip="{DynamicResource Setup.Launch.Advanced.SuperResolution.ToolTip}" />
                     </StackPanel>
                     <local:MyHint Text="{DynamicResource Setup.Launch.Advanced.MoreInInstanceSetup}" Margin="0,5,0,10" Theme="Blue" Grid.Row="9"
                                   Grid.ColumnSpan="2"

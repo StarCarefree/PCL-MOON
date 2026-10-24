@@ -2766,6 +2766,8 @@
     <sys:String x:Key="Setup.Launch.Advanced.FrameSettingsButton.ToolTip">下次啟動生效。遊戲視窗右上角顯示齒輪，可即時開關插幀、長影格診斷與調整目標 FPS，僅作用於本次遊戲。先按 Esc 釋放滑鼠再點擊。切換其他應用時隱藏，隨遊戲視窗移動與關閉；獨佔全螢幕可能遮住疊加層，建議視窗或無邊框模式。顯示按鈕不會自動開啟插幀。</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.FramePacing">啟用獨立限幀與實例設定支援</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.FramePacing.ToolTip">下次啟動載入影格節奏元件，即使未開啟插幀。預設不限幀；在遊戲齒輪或實例設定中指定 1–999 FPS，0 為關閉。精確模式會額外佔用 CPU。此選項控制獨立載入；元件因插幀或齒輪已載入時，仍可使用限幀。不會修改遊戲設定或啟用 Linux 執行緒配額。</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.SuperResolution">實驗性內部超分（降低世界算繪解析度）</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.SuperResolution.ToolTip">預設關閉，下次啟動生效。降低世界算繪解析度後由 GPU 重建到視窗大小，HUD 與滑鼠座標保持原生。目前僅 1.21.11 原生配接器、OpenGL 3.3 有首個實作；顯示卡是否真正支援要在執行時檢查，未知版本或後端保持原生。勾選不代表目前已生效。遊戲內齒輪與實例設定可即時切換比例與銳化。</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.DisableLwjglUnsafeAgent">停用 LWJGL Unsafe Agent</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.DisableLwjglUnsafeAgent.ToolTip">Minecraft 26.1 使用了 LWJGL 3.4.1，LWJGL 3.4.1 使用了 FFM API 以在 JDK 25+ 上存取原生記憶體。由於 JDK 最佳化能力限制，某些情況下這會產生嚴重的效能問題。&#xA;PCL-MOON 會使用 LWJGL Unsafe Agent 修復這個問題，以解決可能存在的效能問題。&#xA;一般情況下沒有停用該選項的必要，但如果你遇到了額外問題，也可以嘗試暫時停用該選項以排查錯誤。&#xA;&#xA;該功能僅會在 LWJGL 版本為 3.4.1 時生效。</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.PrefetchFiles">啟動前預讀遊戲檔案</sys:String>

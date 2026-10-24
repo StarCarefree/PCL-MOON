@@ -78,6 +78,7 @@ public final class SwapHook {
         Method capture, intermediate, current, reset, dispose, overBudget, configureRenderer, gpuTime, rendererReady, pendingWork;
         int cooldown;
         boolean initialised;
+        long upscaleRevision = UpscaleSettings.revision();
 
         Session(long window, Class<?> glfw) {
             this.window = window;
@@ -94,6 +95,12 @@ public final class SwapHook {
         }
         void applySettings() throws Throwable {
             FramePacerProfiles.applyPending();
+            long srRevision = UpscaleSettings.revision();
+            if (srRevision != upscaleRevision) {
+                upscaleRevision = srRevision;
+                pacer.reset();
+                if (renderer != null) call(reset, renderer);
+            }
             boolean requested = FrameSettings.generation();
             if (requestedGeneration != requested) {
                 requestedGeneration = requested;
@@ -332,6 +339,7 @@ public final class SwapHook {
             NativeGameHooks.setPresentationActive(false);
             closeOverlay();
             NativeGameHooks.close();
+            NativeUpscaleHooks.close();
             FramePacerProfiles.close();
             FrameTelemetry.stop();
             releaseRenderer();
