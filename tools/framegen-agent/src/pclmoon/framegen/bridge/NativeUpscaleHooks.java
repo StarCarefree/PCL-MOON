@@ -46,6 +46,8 @@ public final class NativeUpscaleHooks {
         Session current = null;
         if (!settings.enabled) {
             close(); UpscaleSettings.runtime(false, "超分已关闭", 0, 0, 0, 0);
+        } else if (settings.scalePercent == 100 && settings.sharpnessPercent == 0) {
+            close(); UpscaleSettings.runtime(false, "100% 原生直通（锐化关闭，无重建开销）", 0, 0, 0, 0);
         } else if (!complete(owner.getClassLoader())) {
             UpscaleSettings.runtime(false, "不支持的渲染结构：保留原生分辨率", 0, 0, 0, 0);
         } else {
@@ -166,7 +168,7 @@ public final class NativeUpscaleHooks {
                 boolean reconstructed = ((Boolean) invoke(upscale, backend, id(invoke(color, scaled)), id(invoke(depth, scaled)),
                     id(invoke(color, output)), id(invoke(depth, output)), sw, sh, dw, dh, settings.sharpnessPercent / 100f)).booleanValue();
                 if (!reconstructed) throw new IllegalStateException("GPU fallback blit");
-                UpscaleSettings.runtime(true, "FSR1 EASU + RCAS（空间超分）", sw, sh, dw, dh);
+                UpscaleSettings.runtime(true, settings.scalePercent == 100 ? "100% 原生分辨率 + RCAS 锐化" : "FSR1 EASU + RCAS（空间超分）", sw, sh, dw, dh);
             } catch (Throwable unavailable) { fail(settings.revision, unavailable); }
         }
         void fail(long revision, Throwable reason) {

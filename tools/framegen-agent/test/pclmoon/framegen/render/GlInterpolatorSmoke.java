@@ -33,6 +33,9 @@ public final class GlInterpolatorSmoke {
                 + " / " + GL11.glGetString(GL11.GL_VERSION));
             GLUtil.setupDebugMessageCallback(System.err);
             createUserState();
+            int unpack = GL15.glGenBuffers();
+            GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER, unpack);
+            GL15.glBufferData(GL21.GL_PIXEL_UNPACK_BUFFER, 16L, GL15.GL_STATIC_DRAW);
             interpolator = new GlInterpolator(window);
             interpolator.configure(160, Integer.getInteger("pcl.framegen.test.quality", 1), 0.22f, 8);
             paint(0, false);
@@ -42,6 +45,7 @@ public final class GlInterpolatorSmoke {
             same(saved, "first capture");
             paint(SHIFT, false);
             bindUserState();
+            GL11.glEnable(GL30.GL_RASTERIZER_DISCARD);
             saved = snapshot();
             check(interpolator.capture(), "second real frame must have history");
             same(saved, "second capture");
@@ -93,6 +97,7 @@ public final class GlInterpolatorSmoke {
             interpolator.close();
             interpolator.close();
             same(saved, "idempotent close");
+            GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER, 0); GL15.glDeleteBuffers(unpack);
             check(GL11.glGetError() == GL11.GL_NO_ERROR, "OpenGL error leaked");
             System.out.println("PASS GPU halfway MAE=" + actualError + ", current MAE=" + currentError
                 + ", crossfade MAE=" + crossfadeError + "; core state/MRT/query/cut/resize/close");
@@ -110,6 +115,7 @@ public final class GlInterpolatorSmoke {
     private static void paint(int shift, boolean solid) {
         GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
         GL11.glDrawBuffer(GL11.GL_BACK);
+        GL11.glDisable(GL30.GL_RASTERIZER_DISCARD);
         GL30.glColorMaski(0, true, true, true, true);
         GL11.glDisable(GL30.GL_FRAMEBUFFER_SRGB);
         GL11.glDisable(GL11.GL_DITHER);
@@ -172,7 +178,7 @@ public final class GlInterpolatorSmoke {
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, userTextures[i]);
             if (gl33) GL33.glBindSampler(i, userSamplers[i]);
         }
-        GL13.glActiveTexture(GL13.GL_TEXTURE1);
+        GL13.glActiveTexture(GL13.GL_TEXTURE0 + 5);
     }
     private static int[] snapshot() {
         int[] result = new int[37]; int p = 0;

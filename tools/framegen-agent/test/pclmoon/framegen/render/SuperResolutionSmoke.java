@@ -45,10 +45,15 @@ public final class SuperResolutionSmoke {
             renderer = new GlSuperResolutionRenderer();
             check(!renderer.prepare(0, DST_H), "invalid size must be unsupported");
             long before = used();
+            int unpack = GL15.glGenBuffers();
+            GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER, unpack);
+            GL15.glBufferData(GL21.GL_PIXEL_UNPACK_BUFFER, 16L, GL15.GL_STATIC_DRAW);
             long t0 = System.nanoTime();
             check(renderer.prepare(DST_W, DST_H), "prepare must compile official EASU/RCAS");
             long prepareNs = System.nanoTime() - t0;
             check(renderer.prepare(DST_W, DST_H), "prepare is idempotent for the same output");
+            check(GL11.glGetInteger(GL21.GL_PIXEL_UNPACK_BUFFER_BINDING) == unpack, "prepare lost external unpack buffer");
+            GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER, 0); GL15.glDeleteBuffers(unpack);
             input = colorTexture(SRC_W, SRC_H, false);
             output = colorTexture(DST_W, DST_H, false);
             upload(input, pattern(SRC_W, SRC_H, false), SRC_W, SRC_H);
@@ -108,6 +113,7 @@ public final class SuperResolutionSmoke {
             java.lang.reflect.Field programField = GlSuperResolutionRenderer.class.getDeclaredField("easuProgram");
             programField.setAccessible(true); int goodProgram = programField.getInt(renderer);
             programField.setInt(renderer, 0);
+            check(renderer.upscale(unity, 0, unityOut, 0, DST_W, DST_H, DST_W, DST_H, 0.35f), "unity RCAS must not execute EASU");
             bindUserState(); saved = snapshot();
             check(!renderer.upscale(input, 0, output, 0, SRC_W, SRC_H, DST_W, DST_H, 0f), "injected shader failure must fall back");
             same(saved, "failure fallback");

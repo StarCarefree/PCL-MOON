@@ -228,7 +228,7 @@ public final class GlInterpolator {
             return false;
         }
         if (!prepare()) return false;
-        GlState state = GlState.capture(gl33);
+        CaptureState state = null;
         try {
             readSize();
             int w = widthBuf.get(0);
@@ -236,14 +236,15 @@ public final class GlInterpolator {
             if (w <= 0 || h <= 0) {
                 return false;
             }
-            if (w != width || h != height || vao == 0 || configDirty) {
+            boolean needsRebuild = w != width || h != height || vao == 0 || configDirty;
+            state = new CaptureState(needsRebuild, gl33);
+            if (needsRebuild) {
                 rebuild(w, h);
             }
             GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, 0);
             GL11.glReadBuffer(GL11.GL_BACK);
             GL13.glActiveTexture(GL13.GL_TEXTURE0);
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, frameTex[writeSlot]);
-            GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER, 0);
             GL11.glCopyTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
             writeSlot ^= 1;
             flowPrepared = false;
@@ -256,7 +257,7 @@ public final class GlInterpolator {
             fuse(ex);
             return false;
         } finally {
-            state.restore();
+            if (state != null) state.restore();
         }
     }
 
@@ -309,7 +310,7 @@ public final class GlInterpolator {
         if (closed || failed || framesCaptured < 1 || vao == 0) {
             return;
         }
-        GlState state = GlState.capture(gl33);
+        GlState state = GlState.capture(gl33, 1);
         try {
             GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, 0);
             GL11.glDrawBuffer(GL11.GL_BACK);
@@ -688,20 +689,47 @@ public final class GlInterpolator {
      * Saves and restores every GL binding this renderer touches. Sampler
      * objects are saved only when the context is GL 3.3 or newer.
      */
+    /** Steady capture is a texture copy, not a draw: raster/program/VAO state stays untouched. */
+    private static final class CaptureState {
+        private final GlState allocation;
+        private final int readFbo, defaultReadBuffer, active, texture;
+        CaptureState(boolean rebuilding, boolean samplers) {
+            if (rebuilding) {
+                allocation = GlState.capture(samplers);
+                readFbo = defaultReadBuffer = active = texture = 0;
+            } else {
+                allocation = null;
+                readFbo = GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING);
+                GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, 0);
+                defaultReadBuffer = GL11.glGetInteger(GL11.GL_READ_BUFFER);
+                active = GL11.glGetInteger(GL13.GL_ACTIVE_TEXTURE);
+                GL13.glActiveTexture(GL13.GL_TEXTURE0);
+                texture = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
+            }
+        }
+        void restore() {
+            if (allocation != null) { allocation.restore(); return; }
+            GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, 0);
+            GL11.glReadBuffer(defaultReadBuffer);
+            GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, readFbo);
+            GL13.glActiveTexture(GL13.GL_TEXTURE0);
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture);
+            GL13.glActiveTexture(active);
+        }
+    }
+
     private static final class GlState {
         private final boolean samplers;
         private final int readFbo;
         private final int drawFbo;
-        private final int readBuffer;
-        private final int drawBuffer;
         private final int defaultReadBuffer;
         private final int defaultDrawBuffer;
         private final int[] viewport = new int[4];
         private final int program;
         private final int vao;
         private final int active;
-        private final int[] bound = new int[4];
-        private final int[] sampler = new int[4];
+        private final int[] bound;
+        private final int[] sampler;
         private final boolean blend;
         private final boolean depth;
         private final boolean cull;
@@ -714,12 +742,11 @@ public final class GlInterpolator {
         private final int[] polygon = new int[2];
         private final int unpack;
 
-        private GlState(boolean samplers) {
+        private GlState(boolean samplers, int units) {
+            bound = new int[units]; sampler = new int[units];
             this.samplers = samplers;
             readFbo = GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING);
             drawFbo = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
-            readBuffer = GL11.glGetInteger(GL11.GL_READ_BUFFER);
-            drawBuffer = GL11.glGetInteger(GL11.GL_DRAW_BUFFER);
             GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, 0);
             defaultReadBuffer = GL11.glGetInteger(GL11.GL_READ_BUFFER);
             GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, readFbo);
@@ -730,7 +757,7 @@ public final class GlInterpolator {
             program = GL11.glGetInteger(GL20.GL_CURRENT_PROGRAM);
             vao = GL11.glGetInteger(GL30.GL_VERTEX_ARRAY_BINDING);
             active = GL11.glGetInteger(GL13.GL_ACTIVE_TEXTURE);
-            for (int i = 0; i < 4; i++) {
+            for (int i = 0; i < bound.length; i++) {
                 GL13.glActiveTexture(GL13.GL_TEXTURE0 + i);
                 bound[i] = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
                 if (samplers) {
@@ -751,7 +778,11 @@ public final class GlInterpolator {
         }
 
         static GlState capture(boolean samplers) {
-            GlState state = new GlState(samplers);
+            return capture(samplers, 4);
+        }
+
+        static GlState capture(boolean samplers, int units) {
+            GlState state = new GlState(samplers, units);
             GL30.glDisablei(GL11.GL_BLEND, 0);
             GL11.glDisable(GL11.GL_DEPTH_TEST);
             GL11.glDisable(GL11.GL_CULL_FACE);
@@ -764,7 +795,7 @@ public final class GlInterpolator {
             GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_FILL);
             GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER, 0);
             if (samplers) {
-                for (int i = 0; i < 4; i++) {
+                for (int i = 0; i < state.bound.length; i++) {
                     GL33.glBindSampler(i, 0);
                 }
             }
@@ -785,7 +816,7 @@ public final class GlInterpolator {
             cap(GL11.GL_CULL_FACE, cull);
             cap(GL11.GL_DEPTH_TEST, depth);
             if (blend) GL30.glEnablei(GL11.GL_BLEND, 0); else GL30.glDisablei(GL11.GL_BLEND, 0);
-            for (int i = 0; i < 4; i++) {
+            for (int i = 0; i < bound.length; i++) {
                 GL13.glActiveTexture(GL13.GL_TEXTURE0 + i);
                 if (samplers) {
                     GL33.glBindSampler(i, sampler[i]);

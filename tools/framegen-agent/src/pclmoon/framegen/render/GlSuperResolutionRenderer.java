@@ -14,7 +14,6 @@ import org.lwjgl.opengl.GL33;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -57,6 +56,8 @@ public final class GlSuperResolutionRenderer {
     private int rcasCon;
     private int linearInput;
     private int linearInv;
+    private int configuredSourceWidth, configuredSourceHeight;
+    private final float[] con0 = new float[4], con1 = new float[4], con2 = new float[4], con3 = new float[4];
 
     public GlSuperResolutionRenderer() {
     }
@@ -73,7 +74,7 @@ public final class GlSuperResolutionRenderer {
         this.outputHeight = outputHeight;
         prepared = true;
         if (!gl33() || !resourcesPresent()) return fail();
-        GlState state = GlState.capture();
+        GlState state = GlState.capture(true);
         try {
             String vert = source("fullscreen.vert");
             easuProgram = program(vert, source("easu.frag"));
@@ -118,7 +119,7 @@ public final class GlSuperResolutionRenderer {
 
     /**
      * Upscales {@code inputColor} into Minecraft's original color (and optional depth) textures.
-     * {@code sharpness} is 0..1 strength; 0 bypasses RCAS. True only after EASU/RCAS succeeds.
+     * {@code sharpness} is 0..1 strength; 0 bypasses RCAS. Unity scale skips EASU.
      * False is returned only after a scaled GPU blit has copied the current image to the output.
      */
     public boolean upscale(int inputColor, int inputDepth, int outputColor, int outputDepth,
@@ -134,24 +135,32 @@ public final class GlSuperResolutionRenderer {
         try {
             boolean depthRequested = inputDepth != 0 && outputDepth != 0;
             boolean depthOk = !depthRequested || transferDepth(inputDepth, outputDepth, srcW, srcH, dstW, dstH);
+            boolean unity = srcW == dstW && srcH == dstH;
+            if (unity && strength == 0f) {
+                blitColor(inputColor, outputColor, srcW, srcH, dstW, dstH);
+                ok = drainErrors() && depthOk;
+                return ok;
+            }
             bindSampler(GL11.GL_NEAREST);
             GL30.glBindVertexArray(vao);
             GL13.glActiveTexture(GL13.GL_TEXTURE0);
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, inputColor);
-            GL20.glUseProgram(easuProgram);
-            GL20.glUniform1i(easuInput, 0);
-            GL20.glUniform2f(easuSize, srcW, srcH);
-            float[] con0 = new float[4], con1 = new float[4], con2 = new float[4], con3 = new float[4];
-            easuConstants(con0, con1, con2, con3, srcW, srcH, dstW, dstH);
-            GL20.glUniform4fv(easuCon0, con0);
-            GL20.glUniform4fv(easuCon1, con1);
-            GL20.glUniform4fv(easuCon2, con2);
-            GL20.glUniform4fv(easuCon3, con3);
-            int easuTarget = strength == 0f ? outputColor : scratch;
-            int easuFbo = strength == 0f ? drawFbo : scratchFbo;
-            if (!drawColor(easuFbo, easuTarget, dstW, dstH)) return false;
+            if (!unity) {
+                GL20.glUseProgram(easuProgram);
+                GL20.glUniform1i(easuInput, 0);
+                if (configuredSourceWidth != srcW || configuredSourceHeight != srcH) {
+                    GL20.glUniform2f(easuSize, srcW, srcH);
+                    easuConstants(con0, con1, con2, con3, srcW, srcH, dstW, dstH);
+                    GL20.glUniform4fv(easuCon0, con0); GL20.glUniform4fv(easuCon1, con1);
+                    GL20.glUniform4fv(easuCon2, con2); GL20.glUniform4fv(easuCon3, con3);
+                    configuredSourceWidth = srcW; configuredSourceHeight = srcH;
+                }
+                int easuTarget = strength == 0f ? outputColor : scratch;
+                int easuFbo = strength == 0f ? drawFbo : scratchFbo;
+                if (!drawColor(easuFbo, easuTarget, dstW, dstH)) return false;
+            }
             if (strength > 0f) {
-                GL11.glBindTexture(GL11.GL_TEXTURE_2D, scratch);
+                GL11.glBindTexture(GL11.GL_TEXTURE_2D, unity ? inputColor : scratch);
                 GL20.glUseProgram(rcasProgram);
                 GL20.glUniform1i(rcasInput, 0);
                 GL20.glUniform2f(rcasSize, dstW, dstH);
@@ -163,7 +172,12 @@ public final class GlSuperResolutionRenderer {
         } catch (RuntimeException failed) {
             return false;
         } finally {
-            try { if (!ok) blitColor(inputColor, outputColor, srcW, srcH, dstW, dstH); }
+            try {
+                if (!ok) {
+                    configuredSourceWidth = configuredSourceHeight = 0;
+                    blitColor(inputColor, outputColor, srcW, srcH, dstW, dstH);
+                }
+            }
             finally { state.restore(); }
         }
     }
@@ -188,6 +202,7 @@ public final class GlSuperResolutionRenderer {
             vao = scratchFbo = readFbo = drawFbo = scratch = sampler = 0;
             prepared = supported = false;
             outputWidth = outputHeight = 0;
+            configuredSourceWidth = configuredSourceHeight = 0;
             if (state != null) state.restore();
         }
     }
@@ -226,19 +241,19 @@ public final class GlSuperResolutionRenderer {
 
     private boolean transferDepth(int inputDepth, int outputDepth, int srcW, int srcH, int dstW, int dstH) {
         if (inputDepth == 0 || outputDepth == 0) return false;
-        if (!depthCompatible(inputDepth) || !depthCompatible(outputDepth)) return false;
+        int sourceFormat = depthFormat(inputDepth), targetFormat = depthFormat(outputDepth);
+        if (sourceFormat != targetFormat || !depthCompatible(sourceFormat)) return false;
         return scaledBlit(inputDepth, outputDepth, srcW, srcH, dstW, dstH, GL11.GL_DEPTH_BUFFER_BIT, GL11.GL_NEAREST);
     }
 
-    private boolean depthCompatible(int texture) {
-        GL33.glBindSampler(0, 0);
+    private int depthFormat(int texture) {
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture);
-        int internal = GL11.glGetTexLevelParameteri(GL11.GL_TEXTURE_2D, 0, GL11.GL_TEXTURE_INTERNAL_FORMAT);
-        int width = GL11.glGetTexLevelParameteri(GL11.GL_TEXTURE_2D, 0, GL11.GL_TEXTURE_WIDTH);
-        int height = GL11.glGetTexLevelParameteri(GL11.GL_TEXTURE_2D, 0, GL11.GL_TEXTURE_HEIGHT);
-        boolean ok = width > 0 && height > 0 && (internal == DEPTH_INTERNAL || internal == GL11.GL_DEPTH_COMPONENT
-            || internal == GL14.GL_DEPTH_COMPONENT16 || internal == GL14.GL_DEPTH_COMPONENT32 || internal == GL30.GL_DEPTH_COMPONENT32F);
-        return ok;
+        return GL11.glGetTexLevelParameteri(GL11.GL_TEXTURE_2D, 0, GL11.GL_TEXTURE_INTERNAL_FORMAT);
+    }
+
+    private static boolean depthCompatible(int internal) {
+        return internal == DEPTH_INTERNAL || internal == GL11.GL_DEPTH_COMPONENT
+            || internal == GL14.GL_DEPTH_COMPONENT16 || internal == GL14.GL_DEPTH_COMPONENT32 || internal == GL30.GL_DEPTH_COMPONENT32F;
     }
 
     private boolean scaledBlit(int source, int target, int srcW, int srcH, int dstW, int dstH, int mask, int filter) {
@@ -269,12 +284,15 @@ public final class GlSuperResolutionRenderer {
     }
 
     private boolean drawColor(int fbo, int target, int width, int height) {
-        int binding = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, target);
-        int format = GL11.glGetTexLevelParameteri(GL11.GL_TEXTURE_2D, 0, GL11.GL_TEXTURE_INTERNAL_FORMAT);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, binding);
-        if (format == GL21.GL_SRGB8_ALPHA8 || format == GL21.GL_SRGB8) GL11.glEnable(GL30.GL_FRAMEBUFFER_SRGB);
-        else GL11.glDisable(GL30.GL_FRAMEBUFFER_SRGB);
+        boolean srgb = false;
+        if (fbo != scratchFbo) {
+            int binding = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, target);
+            int format = GL11.glGetTexLevelParameteri(GL11.GL_TEXTURE_2D, 0, GL11.GL_TEXTURE_INTERNAL_FORMAT);
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, binding);
+            srgb = format == GL21.GL_SRGB8_ALPHA8 || format == GL21.GL_SRGB8;
+        }
+        if (srgb) GL11.glEnable(GL30.GL_FRAMEBUFFER_SRGB); else GL11.glDisable(GL30.GL_FRAMEBUFFER_SRGB);
         GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, fbo);
         if (fbo != scratchFbo) {
             GL30.glFramebufferTexture2D(GL30.GL_DRAW_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT0, GL11.GL_TEXTURE_2D, target, 0);
@@ -436,74 +454,40 @@ public final class GlSuperResolutionRenderer {
         if (program != 0) GL20.glDeleteProgram(program);
     }
 
-    /** Saves and restores every binding this pass touches, without ending an external query. */
+    /** Only texture unit/output slot zero is touched. Other units/MRT state stay untouched. */
     private static final class GlState {
-        private final int readFbo;
-        private final int drawFbo;
-        private final int[] viewport = new int[4];
-        private final int[] scissorBox = new int[4];
-        private final int program;
-        private final int vao;
-        private final int active;
-        private final int[] bound = new int[4];
-        private final int[] sampler = new int[4];
-        private final boolean[] blend = new boolean[2];
-        private final boolean depth;
-        private final boolean depthMask;
-        private final boolean cull;
-        private final boolean scissor;
-        private final boolean stencil;
-        private final boolean srgb;
-        private final boolean discard;
-        private final boolean dither;
-        private final int[] mask = new int[8];
-        private final int[] polygon = new int[2];
-        private final int unpack;
-        private final int pack;
-        private final int unpackAlignment;
-        private final int packAlignment;
+        private final int readFbo, drawFbo, program, vao, active, texture, sampler, unpack;
+        private final int[] viewport = new int[4], mask = new int[4], polygon = new int[2];
+        private final boolean blend, depth, cull, scissor, stencil, srgb, discard, dither;
 
-        private GlState() {
+        private GlState(boolean allocating) {
             readFbo = GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING);
             drawFbo = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
             GL11.glGetIntegerv(GL11.GL_VIEWPORT, viewport);
-            GL11.glGetIntegerv(GL11.GL_SCISSOR_BOX, scissorBox);
             program = GL11.glGetInteger(GL20.GL_CURRENT_PROGRAM);
             vao = GL11.glGetInteger(GL30.GL_VERTEX_ARRAY_BINDING);
             active = GL11.glGetInteger(GL13.GL_ACTIVE_TEXTURE);
-            for (int i = 0; i < 4; i++) sampler[i] = GL33.glGetIntegeri(GL33.GL_SAMPLER_BINDING, i);
-            for (int i = 0; i < 4; i++) GL33.glBindSampler(i, 0);
-            for (int i = 0; i < 4; i++) {
-                GL13.glActiveTexture(GL13.GL_TEXTURE0 + i);
-                bound[i] = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
-            }
-            for (int i = 0; i < blend.length; i++) blend[i] = GL30.glIsEnabledi(GL11.GL_BLEND, i);
+            GL13.glActiveTexture(GL13.GL_TEXTURE0);
+            texture = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
+            sampler = GL33.glGetIntegeri(GL33.GL_SAMPLER_BINDING, 0);
+            blend = GL30.glIsEnabledi(GL11.GL_BLEND, 0);
             depth = GL11.glIsEnabled(GL11.GL_DEPTH_TEST);
-            depthMask = GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK);
             cull = GL11.glIsEnabled(GL11.GL_CULL_FACE);
             scissor = GL11.glIsEnabled(GL11.GL_SCISSOR_TEST);
             stencil = GL11.glIsEnabled(GL11.GL_STENCIL_TEST);
             srgb = GL11.glIsEnabled(GL30.GL_FRAMEBUFFER_SRGB);
             discard = GL11.glIsEnabled(GL30.GL_RASTERIZER_DISCARD);
             dither = GL11.glIsEnabled(GL11.GL_DITHER);
-            ByteBuffer masks = ByteBuffer.allocateDirect(4);
-            for (int i = 0; i < 2; i++) {
-                masks.clear();
-                GL30.glGetBooleani_v(GL11.GL_COLOR_WRITEMASK, i, masks);
-                for (int j = 0; j < 4; j++) mask[i * 4 + j] = masks.get(j) != 0 ? 1 : 0;
-            }
+            GL11.glGetIntegerv(GL11.GL_COLOR_WRITEMASK, mask);
             GL11.glGetIntegerv(GL11.GL_POLYGON_MODE, polygon);
-            unpack = GL11.glGetInteger(GL21.GL_PIXEL_UNPACK_BUFFER_BINDING);
-            pack = GL11.glGetInteger(GL21.GL_PIXEL_PACK_BUFFER_BINDING);
-            unpackAlignment = GL11.glGetInteger(GL11.GL_UNPACK_ALIGNMENT);
-            packAlignment = GL11.glGetInteger(GL11.GL_PACK_ALIGNMENT);
+            unpack = allocating ? GL11.glGetInteger(GL21.GL_PIXEL_UNPACK_BUFFER_BINDING) : -1;
         }
 
-        static GlState capture() {
-            GlState state = new GlState();
-            for (int i = 0; i < state.blend.length; i++) GL30.glDisablei(GL11.GL_BLEND, i);
+        static GlState capture() { return capture(false); }
+        static GlState capture(boolean allocating) {
+            GlState state = new GlState(allocating);
+            GL30.glDisablei(GL11.GL_BLEND, 0);
             GL11.glDisable(GL11.GL_DEPTH_TEST);
-            GL11.glDepthMask(true);
             GL11.glDisable(GL11.GL_CULL_FACE);
             GL11.glDisable(GL11.GL_SCISSOR_TEST);
             GL11.glDisable(GL11.GL_STENCIL_TEST);
@@ -511,55 +495,37 @@ public final class GlSuperResolutionRenderer {
             GL11.glDisable(GL30.GL_RASTERIZER_DISCARD);
             GL11.glDisable(GL11.GL_DITHER);
             GL30.glColorMaski(0, true, true, true, true);
-            GL30.glColorMaski(1, true, true, true, true);
             GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_FILL);
-            GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER, 0);
-            GL15.glBindBuffer(GL21.GL_PIXEL_PACK_BUFFER, 0);
-            GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 4);
-            GL11.glPixelStorei(GL11.GL_PACK_ALIGNMENT, 4);
-            for (int i = 0; i < 4; i++) GL33.glBindSampler(i, 0);
+            if (allocating) GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER, 0);
+            GL33.glBindSampler(0, 0);
             return state;
         }
 
         void restore() {
-            GL11.glPixelStorei(GL11.GL_PACK_ALIGNMENT, packAlignment);
-            GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, unpackAlignment);
-            GL15.glBindBuffer(GL21.GL_PIXEL_PACK_BUFFER, pack);
-            GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER, unpack);
-            if ((GL11.glGetInteger(0x9126) & 1) != 0 || polygon[0] == polygon[1]) {
-                GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, polygon[0]);
-            } else {
-                GL11.glPolygonMode(GL11.GL_FRONT, polygon[0]);
-                GL11.glPolygonMode(GL11.GL_BACK, polygon[1]);
-            }
+            if (unpack >= 0) GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER, unpack);
+            if ((GL11.glGetInteger(0x9126) & 1) != 0 || polygon[0] == polygon[1]) GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, polygon[0]);
+            else { GL11.glPolygonMode(GL11.GL_FRONT, polygon[0]); GL11.glPolygonMode(GL11.GL_BACK, polygon[1]); }
             GL30.glColorMaski(0, mask[0] != 0, mask[1] != 0, mask[2] != 0, mask[3] != 0);
-            GL30.glColorMaski(1, mask[4] != 0, mask[5] != 0, mask[6] != 0, mask[7] != 0);
             cap(GL11.GL_DITHER, dither);
             cap(GL30.GL_RASTERIZER_DISCARD, discard);
             cap(GL30.GL_FRAMEBUFFER_SRGB, srgb);
             cap(GL11.GL_STENCIL_TEST, stencil);
             cap(GL11.GL_SCISSOR_TEST, scissor);
             cap(GL11.GL_CULL_FACE, cull);
-            GL11.glDepthMask(depthMask);
             cap(GL11.GL_DEPTH_TEST, depth);
-            for (int i = 0; i < blend.length; i++) if (blend[i]) GL30.glEnablei(GL11.GL_BLEND, i); else GL30.glDisablei(GL11.GL_BLEND, i);
-            for (int i = 0; i < 4; i++) {
-                GL13.glActiveTexture(GL13.GL_TEXTURE0 + i);
-                GL33.glBindSampler(i, sampler[i]);
-                GL11.glBindTexture(GL11.GL_TEXTURE_2D, bound[i]);
-            }
+            if (blend) GL30.glEnablei(GL11.GL_BLEND, 0); else GL30.glDisablei(GL11.GL_BLEND, 0);
+            GL13.glActiveTexture(GL13.GL_TEXTURE0);
+            GL33.glBindSampler(0, sampler);
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture);
             GL13.glActiveTexture(active);
             GL30.glBindVertexArray(vao);
             GL20.glUseProgram(program);
             GL11.glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
-            GL11.glScissor(scissorBox[0], scissorBox[1], scissorBox[2], scissorBox[3]);
             GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, readFbo);
             GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, drawFbo);
         }
-
         private static void cap(int name, boolean enabled) {
-            if (enabled) GL11.glEnable(name);
-            else GL11.glDisable(name);
+            if (enabled) GL11.glEnable(name); else GL11.glDisable(name);
         }
     }
 }

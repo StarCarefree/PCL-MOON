@@ -42,6 +42,7 @@ NativeUpscaleHooks.configure(new java.io.File(args[0]).toURI().toString());
 class_757 world=new class_757();class_310 game=world.client;class_9779 counter=new class_9779();
 if(args.length>1){UpscaleSettings.setEnabled(true);world.method_3188(counter);check(!UpscaleSettings.active()&&world.seenWidth==1920&&world.seenTarget==game.field_1689&&number("sr.construct")==0,"incomplete adapter must remain native");System.out.println("PASS unsupported SR getter: native fallback, no GPU allocation");return;}
 UpscaleSettings.apply(false,67,20);world.method_3188(counter);check(world.seenTarget==game.field_1689&&world.seenWidth==1920,"default native");check(number("sr.construct")==0,"disabled does not load GPU");
+UpscaleSettings.apply(true,100,0);world.method_3188(counter);check(world.seenTarget==game.field_1689&&world.seenWidth==1920&&number("sr.construct")==0&&!UpscaleSettings.active(),"100 percent without sharpening must bypass all GPU reconstruction");UpscaleSettings.apply(false,67,20);
 UpscaleSettings.setEnabled(true);world.method_3188(counter);check(UpscaleSettings.active(),"actual SR active: "+UpscaleSettings.status());
 check(world.seenWidth==1286&&world.seenHeight==722&&world.seenTarget!=game.field_1689,"scaled world target");
 check(game.method_1522()==game.field_1689&&game.window.method_4489()==1920&&game.window.method_4506()==1080,"native target restored before HUD");

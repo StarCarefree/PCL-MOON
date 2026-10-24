@@ -128,6 +128,9 @@ def main():
                                         '-Dbench.h=' + str(height), '-Dbench.generated=' + str(generated),
                                         '-cp', str(gpu) + os.pathsep + cp,
                                         'pclmoon.framegen.render.RendererBenchmark'], check=True, timeout=60, cwd=work)
+                    subprocess.run([args.java, '-Xms16m', '-Xmx192m', '-Dbench.w=' + str(width),
+                                    '-Dbench.h=' + str(height), '-cp', str(gpu) + os.pathsep + cp,
+                                    'pclmoon.framegen.render.SuperResolutionBenchmark'], check=True, timeout=60, cwd=work)
 
 
 if __name__ == '__main__':
