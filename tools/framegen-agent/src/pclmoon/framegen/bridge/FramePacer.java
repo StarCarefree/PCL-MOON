@@ -1,32 +1,49 @@
 package pclmoon.framegen.bridge;
 
-import java.util.concurrent.locks.LockSupport;
 
-/** Absolute deadlines, no spin waits and no catch-up queue after a slow frame. */
+/** Bounded adaptive presentation plan. A target is a ceiling, not a demand to discard slower inputs. */
 public final class FramePacer {
-    private final long period;
-    private long lastReal;
+    private final long minimumPeriod;
+    private final int multiplier;
+    private final boolean adaptive;
+    private final long staleNanos;
+    private long lastReal, firstDeadline, slotPeriod;
     private boolean primed;
-    public FramePacer(int outputFps) {
-        period = 1000000000L / Math.max(30, Math.min(240, outputFps));
+    public FramePacer(int outputFps) { this(outputFps, 2, true, 150); }
+    public FramePacer(int outputFps, int multiplier, boolean adaptive, int staleMs) {
+        minimumPeriod = 1000000000L / Math.max(30, Math.min(240, outputFps));
+        this.multiplier = Math.max(2, Math.min(4, multiplier));
+        this.adaptive = adaptive;
+        staleNanos = Math.max(50, Math.min(500, staleMs)) * 1000000L;
+        slotPeriod = minimumPeriod;
     }
-    public void presented(long now) { lastReal = now; primed = true; }
+    public void presented(long now) {
+        lastReal = now;
+        firstDeadline = now + minimumPeriod;
+        slotPeriod = minimumPeriod;
+        primed = true;
+    }
     public void reset() { primed = false; }
-    public boolean historyExpired(long now) { return primed && now - lastReal > 100000000L; }
+    public boolean historyExpired(long now) { return primed && now - lastReal >= staleNanos; }
     public boolean canGenerate(long now) {
         long elapsed = now - lastReal;
-        return primed && elapsed >= 0 && elapsed <= period + period / 2;
+        return primed && elapsed >= 0 && elapsed < staleNanos
+            && (adaptive || elapsed <= minimumPeriod + minimumPeriod / 2);
     }
-    public long midpoint() { return lastReal + period; }
-    public long realDeadline() { return lastReal + period * 2; }
+    public boolean plan(long now) {
+        if (!canGenerate(now)) return false;
+        long inputWork = Math.max(0, now - lastReal);
+        slotPeriod = adaptive ? Math.max(minimumPeriod, inputWork / multiplier) : minimumPeriod;
+        firstDeadline = Math.max(now, lastReal + slotPeriod);
+        return true;
+    }
+    /** Index 0 is the first generated frame; multiplier-1 is the current true frame. */
+    public long deadline(int index) { return firstDeadline + slotPeriod * Math.max(0, Math.min(multiplier - 1, index)); }
+    public long periodNanos() { return slotPeriod; }
+    public long midpoint() { return deadline(0); }
+    public long realDeadline() { return deadline(multiplier - 1); }
     public static boolean await(long deadline) {
-        while (!Thread.currentThread().isInterrupted()) {
-            long remaining = deadline - System.nanoTime();
-            if (remaining <= 0) return true;
-            // Never retain a deadline which could freeze a render thread after clock/reset errors.
-            if (remaining > 100000000L) return false;
-            LockSupport.parkNanos(remaining);
-        }
-        return false;
+        if (deadline - System.nanoTime() > 100000000L) return false;
+        return HybridWait.await(deadline, PacingSettings.waitMode());
     }
 }

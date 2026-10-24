@@ -9,7 +9,7 @@ import java.util.Arrays;
 
 /** Real GL core-profile image/state regression. CPU pixels/readback exist only in this test. */
 public final class GlInterpolatorSmoke {
-    private static final int W = 160, H = 90, SHIFT = 8;
+    private static final int W = 160, H = 90, SHIFT = Integer.getInteger("pcl.framegen.test.shift", 8);
     private static int userFbo, userVao;
     private static final int[] userTextures = new int[4], userSamplers = new int[4];
     private static boolean gl33;
@@ -34,6 +34,7 @@ public final class GlInterpolatorSmoke {
             GLUtil.setupDebugMessageCallback(System.err);
             createUserState();
             interpolator = new GlInterpolator(window);
+            interpolator.configure(160, Integer.getInteger("pcl.framegen.test.quality", 1), 0.22f, 8);
             paint(0, false);
             bindUserState();
             int[] saved = snapshot();
@@ -52,6 +53,13 @@ public final class GlInterpolatorSmoke {
             check(actualError < 0.035, "not at the true halfway position: MAE=" + actualError);
             check(currentError > actualError * 2.5, "merely repeating the current real frame");
             check(actualError < crossfadeError * 0.45, "not better than a plain crossfade");
+            for (float alpha : new float[] {0.25f, 0.75f}) {
+                bindUserState(); saved = snapshot();
+                interpolator.drawInterpolated(alpha);
+                same(saved, "alpha " + alpha);
+                double alphaError = error(readBack(), Math.round(SHIFT * alpha));
+                check(alphaError < 0.035, "incorrect fractional motion alpha=" + alpha + " MAE=" + alphaError);
+            }
             bindUserState();
             saved = snapshot();
             interpolator.drawCurrent();

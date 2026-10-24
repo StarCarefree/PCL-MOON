@@ -15,17 +15,20 @@ import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 
 /**
- * Independent bidirectional block-matching frame interpolator.
+ * Independent coarse-to-fine block-matching interpolator.
  *
- * Captures the default framebuffer back buffer into a pair of textures and
- * composites a t=0.5 frame from prev-to-current and current-to-prev motion.
- * Requires an OpenGL 3.2 context current on the calling thread. Does not bind
- * to a Minecraft version. GPU timer queries run only when GL 3.3 is present;
- * isOverBudget never stalls on a query.
+ * Captures the default framebuffer back buffer and composites a frame at a
+ * caller-supplied t in (0,1). Motion is a bounded image-space pyramid: a
+ * cheap wide search at the coarsest level, then a 3x3 refinement up the
+ * pyramid. Low-confidence and cut pixels fall back to the current real frame.
+ * Requires an OpenGL 3.2 context current on the calling thread. GPU timer
+ * queries run only on GL 3.3 and are never stalled on the normal path.
  */
 public final class GlInterpolator {
-    public static final float BUDGET_MS = 4.0f;
-    private static final int FLOW_MAX_WIDTH = 160;
+    /** Historical default. The live budget is the value passed to {@link #configure}. */
+    public static final float BUDGET_MS = 8.0f;
+    private static final int FLOW_MIN = 80;
+    private static final int FLOW_MAX = 320;
     private static final int GL_TEXTURE_COMPARE_MODE = 0x884C;
 
     private static final String VERT =
@@ -37,81 +40,75 @@ public final class GlInterpolator {
             "    gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0);\n" +
             "}\n";
 
-    private static final String FLOW_FRAG =
+    /** 4x4 box over one destination texel. uSrcTexel is 1/srcSize; uScale is src/dst. */
+    private static final String DOWN_FRAG =
             "#version 150\n" +
             "uniform sampler2D uSrc;\n" +
-            "uniform sampler2D uDst;\n" +
-            "uniform vec2 uFullTexel;\n" +
-            "uniform vec2 uCoarse;\n" +
-            "uniform vec2 uFine;\n" +
+            "uniform vec2 uSrcTexel;\n" +
+            "uniform vec2 uScale;\n" +
             "in vec2 vUv;\n" +
             "out vec4 fragColor;\n" +
-            "float luma(vec3 c) { return dot(c, vec3(0.299, 0.587, 0.114)); }\n" +
-            "float patchCost(vec2 uv, vec2 disp) {\n" +
-            "    float acc = 0.0;\n" +
-            "    for (int y = -1; y <= 1; y++) {\n" +
-            "        for (int x = -1; x <= 1; x++) {\n" +
-            "            vec2 o = vec2(float(x), float(y)) * uFullTexel;\n" +
-            "            vec3 a = texture(uSrc, clamp(uv + o, vec2(0.0), vec2(1.0))).rgb;\n" +
-            "            vec3 b = texture(uDst, clamp(uv + disp + o, vec2(0.0), vec2(1.0))).rgb;\n" +
-            "            vec3 d = abs(a - b);\n" +
-            "            acc += luma(d);\n" +
+            "void main() {\n" +
+            "    vec2 footprint = uSrcTexel * uScale;\n" +
+            "    vec3 acc = vec3(0.0);\n" +
+            "    for (int y = 0; y < 4; y++) {\n" +
+            "        for (int x = 0; x < 4; x++) {\n" +
+            "            vec2 o = (vec2(float(x), float(y)) - 1.5) * footprint / 3.0;\n" +
+            "            acc += texture(uSrc, clamp(vUv + o, vec2(0.0), vec2(1.0))).rgb;\n" +
             "        }\n" +
             "    }\n" +
-            "    return acc;\n" +
-            "}\n" +
-            "void consider(inout vec2 best, inout float bestCost, vec2 cand) {\n" +
-            "    float c = patchCost(vUv, cand);\n" +
-            "    if (c < bestCost) { bestCost = c; best = cand; }\n" +
+            "    fragColor = vec4(acc * 0.0625, 1.0);\n" +
+            "}\n";
+
+    /** Coarse-to-fine UV flow; parent flow is refined at each finer image level. */
+    private static final String FLOW_FRAG =
+            "#version 150\n" +
+            "uniform sampler2D uSrc, uDst, uParent;\n" +
+            "uniform vec2 uStep; uniform float uExtent; uniform int uCoarse,uSmooth;\n" +
+            "in vec2 vUv; out vec4 fragColor;\n" +
+            "float costAt(vec2 d) {\n" +
+            "  vec2 q=vUv+d; if(any(lessThan(q,vec2(0))) || any(greaterThan(q,vec2(1)))) return 10.0;\n" +
+            "  float acc=0.0;\n" +
+            "  for(int y=-1;y<=1;y++) for(int x=-1;x<=1;x++) {\n" +
+            "    vec2 o=vec2(x,y)*uStep;\n" +
+            "    vec3 a=textureLod(uSrc,clamp(vUv+o,vec2(0),vec2(1)),0.0).rgb;\n" +
+            "    vec3 b=textureLod(uDst,clamp(q+o,vec2(0),vec2(1)),0.0).rgb;\n" +
+            "    acc+=dot(abs(a-b),vec3(0.333333));\n" +
+            "  } return acc/9.0;\n" +
             "}\n" +
             "void main() {\n" +
-            "    vec2 best = vec2(0.0);\n" +
-            "    float bestCost = patchCost(vUv, best);\n" +
-            "    for (int y = -2; y <= 2; y++) {\n" +
-            "        for (int x = -2; x <= 2; x++) {\n" +
-            "            consider(best, bestCost, vec2(float(x), float(y)) * uCoarse);\n" +
-            "        }\n" +
-            "    }\n" +
-            "    vec2 stepSize = uFine;\n" +
-            "    for (int level = 0; level < 8; level++) {\n" +
-            "        vec2 coarse = best;\n" +
-            "        for (int y = -1; y <= 1; y++) {\n" +
-            "            for (int x = -1; x <= 1; x++) {\n" +
-            "                consider(best, bestCost, coarse + vec2(float(x), float(y)) * stepSize);\n" +
-            "            }\n" +
-            "        }\n" +
-            "        if (all(lessThanEqual(stepSize, uFullTexel))) break;\n" +
-            "        stepSize = max(stepSize * 0.5, uFullTexel);\n" +
-            "    }\n" +
-            "    fragColor = vec4(best * 0.5 + 0.5, clamp(bestCost / 4.5, 0.0, 1.0), 1.0);\n" +
+            "  vec2 base=vec2(0); if(uCoarse==0) base=texture(uParent,vUv).xy;\n" +
+            "  vec2 best=base; float bestCost=costAt(best);\n" +
+            "  for(int y=-8;y<=8;y++) for(int x=-8;x<=8;x++) {\n" +
+            "    if(abs(float(x))>uExtent || abs(float(y))>uExtent) continue;\n" +
+            "    vec2 d=base+vec2(x,y)*uStep; float c=costAt(d);\n" +
+            "    if(c+length(vec2(x,y))*0.0001<bestCost) { best=d; bestCost=c; }\n" +
+            "  }\n" +
+            "  if(uSmooth!=0) for(int y=-4;y<=4;y++) for(int x=-4;x<=4;x++) {\n" +
+            "    vec2 d=vec2(x,y)*uStep*8.0; float c=costAt(d);\n" +
+            "    if(c<bestCost) { best=d; bestCost=c; }\n" +
+            "  } fragColor=vec4(best,bestCost,1);\n" +
             "}\n";
 
     private static final String COMPOSE_FRAG =
             "#version 150\n" +
-            "uniform sampler2D uPrev;\n" +
-            "uniform sampler2D uCur;\n" +
-            "uniform sampler2D uFwd;\n" +
-            "uniform sampler2D uBwd;\n" +
-            "in vec2 vUv;\n" +
-            "out vec4 fragColor;\n" +
-            "float luma(vec3 c) { return dot(c, vec3(0.299, 0.587, 0.114)); }\n" +
+            "uniform sampler2D uPrev,uCur,uFwd,uBwd; uniform float uAlpha,uReject;\n" +
+            "in vec2 vUv; out vec4 fragColor;\n" +
             "void main() {\n" +
-            "    vec4 fwd = texture(uFwd, vUv);\n" +
-            "    vec4 bwd = texture(uBwd, vUv);\n" +
-            "    vec2 dFwd = (fwd.xy - 0.5) * 2.0;\n" +
-            "    vec2 dBwd = (bwd.xy - 0.5) * 2.0;\n" +
-            "    vec2 prevUv = vUv - dFwd * 0.5;\n" +
-            "    vec2 curUv = vUv - dBwd * 0.5;\n" +
-            "    bool inside = prevUv.x > 0.0 && prevUv.y > 0.0 && prevUv.x < 1.0 && prevUv.y < 1.0\n" +
-            "        && curUv.x > 0.0 && curUv.y > 0.0 && curUv.x < 1.0 && curUv.y < 1.0;\n" +
-            "    vec3 fromPrev = texture(uPrev, prevUv).rgb;\n" +
-            "    vec3 fromCur = texture(uCur, curUv).rgb;\n" +
-            "    vec3 cur = texture(uCur, vUv).rgb;\n" +
-            "    float photo = max(max(abs(fromPrev.r-fromCur.r), abs(fromPrev.g-fromCur.g)), abs(fromPrev.b-fromCur.b));\n" +
-            "    float agree = length(dFwd + dBwd);\n" +
-            "    bool huge = length(dFwd) > 0.5 || length(dBwd) > 0.5;\n" +
-            "    bool reject = !inside || huge || photo > 0.22 || agree > 0.08 || fwd.z > 0.45 || bwd.z > 0.45;\n" +
-            "    fragColor = vec4(reject ? cur : 0.5 * (fromPrev + fromCur), 1.0);\n" +
+            "  float t=clamp(uAlpha,0.0,1.0);\n" +
+            "  if(t<=0.0) { fragColor=texture(uPrev,vUv); return; }\n" +
+            "  if(t>=1.0) { fragColor=texture(uCur,vUv); return; }\n" +
+            "  vec2 pu=vUv,cu=vUv;\n" +
+            "  for(int i=0;i<3;i++) { pu=vUv-texture(uFwd,pu).xy*t; cu=vUv-texture(uBwd,cu).xy*(1.0-t); }\n" +
+            "  vec4 f=texture(uFwd,pu),b=texture(uBwd,cu);\n" +
+            "  vec3 a=texture(uPrev,pu).rgb,c=texture(uCur,cu).rgb,cur=texture(uCur,vUv).rgb;\n" +
+            "  vec3 diff=abs(a-c); float photo=max(max(diff.r,diff.g),diff.b);\n" +
+            "  vec2 px=1.0/vec2(textureSize(uFwd,0));\n" +
+            "  bool inside=all(greaterThan(pu,vec2(0))) && all(lessThan(pu,vec2(1)))\n" +
+            "    && all(greaterThan(cu,vec2(0))) && all(lessThan(cu,vec2(1)));\n" +
+            "  bool reject=!inside || photo>uReject || length(f.xy+b.xy)>max(0.015,3.0*length(px))\n" +
+            "    || max(f.z,b.z)>uReject;\n" +
+            "  fragColor=vec4(reject?cur:mix(a,c,t),1);\n" +
             "}\n";
 
     private static final String BLIT_FRAG =
@@ -130,32 +127,55 @@ public final class GlInterpolator {
     private int height;
     private int flowW;
     private int flowH;
+    private int levels;
     private int framesCaptured;
     private int writeSlot;
     private boolean gl33;
+    private boolean flowPrepared;
+
+    private int cfgFlow = 160;
+    private int cfgQuality = 1;
+    private float cfgReject = 0.22f;
+    private float cfgBudgetMs = BUDGET_MS;
+    private int appliedFlow = -1;
+    private int appliedQuality = -1;
+    private boolean configDirty;
 
     private int vao;
     private int flowProgram;
+    private int downProgram;
     private int composeProgram;
     private int blitProgram;
     private int flowFbo;
     private final int[] frameTex = new int[2];
     private final int[] flowTex = new int[2];
+    /** [level][0=fwd pyramid color, 1=bwd]. Level 0 is full flow resolution. */
+    private final int[][] pyrColor = new int[4][2];
+    private final int[][] pyrFlow = new int[4][2];
+    private final int[] pyrW = new int[4];
+    private final int[] pyrH = new int[4];
     private final int[] queries = new int[2];
     private int querySlot;
     private boolean queryBusy;
     private boolean queryRunning;
     private boolean overBudget;
-
+    private double lastGpuMillis;
     private int locSrc;
     private int locDst;
-    private int locFullTexel;
+    private int locParent;
+    private int locTexel;
+    private int locRadius;
     private int locCoarse;
-    private int locFine;
+    private int locSmooth;
+    private int locDownSrc;
+    private int locDownTexel;
+    private int locDownScale;
     private int locPrev;
     private int locCur;
     private int locFwd;
     private int locBwd;
+    private int locAlpha;
+    private int locReject;
     private int locBlit;
 
     private final IntBuffer widthBuf = ByteBuffer.allocateDirect(4).order(ByteOrder.nativeOrder()).asIntBuffer();
@@ -166,6 +186,35 @@ public final class GlInterpolator {
             throw new IllegalArgumentException("window");
         }
         this.window = window;
+    }
+
+    /**
+     * @param flowWidth 80..320, finest motion-field width
+     * @param quality 0 fast, 1 balanced, 2 quality
+     * @param rejectionThreshold photometric reject, typically 0.12..0.40
+     * @param gpuBudgetMs async timer budget; never waited on
+     */
+    public void configure(int flowWidth, int quality, float rejectionThreshold, float gpuBudgetMs) {
+        int widthClamped = Math.max(FLOW_MIN, Math.min(FLOW_MAX, flowWidth));
+        int qualityClamped = quality < 0 ? 0 : Math.min(2, quality);
+        float reject = rejectionThreshold < 0.05f ? 0.05f : Math.min(0.80f, rejectionThreshold);
+        float budget = gpuBudgetMs < 0.5f ? 0.5f : Math.min(33.0f, gpuBudgetMs);
+        if (widthClamped != cfgFlow || qualityClamped != cfgQuality) {
+            configDirty = true;
+        }
+        cfgFlow = widthClamped;
+        cfgQuality = qualityClamped;
+        cfgReject = reject;
+        cfgBudgetMs = budget;
+    }
+
+    public boolean ready() {
+        return !closed && !failed && supported && framesCaptured >= 2 && vao != 0;
+    }
+
+    /** Last completed GPU timer sample in milliseconds. 0 until a query resolves. Non-blocking. */
+    public double lastGpuMillis() {
+        return lastGpuMillis;
     }
 
     public boolean capture() {
@@ -181,9 +230,8 @@ public final class GlInterpolator {
             if (w <= 0 || h <= 0) {
                 return false;
             }
-            if (w != width || h != height || vao == 0) {
+            if (w != width || h != height || vao == 0 || configDirty) {
                 rebuild(w, h);
-                // Capture this first real frame after allocation, but do not synthesize it yet.
             }
             GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, 0);
             GL11.glReadBuffer(GL11.GL_BACK);
@@ -192,6 +240,7 @@ public final class GlInterpolator {
             GL15.glBindBuffer(GL21.GL_PIXEL_UNPACK_BUFFER, 0);
             GL11.glCopyTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
             writeSlot ^= 1;
+            flowPrepared = false;
             if (framesCaptured < 2) {
                 framesCaptured++;
             }
@@ -206,17 +255,25 @@ public final class GlInterpolator {
     }
 
     public void drawIntermediate() {
+        drawInterpolated(0.5f);
+    }
+
+    public void drawInterpolated(float alpha) {
         if (closed || failed || framesCaptured < 2 || vao == 0) {
             return;
         }
+        float t = alpha < 0f ? 0f : Math.min(1f, alpha);
         GlState state = GlState.capture(gl33);
         try {
             int prev = writeSlot;
             int cur = writeSlot ^ 1;
-            beginBudgetQuery();
-            dispatchFlow(flowTex[0], frameTex[prev], frameTex[cur]);
-            dispatchFlow(flowTex[1], frameTex[cur], frameTex[prev]);
-            endBudgetQuery();
+            if (!flowPrepared) {
+                beginBudgetQuery();
+                buildPyramids(prev, cur);
+                estimateFlow(0, prev, cur);
+                estimateFlow(1, cur, prev);
+                flowPrepared = true;
+            }
             GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, 0);
             GL11.glDrawBuffer(GL11.GL_BACK);
             GL11.glViewport(0, 0, width, height);
@@ -225,8 +282,11 @@ public final class GlInterpolator {
             bindUnit(1, frameTex[cur], locCur);
             bindUnit(2, flowTex[0], locFwd);
             bindUnit(3, flowTex[1], locBwd);
+            if (locAlpha >= 0) GL20.glUniform1f(locAlpha, t);
+            if (locReject >= 0) GL20.glUniform1f(locReject, cfgReject);
             GL30.glBindVertexArray(vao);
             GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 3);
+            if (queryRunning) endBudgetQuery();
             pollBudget();
         } catch (RuntimeException ex) {
             if (queryRunning) endBudgetQuery();
@@ -261,6 +321,7 @@ public final class GlInterpolator {
         writeSlot = 0;
         overBudget = false;
         queryBusy = false;
+        flowPrepared = false;
     }
 
     public boolean isOverBudget() {
@@ -308,8 +369,19 @@ public final class GlInterpolator {
         resetHistory();
         width = w;
         height = h;
-        flowW = Math.min(FLOW_MAX_WIDTH, w);
+        flowW = Math.min(cfgFlow, w);
         flowH = Math.max(1, (int) Math.round(h * (flowW / (double) w)));
+        levels = cfgQuality == 0 ? 2 : 3; // Quality widens coarse search instead of destroying detail in a fourth image level.
+        int coarseW = flowW;
+        for (int i = 1; i < levels; i++) coarseW = Math.max(1, coarseW / 2);
+        while (levels > 2 && coarseW < 20) {
+            levels--;
+            coarseW = flowW;
+            for (int i = 1; i < levels; i++) coarseW = Math.max(1, coarseW / 2);
+        }
+        appliedFlow = cfgFlow;
+        appliedQuality = cfgQuality;
+        configDirty = false;
         try {
             vao = GL30.glGenVertexArrays();
             if (vao == 0) {
@@ -317,22 +389,42 @@ public final class GlInterpolator {
             }
             GL30.glBindVertexArray(vao);
             flowProgram = link(VERT, FLOW_FRAG);
+            downProgram = link(VERT, DOWN_FRAG);
             composeProgram = link(VERT, COMPOSE_FRAG);
             blitProgram = link(VERT, BLIT_FRAG);
             locSrc = GL20.glGetUniformLocation(flowProgram, "uSrc");
             locDst = GL20.glGetUniformLocation(flowProgram, "uDst");
-            locFullTexel = GL20.glGetUniformLocation(flowProgram, "uFullTexel");
+            locParent = GL20.glGetUniformLocation(flowProgram, "uParent");
+            locTexel = GL20.glGetUniformLocation(flowProgram, "uStep");
+            locRadius = GL20.glGetUniformLocation(flowProgram, "uExtent");
             locCoarse = GL20.glGetUniformLocation(flowProgram, "uCoarse");
-            locFine = GL20.glGetUniformLocation(flowProgram, "uFine");
+            locSmooth = GL20.glGetUniformLocation(flowProgram, "uSmooth");
+            locDownSrc = GL20.glGetUniformLocation(downProgram, "uSrc");
+            locDownTexel = GL20.glGetUniformLocation(downProgram, "uSrcTexel");
+            locDownScale = GL20.glGetUniformLocation(downProgram, "uScale");
             locPrev = GL20.glGetUniformLocation(composeProgram, "uPrev");
             locCur = GL20.glGetUniformLocation(composeProgram, "uCur");
             locFwd = GL20.glGetUniformLocation(composeProgram, "uFwd");
             locBwd = GL20.glGetUniformLocation(composeProgram, "uBwd");
+            locAlpha = GL20.glGetUniformLocation(composeProgram, "uAlpha");
+            locReject = GL20.glGetUniformLocation(composeProgram, "uReject");
             locBlit = GL20.glGetUniformLocation(blitProgram, "uTex");
-            frameTex[0] = alloc(width, height, GL11.GL_RGBA8, GL11.GL_UNSIGNED_BYTE);
-            frameTex[1] = alloc(width, height, GL11.GL_RGBA8, GL11.GL_UNSIGNED_BYTE);
-            flowTex[0] = alloc(flowW, flowH, GL30.GL_RGBA16F, GL11.GL_FLOAT);
-            flowTex[1] = alloc(flowW, flowH, GL30.GL_RGBA16F, GL11.GL_FLOAT);
+            frameTex[0] = alloc(width, height, GL11.GL_RGBA8, GL11.GL_UNSIGNED_BYTE, true);
+            frameTex[1] = alloc(width, height, GL11.GL_RGBA8, GL11.GL_UNSIGNED_BYTE, true);
+            flowTex[0] = alloc(flowW, flowH, GL30.GL_RGBA16F, GL11.GL_FLOAT, false);
+            flowTex[1] = alloc(flowW, flowH, GL30.GL_RGBA16F, GL11.GL_FLOAT, false);
+            int pw = flowW;
+            int ph = flowH;
+            for (int level = 0; level < levels; level++) {
+                pyrW[level] = pw;
+                pyrH[level] = ph;
+                for (int dir = 0; dir < 2; dir++) {
+                    pyrColor[level][dir] = alloc(pw, ph, GL11.GL_RGBA8, GL11.GL_UNSIGNED_BYTE, true);
+                    pyrFlow[level][dir] = alloc(pw, ph, GL30.GL_RGBA16F, GL11.GL_FLOAT, false);
+                }
+                pw = Math.max(1, pw / 2);
+                ph = Math.max(1, ph / 2);
+            }
             flowFbo = GL30.glGenFramebuffers();
             if (flowFbo == 0) {
                 throw new IllegalStateException("fbo");
@@ -350,24 +442,54 @@ public final class GlInterpolator {
         }
     }
 
-    private void dispatchFlow(int target, int src, int dst) {
+    private void buildPyramids(int prev, int cur) {
+        int[] src = {frameTex[prev], frameTex[cur]};
+        int[] srcW = {width, width};
+        int[] srcH = {height, height};
+        for (int level = 0; level < levels; level++) {
+            for (int dir = 0; dir < 2; dir++) {
+                drawTo(pyrColor[level][dir], pyrW[level], pyrH[level]);
+                GL20.glUseProgram(downProgram);
+                bindUnit(0, src[dir], locDownSrc);
+                if (locDownTexel >= 0) GL20.glUniform2f(locDownTexel, 1.0f / srcW[dir], 1.0f / srcH[dir]);
+                if (locDownScale >= 0) GL20.glUniform2f(locDownScale, (float) srcW[dir] / pyrW[level], (float) srcH[dir] / pyrH[level]);
+                GL30.glBindVertexArray(vao);
+                GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 3);
+                src[dir] = pyrColor[level][dir];
+                srcW[dir] = pyrW[level];
+                srcH[dir] = pyrH[level];
+            }
+        }
+    }
+
+    /** Estimate a bounded motion field once per true-frame pair, reusable for every alpha. */
+    private void estimateFlow(int dir, int srcFrame, int dstFrame) {
+        for (int level = levels - 1; level >= 0; level--) {
+            int target = level == 0 ? flowTex[dir] : pyrFlow[level][dir];
+            drawTo(target, pyrW[level], pyrH[level]);
+            GL20.glUseProgram(flowProgram);
+            bindUnit(0, pyrColor[level][dir], locSrc);
+            bindUnit(1, pyrColor[level][dir ^ 1], locDst);
+            bindUnit(2, level + 1 < levels ? pyrFlow[level + 1][dir] : 0, locParent);
+            GL20.glUniform2f(locTexel, 1.0f / pyrW[level], 1.0f / pyrH[level]);
+            GL20.glUniform1f(locRadius, level == levels - 1 ? (cfgQuality == 2 ? 8 : 4) : (cfgQuality == 2 ? 3 : 2));
+            GL20.glUniform1i(locCoarse, level == levels - 1 ? 1 : 0);
+            GL20.glUniform1i(locSmooth, cfgQuality == 2 && level == 0 ? 1 : 0);
+            GL30.glBindVertexArray(vao);
+            GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 3);
+        }
+    }
+
+
+    private void drawTo(int target, int w, int h) {
         GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, flowFbo);
         GL30.glFramebufferTexture2D(GL30.GL_DRAW_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT0,
                 GL11.GL_TEXTURE_2D, target, 0);
-        if (GL30.glCheckFramebufferStatus(GL30.GL_DRAW_FRAMEBUFFER) != GL30.GL_FRAMEBUFFER_COMPLETE) {
-            throw new IllegalStateException("flow fbo");
-        }
+        if (GL30.glCheckFramebufferStatus(GL30.GL_DRAW_FRAMEBUFFER) != GL30.GL_FRAMEBUFFER_COMPLETE)
+            throw new IllegalStateException("motion framebuffer incomplete");
         GL11.glDrawBuffer(GL30.GL_COLOR_ATTACHMENT0);
-        GL11.glViewport(0, 0, flowW, flowH);
-        GL20.glUseProgram(flowProgram);
-        bindUnit(0, src, locSrc);
-        bindUnit(1, dst, locDst);
-        float coarse = 4.0f * width / flowW;
-        GL20.glUniform2f(locFullTexel, 1.0f / width, 1.0f / height);
-        GL20.glUniform2f(locCoarse, coarse / width, coarse / height);
-        GL20.glUniform2f(locFine, Math.max(1.0f, coarse * 0.5f) / width, Math.max(1.0f, coarse * 0.5f) / height);
-        GL30.glBindVertexArray(vao);
-        GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 3);
+        GL11.glViewport(0, 0, w, h);
+        GL11.glDisable(GL11.GL_SCISSOR_TEST);
     }
 
     private void bindUnit(int unit, int texture, int location) {
@@ -378,7 +500,7 @@ public final class GlInterpolator {
         }
     }
 
-    private static int alloc(int w, int h, int internalFormat, int type) {
+    private static int alloc(int w, int h, int internalFormat, int type, boolean mips) {
         int tex = GL11.glGenTextures();
         if (tex == 0) {
             throw new IllegalStateException("texture");
@@ -390,6 +512,8 @@ public final class GlInterpolator {
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL11.GL_NONE);
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL12.GL_TEXTURE_BASE_LEVEL, 0);
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL12.GL_TEXTURE_MAX_LEVEL, 0);
         GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, internalFormat, w, h, 0, GL11.GL_RGBA, type, 0L);
         return tex;
     }
@@ -462,7 +586,8 @@ public final class GlInterpolator {
             return;
         }
         long nanos = GL33.glGetQueryObjectui64(id, GL15.GL_QUERY_RESULT);
-        overBudget = nanos > (long) (BUDGET_MS * 1000000.0f);
+        lastGpuMillis = nanos / 1_000_000.0;
+        overBudget = nanos > (long) (cfgBudgetMs * 1_000_000.0f);
         queryBusy = false;
         querySlot ^= 1;
     }
@@ -485,6 +610,8 @@ public final class GlInterpolator {
         }
         deleteProgram(flowProgram);
         flowProgram = 0;
+        deleteProgram(downProgram);
+        downProgram = 0;
         deleteProgram(composeProgram);
         composeProgram = 0;
         deleteProgram(blitProgram);
@@ -505,6 +632,20 @@ public final class GlInterpolator {
                 flowTex[i] = 0;
             }
         }
+        for (int level = 0; level < pyrColor.length; level++) {
+            for (int dir = 0; dir < 2; dir++) {
+                if (pyrColor[level][dir] != 0) {
+                    GL11.glDeleteTextures(pyrColor[level][dir]);
+                    pyrColor[level][dir] = 0;
+                }
+                if (pyrFlow[level][dir] != 0) {
+                    GL11.glDeleteTextures(pyrFlow[level][dir]);
+                    pyrFlow[level][dir] = 0;
+                }
+            }
+            pyrW[level] = 0;
+            pyrH[level] = 0;
+        }
         if (queries[0] != 0 || queries[1] != 0) {
             GL33.glDeleteQueries(queries);
             queries[0] = 0;
@@ -514,6 +655,7 @@ public final class GlInterpolator {
         height = 0;
         flowW = 0;
         flowH = 0;
+        levels = 0;
     }
 
     private static void deleteProgram(int program) {

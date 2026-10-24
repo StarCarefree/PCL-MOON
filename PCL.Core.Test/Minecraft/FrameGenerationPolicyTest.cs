@@ -26,4 +26,32 @@ public sealed class FrameGenerationPolicyTest
     [DataRow("\"unclosed", false)]
     public void ExplicitDisableAndDuplicateAgentsAreRespected(string args, bool expected)
         => Assert.AreEqual(expected, FrameGenerationPolicy.ShouldInject(true, false, 21, true, args));
+
+    [TestMethod]
+    [DataRow(8, true, "", true)]
+    [DataRow(21, true, "", true)]
+    [DataRow(7, true, "", false)]
+    [DataRow(21, false, "", false)]
+    [DataRow(21, true, "-Dpclmoon.framegen.disabled=true", false)]
+    [DataRow(21, true, "-javaagent:D:/pcl-framegen.jar", false)]
+    public void SettingsButtonCanLoadAgentWithoutEnablingGeneration(int java, bool x64, string args, bool expected)
+        => Assert.AreEqual(expected, FrameGenerationPolicy.ShouldInject(false, false, java, x64, args, settingsButton: true));
+
+    [TestMethod]
+    public void IndependentPacingLoadsWithoutGenerationButRespectsForcedDisable()
+    {
+        Assert.IsTrue(FrameGenerationPolicy.ShouldInject(false, false, 21, true, "", independentPacing: true));
+        Assert.IsFalse(FrameGenerationPolicy.ShouldInject(false, false, 21, true,
+            "-Dpclmoon.framegen.disabled=true", independentPacing: true));
+    }
+
+    [TestMethod]
+    public void ProfileIdentityIsInstanceBasedAndStableOnWindows()
+    {
+        var first = FrameGenerationPolicy.ProfileKey("D:/Game/versions/测试实例");
+        Assert.AreEqual(first, FrameGenerationPolicy.ProfileKey("d:/game/versions/测试实例/"));
+        Assert.AreNotEqual(first, FrameGenerationPolicy.ProfileKey("D:/Game/versions/另一个实例"));
+        Assert.AreEqual(64, first.Length);
+        Assert.IsFalse(first.Contains("测试实例", System.StringComparison.Ordinal));
+    }
 }

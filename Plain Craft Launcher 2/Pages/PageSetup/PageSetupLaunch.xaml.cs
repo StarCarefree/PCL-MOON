@@ -87,6 +87,8 @@ public partial class PageSetupLaunch
             CheckAdvanceLockMemory.Checked = Config.Launch.LockMemory;
             CheckFrameGeneration.Checked = Config.Launch.FrameGeneration;
             CheckFrameDiagnostics.Checked = Config.Launch.FrameDiagnostics;
+            CheckFrameSettingsButton.Checked = Config.Launch.FrameSettingsButton;
+            CheckFramePacing.Checked = Config.Launch.FramePacing;
             if (SystemInfo.IsArm64System)
             {
                 CheckAdvanceDisableJLW.Checked = true;

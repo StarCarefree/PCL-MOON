@@ -505,6 +505,12 @@ public static partial class Config
         /// <summary>独立记录超过 250ms 的呈现间隔和渲染线程栈，不自动修改 JVM 参数。</summary>
         [ConfigItem<bool>("LaunchFrameDiagnostics", false, ConfigSource.Local)] public partial bool FrameDiagnostics { get; set; }
 
+        /// <summary>在游戏窗口右上角显示实时插帧设置按钮，不自动开启插帧。</summary>
+        [ConfigItem<bool>("LaunchFrameSettingsButton", true, ConfigSource.Local)] public partial bool FrameSettingsButton { get; set; }
+
+        /// <summary>允许不启用插帧/齿轮时仍加载独立节奏与实例配置；实际限帧默认关闭。</summary>
+        [ConfigItem<bool>("LaunchFramePacing", false, ConfigSource.Local)] public partial bool FramePacing { get; set; }
+
         /// <summary>
         /// 优先 IP 协议栈。
         /// </summary>

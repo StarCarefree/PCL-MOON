@@ -26,6 +26,8 @@ def main():
     parser.add_argument('--deps', type=Path, default=Path(os.environ.get('PI_SCRATCH_DIR', ROOT / 'build')) / 'framegen-deps')
     parser.add_argument('--skip-build', action='store_true')
     parser.add_argument('--gpu', action='store_true')
+    parser.add_argument('--benchmark', action='store_true', help='With --gpu, measure capture/flow/composition at 720p and 1080p')
+    parser.add_argument('--overlay', action='store_true', help='Run real Swing gear/panel interaction checks with a test game window')
     args = parser.parse_args()
     if not args.java or not args.javac:
         parser.error('java and javac are required')
@@ -45,7 +47,8 @@ def main():
                 for name in item.namelist():
                     if name.endswith('.class') and '/internal/' not in name:
                         assert struct.unpack_from('>H', item.read(name), 6)[0] == 52, name + ': not Java 8 bytecode'
-        subprocess.run([args.javac, '-J-Xms16m', '-J-Xmx192m', '--release', '8', '-encoding', 'UTF-8', '-cp', str(helper), '-d', str(fixture),
+        fixture_cp = os.pathsep.join(map(str, (helper, jar, deps[0])))
+        subprocess.run([args.javac, '-J-Xms16m', '-J-Xmx192m', '--release', '8', '-encoding', 'UTF-8', '-cp', fixture_cp, '-d', str(fixture),
                         *map(str, sorted((ROOT / 'test/fixture').rglob('*.java')))], check=True)
         subprocess.run([args.javac, '-J-Xms16m', '-J-Xmx192m', '--release', '8', '-encoding', 'UTF-8', '-cp', str(fixture), '-d', str(renderer),
                         *map(str, sorted((ROOT / 'test/fake-renderer').rglob('*.java')))], check=True)
@@ -53,10 +56,17 @@ def main():
         with zipfile.ZipFile(fake_jar, 'w') as archive:
             for source in renderer.rglob('*.class'):
                 agent_build.put(archive, source.relative_to(renderer).as_posix(), source.read_bytes())
-        modes = ('disabled', 'diagnostics-only', 'no-context', 'unfocused', 'missing-renderer', 'generate', 'render-failure', 'native-failure', 'budget', 'long-gap', 'stall-diagnostics')
+        modes = ('disabled', 'diagnostics-only', 'no-context', 'unfocused', 'missing-renderer', 'generate', 'render-failure', 'native-failure', 'budget', 'long-gap', 'stall-diagnostics', 'runtime-settings', 'overlay-unavailable', 'triple', 'quadruple', 'slow-input', 'standalone-cap', 'combined-cap', 'low-cap')
         for mode in modes:
             flags = ['-Xms16m', '-Xmx128m', '-XX:ReservedCodeCacheSize=64m', '-Dpclmoon.framegen.outputFps=30']
             if mode == 'disabled': flags += ['-Dpclmoon.framegen.disabled=true']
+            if mode == 'overlay-unavailable': flags += ['-Dpclmoon.framegen.overlay=true']
+            if mode == 'triple': flags += ['-Dpclmoon.framegen.multiplier=3']
+            if mode == 'quadruple': flags += ['-Dpclmoon.framegen.multiplier=4']
+            if mode == 'slow-input': flags += ['-Dpclmoon.framegen.outputFps=240']
+            if mode in ('standalone-cap', 'combined-cap'): flags += ['-Dpclmoon.framegen.fpsLimit=30']
+            if mode == 'standalone-cap': flags += ['-Dpclmoon.framegen.enabled=false']
+            if mode == 'low-cap': flags += ['-Dpclmoon.framegen.fpsLimit=29']
             if mode in ('diagnostics-only', 'stall-diagnostics'): flags += ['-Dpclmoon.framegen.enabled=false', '-Dpclmoon.framegen.diagnostics=true']
             target = work / 'missing.jar' if mode == 'missing-renderer' else fake_jar
             result = subprocess.run([args.java, *flags, '-javaagent:' + str(jar), '-cp', os.pathsep.join(map(str, (fixture, helper))),
@@ -65,7 +75,22 @@ def main():
             if mode == 'stall-diagnostics':
                 assert b'[PCL FrameTime] presentation gap=' in result.stderr, 'watchdog did not report the controlled render-thread stall'
                 print(result.stdout.decode('utf-8').strip())
-        print('PASS: 11 agent integration scenarios + deterministic pacing/stall boundary assertions')
+        native_fixture = work / 'native-fixture'
+        native_fixture.mkdir()
+        subprocess.run([args.javac, '-J-Xms16m', '-J-Xmx128m', '--release', '8', '-d', str(native_fixture),
+                        *map(str, sorted((ROOT / 'test/native-fixture').rglob('*.java')))], check=True)
+        subprocess.run([args.java, '-Xms16m', '-Xmx128m', '-cp',
+                        str(native_fixture) + os.pathsep + str(fixture) + os.pathsep + fixture_cp,
+                        'pclmoon.framegen.test.NativeGameHarness'], check=True, timeout=20, cwd=work)
+        print('PASS:', len(modes), 'agent integration scenarios + pacing/counter/native-cap regressions')
+        for harness in ('FramePacingHarness', 'TelemetryHarness', 'ProfilesHarness'):
+            subprocess.run([args.java, '-Xms16m', '-Xmx128m', '-cp', os.pathsep.join(map(str, (fixture, helper))),
+                            'pclmoon.framegen.test.' + harness, str(work / 'profiles')], check=True, timeout=40, cwd=work)
+        if args.overlay:
+            subprocess.run([args.java, '-Xms16m', '-Xmx128m', '-XX:ReservedCodeCacheSize=64m',
+                            '-Dpclmoon.framegen.test.preview=' + str(Path(os.environ.get('PI_SCRATCH_DIR', work)) / 'framegen-gear-panel.png'),
+                            '-javaagent:' + str(jar), '-cp', str(fixture),
+                            'pclmoon.framegen.test.OverlayHarness'], check=True, timeout=45, cwd=work)
         if args.gpu:
             if os.name != 'nt': parser.error('--gpu native fixture currently targets Windows x64')
             original = agent_build.DEPS
@@ -76,13 +101,26 @@ def main():
                 agent_build.DEPS = original
             gpu = work / 'gpu'
             gpu.mkdir()
-            cp = os.pathsep.join(map(str, [jar, *deps[1:], *natives]))
+            cp = os.pathsep.join(map(str, [jar, helper, *deps[1:], *natives]))
             subprocess.run([args.javac, '-J-Xms16m', '-J-Xmx192m', '--release', '8', '-encoding', 'UTF-8', '-cp', cp, '-d', str(gpu),
                             *map(str, sorted((ROOT / 'test/pclmoon/framegen/render').rglob('*.java')))], check=True)
-            for minor in (2, 3):
+            for minor, shift, quality in ((2, 8, 1), (3, 8, 1), (3, 32, 2)):
                 subprocess.run([args.java, '-Xms16m', '-Xmx128m', '-XX:ReservedCodeCacheSize=64m',
-                                '-Dpcl.framegen.test.glMinor=' + str(minor), '-cp', str(gpu) + os.pathsep + cp,
+                                '-Dpcl.framegen.test.glMinor=' + str(minor), '-Dpcl.framegen.test.shift=' + str(shift),
+                                '-Dpcl.framegen.test.quality=' + str(quality), '-cp', str(gpu) + os.pathsep + cp,
                                 'pclmoon.framegen.render.GlInterpolatorSmoke'], check=True, timeout=60, cwd=work)
+            if args.overlay:
+                subprocess.run([args.java, '-Xms16m', '-Xmx128m', '-XX:ReservedCodeCacheSize=64m',
+                                '-Dpclmoon.framegen.overlay=true', '-Dpclmoon.framegen.enabled=false',
+                                '-javaagent:' + str(jar), '-cp', str(gpu) + os.pathsep + cp,
+                                'pclmoon.framegen.render.GameWindowOverlaySmoke'], check=True, timeout=30, cwd=work)
+            if args.benchmark:
+                for width, height in ((1280, 720), (1920, 1080)):
+                    for generated in (1, 3):
+                        subprocess.run([args.java, '-Xms16m', '-Xmx128m', '-Dbench.w=' + str(width),
+                                        '-Dbench.h=' + str(height), '-Dbench.generated=' + str(generated),
+                                        '-cp', str(gpu) + os.pathsep + cp,
+                                        'pclmoon.framegen.render.RendererBenchmark'], check=True, timeout=60, cwd=work)
 
 
 if __name__ == '__main__':

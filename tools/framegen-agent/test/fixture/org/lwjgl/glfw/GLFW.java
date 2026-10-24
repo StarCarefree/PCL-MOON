@@ -3,10 +3,12 @@ package org.lwjgl.glfw;
 /** Deliberately mirrors LWJGL's non-native public wrappers, without a display or native library. */
 public final class GLFW {
     public static int swaps, destroys;
+    public static final long[] submissions = new long[128];
     public static boolean nativeFailure;
     public static long context = 1;
     public static int focused = 1;
     public static void glfwSwapBuffers(long window) {
+        submissions[swaps] = System.nanoTime();
         swaps++;
         if (nativeFailure) throw new IllegalStateException("synthetic native failure");
     }

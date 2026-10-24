@@ -5,6 +5,10 @@ import org.lwjgl.glfw.GLFW;
 import pclmoon.framegen.bridge.FrameDiagnostics;
 import pclmoon.framegen.bridge.FramePacer;
 import pclmoon.framegen.bridge.SwapHook;
+import pclmoon.framegen.bridge.FrameSettings;
+import pclmoon.framegen.bridge.FrameMetrics;
+import pclmoon.framegen.bridge.NativeGameHooks;
+import pclmoon.framegen.bridge.PacingSettings;
 
 public final class AgentHarness {
     private static void check(boolean ok, String message) { if (!ok) throw new AssertionError(message); }
@@ -28,6 +32,19 @@ public final class AgentHarness {
                 check(GLFW.swaps == 3 && Probe.intermediates == 1 && Probe.currents == 1, "one compensated midpoint then current");
                 GLFW.glfwSwapBuffers(2);
                 check(GLFW.swaps == 4 && Probe.captures == 2, "secondary context must not reuse GL resources");
+            } else if (mode.equals("triple") || mode.equals("quadruple")) {
+                int factor = FrameSettings.multiplier();
+                GLFW.glfwSwapBuffers(1);
+                check(GLFW.swaps == factor + 1 && Probe.intermediates == factor - 1, "all generated frames must actually be submitted");
+                for (int i = 0; i < factor - 1; i++) check(Math.abs(Probe.alphas[i] - (i + 1) / (float) factor) < 0.0001,
+                    "each multiplier frame needs a distinct interpolation time");
+                FrameMetrics.Snapshot measured = FrameMetrics.snapshot();
+                check(Math.abs(measured.presentedFps - measured.renderFps - measured.generatedFps) < 0.001,
+                    "presented count equals successful true + generated submissions");
+            } else if (mode.equals("slow-input")) {
+                Thread.sleep(33);
+                GLFW.glfwSwapBuffers(1);
+                check(Probe.intermediates == 1 && GLFW.swaps == 3, "30 FPS input / high target must not disable every interpolation");
             } else if (mode.equals("long-gap")) {
                 Thread.sleep(150);
                 GLFW.glfwSwapBuffers(1);
@@ -52,10 +69,49 @@ public final class AgentHarness {
             } else if (mode.equals("budget")) {
                 Probe.budget = true;
                 GLFW.glfwSwapBuffers(1);
-                for (int i = 0; i < 120; i++) GLFW.glfwSwapBuffers(1);
-                check(Probe.captures == 1 && Probe.resets == 1, "cooldown must avoid capture/flow work");
+                for (int i = 0; i < 2; i++) GLFW.glfwSwapBuffers(1);
+                check(Probe.captures == 1 && Probe.resets == 1, "short cooldown avoids capture/flow work while lowering quality");
                 GLFW.glfwSwapBuffers(1);
                 check(Probe.captures == 2 && Probe.intermediates == 0, "resume with fresh history, not stale frames");
+            } else if (mode.equals("runtime-settings")) {
+                FrameSettings.setGeneration(false);
+                GLFW.glfwSwapBuffers(1);
+                check(Probe.captures == 1 && Probe.closes == 1 && GLFW.swaps == 2, "live disable must stop capture and release renderer");
+                FrameSettings.setGeneration(true);
+                GLFW.glfwSwapBuffers(1);
+                check(Probe.captures == 2 && Probe.intermediates == 0, "live enable starts cold");
+                GLFW.glfwSwapBuffers(1);
+                check(Probe.intermediates == 1, "live enable generates after warm-up");
+                FrameSettings.setOutputFps(60);
+                GLFW.glfwSwapBuffers(1);
+                check(Probe.resets >= 1 && Probe.intermediates == 1, "FPS change must reset history and pacing");
+                FrameSettings.setDiagnostics(true);
+                GLFW.glfwSwapBuffers(1);
+                FrameSettings.setDiagnostics(false);
+                GLFW.glfwSwapBuffers(1);
+                FrameSettings.setOutputFps(0);
+                check(FrameSettings.outputFps() == 30, "low FPS clamped");
+                FrameSettings.setOutputFps(1000);
+                check(FrameSettings.outputFps() == 240, "high FPS clamped");
+            } else if (mode.equals("overlay-unavailable")) {
+                GLFW.glfwSwapBuffers(1);
+                check(Probe.captures == 2 && Probe.intermediates == 1, "optional UI failure must not disable generation");
+            } else if (mode.equals("standalone-cap") || mode.equals("combined-cap")) {
+                boolean combined = mode.equals("combined-cap");
+                for (int i = 0; i < 3; i++) GLFW.glfwSwapBuffers(1);
+                check(combined ? Probe.intermediates == 3 : Probe.captures == 0, "independent cap must not force generation");
+                for (int i = 1; i < GLFW.swaps; i++)
+                    check(GLFW.submissions[i] - GLFW.submissions[i - 1] >= 31000000L, "every actual presentation respects cap");
+                check(GLFW.swaps == (combined ? 7 : 4), "capped presentation counters reflect submitted frames");
+                FrameSettings.setGeneration(false); FrameSettings.setShowFps(false);
+                long last = GLFW.submissions[GLFW.swaps - 1];
+                GLFW.glfwSwapBuffers(1);
+                check(GLFW.submissions[GLFW.swaps - 1] - last >= 31000000L, "cap survives hidden HUD and disabled FG");
+                PacingSettings.setFpsLimit(0);
+            } else if (mode.equals("low-cap")) {
+                GLFW.glfwSwapBuffers(1);
+                check(Probe.intermediates == 0 && GLFW.swaps == 2, "low standalone cap pauses generation");
+                PacingSettings.setFpsLimit(0);
             } else {
                 GLFW.glfwSwapBuffers(1);
                 check(GLFW.swaps == 2 && Probe.intermediates == 0, "disabled/unsupported presentation stays native");
@@ -65,6 +121,7 @@ public final class AgentHarness {
             if (mode.equals("generate")) check(Probe.closes == 1, "renderer disposed on context owner thread");
         }
         testTiming();
+        testMetricsAndNativeCap();
         System.out.println("PASS " + mode);
     }
     private static void testTiming() {
@@ -73,7 +130,10 @@ public final class AgentHarness {
         pacer.presented(1000000000L);
         check(pacer.canGenerate(1001000000L), "on-time frame");
         check(pacer.midpoint() == 1016666666L && pacer.realDeadline() == 1033333332L, "absolute evenly spaced deadlines");
-        check(!pacer.canGenerate(1040000000L), "late frame not queued");
+        check(pacer.canGenerate(1040000000L), "adaptive pacing accepts slower input without accumulating a catch-up queue");
+        FramePacer fixed = new FramePacer(60, 2, false, 150);
+        fixed.presented(1000000000L);
+        check(!fixed.canGenerate(1040000000L), "fixed pacing remains an explicit option");
         check(pacer.historyExpired(1250000000L), "long stall invalidates history");
         pacer.reset();
         check(!pacer.canGenerate(1250000000L), "no catch-up after stall");
@@ -82,5 +142,26 @@ public final class AgentHarness {
         Thread.currentThread().interrupt();
         check(!FramePacer.await(System.nanoTime() + 1000000L) && Thread.currentThread().isInterrupted(), "no spin or lost interrupt");
         Thread.interrupted();
+    }
+    private static void testMetricsAndNativeCap() {
+        FrameMetrics.reset();
+        for (int i = 0; i < 30; i++) {
+            FrameMetrics.realPresented(1000000000L + i * 33333333L);
+            FrameMetrics.generatedPresented(1016666666L + i * 33333333L);
+        }
+        FrameMetrics.Snapshot sample = FrameMetrics.snapshotAt(2000000000L);
+        check(sample.renderFps == 29 && sample.generatedFps == 30 && sample.presentedFps == 59,
+            "rolling FPS uses actual timestamped submissions, not a multiplier formula");
+        FrameMetrics.Snapshot stalled = FrameMetrics.snapshotAt(3500000000L);
+        check(stalled.presentedFps == 0 && stalled.onePercentLow == 0, "no frozen good FPS during a genuine stall");
+        FrameSettings.setGeneration(true);
+        FrameSettings.setNativeFrameControl(true);
+        FrameSettings.setMultiplier(2);
+        FrameSettings.setOutputFps(240);
+        NativeGameHooks.setPresentationActive(true);
+        check(NativeGameHooks.limitFps(30) == 120, "temporary native game cap must not conflict with selected ceiling");
+        FrameSettings.setGeneration(false);
+        check(NativeGameHooks.limitFps(30) == 30, "disabling generation immediately restores original game cap");
+        NativeGameHooks.setPresentationActive(false);
     }
 }

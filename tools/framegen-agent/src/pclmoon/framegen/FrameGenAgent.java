@@ -46,7 +46,15 @@ public final class FrameGenAgent {
             instrumentation.appendToBootstrapClassLoaderSearch(new JarFile(target.toFile()));
             Class<?> hook = Class.forName("pclmoon.framegen.bridge.SwapHook", true, null);
             hook.getMethod("configure", String.class).invoke(null, own.toUri().toString());
+            try {
+                Class<?> profiles = Class.forName("pclmoon.framegen.bridge.FramePacerProfiles", true, null);
+                profiles.getMethod("configure", String.class, String.class).invoke(null,
+                    System.getProperty("pclmoon.framegen.profileGlobal"), System.getProperty("pclmoon.framegen.profile"));
+            } catch (Throwable optionalConfig) {
+                System.err.println("[PCL FrameGen] optional pacing profiles unavailable; session controls remain available");
+            }
             instrumentation.addTransformer(new GlfwTransformer());
+            instrumentation.addTransformer(new NativeGameTransformer());
             System.err.println("[PCL FrameGen] optional GLFW presentation hook installed; OpenGL support is checked on first frame");
         } catch (Throwable unavailable) {
             System.err.println("[PCL FrameGen] agent unavailable (" + unavailable.getClass().getSimpleName() + "); original presentation retained");

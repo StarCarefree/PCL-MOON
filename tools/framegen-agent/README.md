@@ -1,54 +1,121 @@
-# 实验性游戏画面插帧 Agent
+# 实验性游戏帧生成 Agent
 
 ## 使用
 
-在 **设置 → 启动 → 高级设置** 中启用，下次启动游戏生效：
+启动器 **设置 → 启动 → 高级设置** 可设置启动默认值；插帧与诊断默认关闭，游戏设置齿轮默认显示。游戏中先按 Esc 释放鼠标，点击窗口右上角齿轮展开面板，旁边的 **FPS** 按钮开关统计 HUD。
 
-- **实验性游戏画面插帧**：通用 OpenGL 双向块匹配，2× 呈现，默认目标 60 FPS，面向核显/NVIDIA 的 OpenGL 路径，无 DLSS、CUDA 或厂商扩展依赖；核显尚未实测。
-- **记录游戏长帧诊断**：可以单独启用；发现前台窗口超过 250ms 无呈现时，在启动器捕获的游戏输出中记录 `[PCL FrameTime]`、GC 时间变化和渲染线程栈。
+面板提供：
 
-两个开关均默认关闭，不写入或替换实例的 mod 文件，也不自动修改 JVM/游戏设置。关闭后重新启动即可移除注入；还可用 JVM 参数 `-Dpclmoon.framegen.disabled=true` 强制禁用。手动指定同名 Agent 时不会重复注入。
+| 设置 | 作用 / 默认值 |
+|---|---|
+| 插帧 | 开关运动补偿插值，不是重复帧；默认关闭 |
+| 倍率 | 2× / 3× / 4×；默认 2×，分别最多生成 1/2/3 张中间帧 |
+| 呈现上限 | 30–240 FPS；默认 60。这是上限，不是保证达到的帧率 |
+| 质量 | 性能 / 均衡 / 画质；默认均衡。画质档扩大位移搜索，开销更高 |
+| 运动场宽度 | 80–320；默认 160。不是降低游戏画面分辨率 |
+| GPU 预算 | 2–20 ms；默认 8。只读已完成的异步计时结果 |
+| 长帧阈值 | 50–500 ms；默认 150。历史过期后优先新真帧，不补播旧帧 |
+| 自适应节奏 | 默认开启。慢输入不会因为目标设置过高而每帧都被跳过 |
+| 低帧/预算保护 | 默认开启。超预算先降低运动场并短暂预热；最低档仍超预算才暂停较久 |
+| 原生限帧协调 | 默认开启。适配命中后临时协调游戏限帧，不写 `options.txt` |
+| 长帧诊断 | 独立开关，日志采样超过 250ms 无呈现时的线程栈和 GC 时间变化 |
+| FPS HUD | 真帧、生成、呈现提交、1% low/P95、GPU/原生耗时、跳过原因、原生接入状态 |
+| 独立限帧 | 0（默认关闭）或 1–999 FPS；关闭插帧/HUD 后仍可限帧，失焦时交回游戏后台限帧 |
+| 等待精度 | 节能：不忙等；均衡（默认）：末段最多 100µs；精确：末段最多 1ms，会增加 CPU 占用 |
+| 硬件监控 | HUD 可见且此项开启时，后台至多每秒采样一次；缺失传感器显示 N/A |
+| 实例配置 | 保存当前设置供本实例下次使用，或恢复全局/启动默认值；不修改游戏配置 |
 
-## 效果与限制
+未保存的设置只影响本次游戏，不覆盖启动器默认值。改变倍率/FPS 会重置节奏，改变质量/运动场会重建历史并预热。关闭插帧释放资源；如独立限帧仍开启，则继续约束呈现。关闭全部启动器开关后重新启动可移除 Agent；`-Dpclmoon.framegen.disabled=true` 始终强制禁用。单独使用配置/限帧可开启“独立限帧与实例配置支持”，该开关只负责加载组件，并不自动设置 FPS 上限。
 
-这是**实验功能，不是已完成的 1.16.5–26.3 兼容矩阵**。
+建议给 **2080 SUPER + Iris/Complementary** 先用 **2×、120 FPS 上限、均衡、160 宽运动场、8ms 预算**，打开 FPS HUD 后再比较生成数量、跳过原因和帧时间。不要一开始就用 4×/240 FPS 当作实际效果保证。
 
-- 以两张真帧估计双向运动、在 GPU 上生成半时刻画面，再呈现当前真帧；不是重复帧或简单 crossfade。低分辨率运动场宽度最多 160，再做逐级块匹配细化。捕获、匹配、合成都不读回整帧到 CPU。
-- 默认目标是 **60 呈现 FPS / 约 30 真渲染 FPS**。Minecraft 自身的 FPS 计数仍可能显示约 30；它不统计额外呈现。插值增加等待和输入延迟，并消耗 GPU 带宽，不能承诺比原生渲染更快。建议游戏帧率上限不低于 60。
-- 不分离 HUD。遮挡、均匀色块、细小物体、快速独立运动等可能出现匹配歧义/伪影；低置信度区域使用当前真帧，不保证所有画面都能正确插值。
-- 仅支持有当前上下文的 **GLFW + OpenGL 3.2+ 双缓冲**。Vulkan、新渲染后端、尚未加载 GLFW 的情形不受此方案覆盖；不能据此声称 26.3 可用。未修改或取消世界渲染，不依赖 Minecraft 混淆名称。
-- 不支持 32 位 JVM。Agent 自有代码为 Java 8 字节码；构建用 JDK 9+。尚未进行 Java 8 运行时、核显、全部 Minecraft 版本及光影/录像 mod 的实机矩阵测试。
+齿轮/FPS HUD 跟随游戏窗口、失焦/最小化隐藏，游戏窗口销毁时清理，不依赖启动器保持打开。需要 `java.desktop`；独占全屏可能遮住工具层，建议窗口化/无边框。混合 DPI 多显示器尚未做矩阵测试。
 
-### 防止插帧加重卡顿
+## FPS 的准确含义
 
-- 绝对时间调度；错过时限直接跳过，不突发补播积压帧，不自旋等待，不吞掉中断。
-- 间隔超过 100ms、失焦、最小化或窗口大小变化后丢弃历史，恢复时重新预热。
-- OpenGL 3.3+ 使用异步 GPU 查询；仅查询结果已就绪时读取。匹配开销超过 4ms，冷却 120 张真帧后重新预热。3.2 无 GPU timer 时仍按呈现时限跳过。
-- 不接管其他渲染器已有的时间查询。保存/恢复游戏 FBO、多目标输出、采样器、纹理、VAO、程序、视口、颜色掩码等状态。异常时熔断，尽可能恢复当前真帧并退回原生呈现。
+统计在原生交换缓冲**成功返回后**累计真帧/生成帧时间戳，按最近一秒计算；呈现提交 FPS = 真帧提交 FPS + 生成提交 FPS。失败、过期丢弃、尚未提交的生成尝试均不计数，不用目标值乘倍率伪造数据。1% low/P95 取所有成功呈现提交的最近 256 个间隔，HUD 独立定时刷新；长时间没有提交时读数归零。
 
-**插帧无法消除 GC STW、区块加载、磁盘或主线程阻塞引起的 0 FPS。** 当前没有该问题的实机复现/日志，不能宣称根因已修复。请先单独打开长帧诊断，复现后查看 `[PCL FrameTime]`。GC 时间变化只是采样信息，不是因果判定；加载/切换焦点也可能产生长间隔。
+这些是 **swap 提交统计，不是显示器扫描输出/PresentMon 实测**。游戏自身 FPS 通常仍统计真实渲染，不包括 Agent 的额外提交。插值需要前后真帧，会增加等待和输入延迟；呈现计数上升不等于游戏模拟频率提高。
 
-## 构建与验证
+## 原生接入与适用范围
+
+除了 GLFW 呈现钩子，新增可验证的原生适配：
+
+- 已核对 Minecraft **1.21.11 / Fabric 0.18.4 intermediary** 的 `class_310.method_1523(boolean)` 单帧方法，插入耗时采样；不把外层 `run()` 当单帧方法。
+- 适配命中的 `RenderSystem.limitDisplayFPS(int)` 使用混合休眠/末段忙等。插帧或前台独立限帧接管呈现时跳过原生等待；插帧时间点与独立上限合并成一个截止时间，不叠加两次等待。关闭接管或失焦后遵守游戏原有上限，不改保存的选项。原方法保留用于异常回退及超出支持范围的原生上限。
+- 只转换已确认类和结构，不修改 tick、物理、网络或 JDK，不调用强制 GC。未知结构保留原流程。HUD 分别显示限帧和单帧采样是否命中，不能据此宣称全部版本已适配。
+
+用户提供的 Simply Optimized 实例配置/日志中，原生 `maxFps=30`，旧 Agent 目标设为 240；旧调度会把每张 30 FPS 输入视为迟到，直接跳过生成。此情形已经用可重复测试从失败验证到通过。实例还出现过 JAR 随机读取和 Iris 缓冲初始化的长停顿，采样 GC 时间变化为 0；这不是插帧能够根治的阻塞。
+
+**并未完成 Minecraft 1.16.5–26.3、核显、全部光影/录像 mod 的实机兼容矩阵。Vulkan 不支持。** 已只读验证所提供实例的真实 intermediary JAR 可以转换，没有修改该实例 JAR、配置、模组或存档，也没有启动其存档做游玩 A/B 基准。
+
+## 运动补偿与低帧保护
+
+GPU 内保存两张真帧，以低分辨率图像金字塔进行双向 coarse-to-fine 匹配，再进行对应时间位置的反向采样、光度误差/双向一致性检查和混合。画质档增加有界的大位移候选校验。切镜、无效对应或低置信度像素回退当前真帧；遮挡、细小物体、透明效果、HUD、均匀区域和剧烈独立运动仍可能产生伪影，未接入游戏深度或原生运动向量，不能声称具备神经 RIFE/DLSS 的画质。
+
+同一对真帧的运动场只算一次，3×/4× 复用它合成不同 alpha。正常路径不做整帧 CPU 读回，不调用 `glFinish`。保存/恢复 FBO/MRT、程序、VAO、采样器、纹理、视口和相关状态，不抢占已有 GPU 时间查询。
+
+节奏采用绝对时限，可选有界末段忙等，不积压队列。过期生成不突发补播；超预算先缩小运动场、冷却两张真帧并重新预热，最低宽度仍超预算时冷却 30 张真帧，稳定后逐步恢复。独立上限低于 30 时优先限帧、暂停插帧。保护的目标是**不让插帧自身加重卡顿**，不是遮掩真实停顿或保证永不掉帧。
+
+**JVM STW、着色器初始化、磁盘等待、主线程/驱动阻塞无法靠这一模块保证消除。** 诊断栈与 GC 数值只是采样，不是完整因果判定；加载和焦点变化也可能产生长间隔。实际游玩中的改善幅度仍需同场景 A/B 测量。
+
+## 按实例配置与硬件 HUD
+
+启动器传入 UTF-8 Java properties 路径（不是 Steam/Linux 原项目 INI）：
+
+- 全局：`<启动器数据目录>/framegen-agent/frame-pacer.properties`。
+- 实例覆盖：`<启动器数据目录>/framegen-agent/profiles/<实例目录 SHA256>.properties`。按实际版本目录区分，不按 `javaw.exe` 或共用工作目录；齿轮中配置状态的提示可查看精确路径。
+
+缺项继承全局，再继承本次启动默认值；后台约每秒检测语义变化，在下一帧边界应用。普通文件不超过 1 MiB；拒绝符号链接。不会因注释、时间戳变化反复覆盖未保存的面板调整。“保存实例”仅原子写入实例文件；“恢复全局”仅移除实例覆盖，不写全局。没有配置路径时保存/恢复不可用。新 Agent 代码需要重启游戏，属性文件和面板调节可热更新。
+热重载使用修改时间和文件大小检测；外部工具若保留这两者并原地改写同长度内容，需再次正常保存才能被识别。符号链接拒绝逻辑已实现，但本机因权限不足未执行创建链接的测试用例；不宣称提供跨用户 ACL 隔离。
+
+```properties
+# 独立限帧，与插帧上限 output_fps 分开
+fps_limit=120
+pacing_mode=balanced
+telemetry=on
+hud=on
+generation=off
+```
+
+`fps_limit=off` 或 `0` 关闭，非法上限按关闭处理；全局还接受 `global_fps_limit` 别名。精度为 `efficient/balanced/precise`。其余白名单：`output_fps`、`multiplier`、`quality`、`flow_width`、`gpu_budget_ms`、`stall_threshold_ms`、`adaptive`、`low_fps_protection`、`native_frame_control`、`diagnostics`；布尔值接受 `on/off/true/false`。配置读写不在渲染线程或 Swing EDT 执行。
+
+CPU 使用率来自 JMX（系统和当前 Java 进程，不是线程配额）；GPU 只在 NVIDIA GL renderer 能唯一匹配时，通过系统/NVIDIA 官方目录中的 `nvidia-smi.exe` 后台查询，占用与温度超时/缺失显示 N/A。Intel/AMD GPU 和 CPU 温度暂无可靠后端，显示 N/A，不推测数值。HUD 隐藏后采样自动停止，超过 3 秒缓存不再显示为有效读数。
+
+便携功能参考 endjynn/frame-pacer；混合等待参考 supcherski 的 FramePacer 1.2。**不包含 Linux preload/Steam 注入、cgroup 每线程 CPU 配额，也不附带或安装该 Mod JAR**。如果已安装其他修改同一原生限帧方法的 Mod，应只启用一个原生限帧实现，避免 Mixin/Agent 顺序冲突；不能宣称已验证两者并装。
+
+## 构建、回归与测量
 
 ```bash
 python -X utf8 tools/framegen-agent/build.py
-python -X utf8 tools/framegen-agent/test.py --skip-build --gpu
-dotnet test PCL.Core.Test/PCL.Core.Test.csproj -c Release --filter FullyQualifiedName~FrameGenerationPolicyTest
+python -X utf8 tools/framegen-agent/test.py --skip-build --gpu --overlay
+python -X utf8 tools/framegen-agent/test.py --skip-build --gpu --benchmark
+dotnet build "Plain Craft Launcher 2/Plain Craft Launcher 2.csproj" -c Release -p:UseSharedCompilation=false
 ```
 
-需要 PATH 中可用的 Python、JDK javac/java、.NET 10 SDK。构建用 SHA256 固定版本校验下载 ASM/LWJGL，临时文件优先放 `PI_SCRATCH_DIR`。MSBuild 自动构建并嵌入 Agent；运行游戏不联网下载。
+需要 Python、JDK 9+ javac/java 和 .NET 10 SDK；Agent 自有代码为 Java 8 字节码。依赖固定版本并验 SHA256，运行游戏不联网下载。MSBuild 自动嵌入 `tools/framegen-agent/build/pcl-moon-framegen-agent.jar`，临时产物使用 `PI_SCRATCH_DIR`，构建目录已忽略。
 
-- 输出：`tools/framegen-agent/build/pcl-moon-framegen-agent.jar`，已 gitignore。
-- `test.py` 的 11 个场景验证真正的 `-javaagent` / bootstrap 桥接 / 隔离类加载路径，并使用可控 GLFW 替身检查调度、回退、禁用、失焦、超预算、窗口释放、长间隔不补播，以及受控阻塞期间实际输出长帧诊断。替身通过不等于游戏兼容。
-- `--gpu` 使用测试专用 Windows x64 LWJGL natives，创建隐藏 3.2 和 3.3 核心上下文，检查真实中间位移、排除简单混帧/重复帧、GL 状态/MRT/已有 timer query、场景切换、缩放和重复释放。仅测试代码读回像素；natives 不打包进 Agent。
-- 已验证：RTX 2080 SUPER / NVIDIA 595.79，3.2、3.3 核心上下文；半位移图像 MAE 约 `0.00108`，简单混帧对照约 `0.09571`。这是合成输入的正确性测试，不是游戏 FPS 提升或核显性能基准。
-- 已验证：13 项 C# 启动策略测试，以及启动器 Release 构建（0 错误，现有仓库有大量警告）。
-- 另用临时下载的 LWJGL 3.2.2 重跑了上述 3.2/3.3 GPU 图像与状态测试，均通过；其在当前 Java 21 下出现旧 LWJGL 的 JNI 版本警告。本结果不是 Minecraft 1.16.5 + Java 8 的实机验证。
+已执行的验证：
 
-高级参数：`-Dpclmoon.framegen.outputFps=60`（范围 30–240）；手动使用 Agent 时可传 `-Dpclmoon.framegen.enabled=false -Dpclmoon.framegen.diagnostics=true` 只采样不插帧。
+- 19 个真实 `-javaagent` 替身场景，包含独立限帧、插帧组合上限、低上限暂停插帧、30 FPS 输入/240 目标、多倍率不同 alpha、实际提交计数、停顿归零、预算降级、运行时设置、异常回退和窗口释放。
+- 原生 transformer 的单帧位置、限帧协调/恢复、tick/异常不变、重复转换不叠加测试；并只读验证所提供实例的真实 intermediary 类可转换。
+- 可控时钟覆盖全部 1–999 FPS、三种末段精度、提前/延迟唤醒、中断、停顿不追帧与截止时间合并；UTF-8 配置继承/保存/恢复/等价变化和采样生命周期测试通过（符号链接用例跳过）。
+- 本机 NVIDIA 硬件采样确认能读取显卡占用和温度；启动器策略测试 21 项通过。
+- 真实 Swing 设置/FPS HUD 交互和真实 GLFW 窗口附着、移动、最小化、销毁；不是完整 Minecraft 游玩测试。
+- RTX 2080 SUPER / NVIDIA 595.79 的 OpenGL 3.2/3.3 core 图像/GL 状态/MRT/query/cut/resize/close 回归。8 像素位移的中点 MAE 约 0.0010；画质档 32 像素位移约 0.0303（门槛 0.035），并验证 1/4、1/2、3/4 三个位置。独立运动遮挡的完整游戏画质尚未验证。
+- 启动器 Release 构建 0 错误；仓库仍有大量警告。
 
-## 实现与许可
+同机合成输入基准，均衡/160 宽，预热 10 次、测 40 次；测试专用 `glFinish` 排除输入画面绘制并测完成墙钟时间，**不是实际游戏 FPS 提升**：
 
-`GlfwTransformer` 只包装 LWJGL 的非 native `glfwSwapBuffers` / `glfwDestroyWindow`，不重转换已加载的类，不改 JDK。bootstrap 桥接本身不依赖 LWJGL；渲染器通过以游戏 GLFW 类加载器为父的隔离加载器，使用游戏自带 LWJGL。ASM 被私有重定位，避免干扰 mod 加载器。
+| 输出尺寸 | 本轮前单张生成完成墙钟 | 新版单张 | 新版三张（复用运动场） |
+|---|---:|---:|---:|
+| 1280×720 | 1.006ms | 0.775ms | 0.875ms |
+| 1920×1080 | 0.865ms | 0.925ms | 1.516ms |
 
-参考研究：<https://github.com/Screamix1/FrameGen>。该项目源码采用深度重投影外推，当前源码明确适配 NeoForge 1.21.1；本模块独立实现图像空间块匹配，不复制其 LGPL 源码或着色器。依赖声明见 `THIRD-PARTY-NOTICES.md`。
+单张 1080p 并未全面变快；主要收益在限帧冲突修复、不会全部跳过慢输入，以及多张生成复用运动场。当前异步 GPU 查询约 0.35/0.44ms，计量运动估计和首次合成，不含全部 CPU 开销。驱动调度/背景负载会带来波动，不做无依据的性能承诺。
+
+## 参考与许可
+
+研究了 Screamix1/FrameGen（深度重投影外推）和用户提供的 Squirrel-RIFE。后者主应用 GPLv3、RIFE 子目录 MIT；本地目录没有模型权重，也没有实时游戏 GPU 互操作链路，离线 Python/视频队列不能直接充当低延迟游戏后端。本模块独立实现通用多尺度匹配，不包含它们的源码、模型或神经推理后端。第三方依赖声明见 `THIRD-PARTY-NOTICES.md`。
+
+高级 JVM 属性前缀 `pclmoon.framegen.`：`enabled`、`diagnostics`、`overlay`、`showFps`、`outputFps`、`multiplier`、`quality`、`flowWidth`、`gpuBudgetMs`、`stallThresholdMs`、`adaptivePacing`、`lowFpsProtection`、`nativeFrameControl`、`fpsLimit`、`waitMode`（0/1/2）、`telemetry`、`profileGlobal`、`profile`；`disabled=true` 强制停用整个 Agent。手动加载 Agent 若要工具层，传 `-Dpclmoon.framegen.overlay=true`。

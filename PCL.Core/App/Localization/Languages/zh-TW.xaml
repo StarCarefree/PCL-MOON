@@ -2762,6 +2762,10 @@
     <sys:String x:Key="Setup.Launch.Advanced.FrameGeneration.ToolTip">下次啟動生效。以通用 OpenGL 3.2 雙向區塊比對產生中間影格，無 NVIDIA 專屬相依。目標呈現 60 FPS、實際算繪約 30 FPS，會增加延遲及顯卡負擔，HUD 也參與插值。建議遊戲影格上限不低於 60；過慢、失焦或超出預算時跳過。無法消除 GC/主執行緒停頓。不支援 Vulkan；1.16.5–26.3 尚未逐版本及顯卡實測。</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.FrameDiagnostics">記錄遊戲長影格診斷（定位瞬間 0 FPS）</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.FrameDiagnostics.ToolTip">下次啟動生效，可獨立於插幀啟用。偵測超過 250ms 的呈現間隔，在啟動日誌輸出 [PCL FrameTime]、GC 時間變化與算繪執行緒堆疊。僅取樣，不自動修改 JVM 或遊戲設定；載入與切換視窗亦可能產生長間隔。</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.FrameSettingsButton">在遊戲視窗顯示插幀設定齒輪</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.FrameSettingsButton.ToolTip">下次啟動生效。遊戲視窗右上角顯示齒輪，可即時開關插幀、長影格診斷與調整目標 FPS，僅作用於本次遊戲。先按 Esc 釋放滑鼠再點擊。切換其他應用時隱藏，隨遊戲視窗移動與關閉；獨佔全螢幕可能遮住疊加層，建議視窗或無邊框模式。顯示按鈕不會自動開啟插幀。</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.FramePacing">啟用獨立限幀與實例設定支援</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.FramePacing.ToolTip">下次啟動載入影格節奏元件，即使未開啟插幀。預設不限幀；在遊戲齒輪或實例設定中指定 1–999 FPS，0 為關閉。精確模式會額外佔用 CPU。此選項控制獨立載入；元件因插幀或齒輪已載入時，仍可使用限幀。不會修改遊戲設定或啟用 Linux 執行緒配額。</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.DisableLwjglUnsafeAgent">停用 LWJGL Unsafe Agent</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.DisableLwjglUnsafeAgent.ToolTip">Minecraft 26.1 使用了 LWJGL 3.4.1，LWJGL 3.4.1 使用了 FFM API 以在 JDK 25+ 上存取原生記憶體。由於 JDK 最佳化能力限制，某些情況下這會產生嚴重的效能問題。&#xA;PCL-MOON 會使用 LWJGL Unsafe Agent 修復這個問題，以解決可能存在的效能問題。&#xA;一般情況下沒有停用該選項的必要，但如果你遇到了額外問題，也可以嘗試暫時停用該選項以排查錯誤。&#xA;&#xA;該功能僅會在 LWJGL 版本為 3.4.1 時生效。</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.PrefetchFiles">啟動前預讀遊戲檔案</sys:String>
