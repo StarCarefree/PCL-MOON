@@ -629,7 +629,7 @@ internal sealed class LauncherLibrary : IDisposable
                 await Task.Delay(400);
             }
             if (loader.State != ModBase.LoadState.Finished && VanillaInstance(minecraft) is null)
-                throw new InvalidOperationException(DownloadRegionPolicy.RegionBlockMessage(loader.Error) ?? loader.Error?.Message ?? "原版下载没有完成。");
+                throw new InvalidOperationException(loader.Error?.Message ?? "原版下载没有完成。");
         }
         ModInstanceList.mcInstanceListForceRefresh = true;
         await Task.Run(() => ModInstanceList.mcInstanceListLoader.WaitForExit(ModFolder.mcFolderSelected, isForceRestart: true));

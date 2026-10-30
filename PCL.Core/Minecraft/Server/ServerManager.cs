@@ -244,8 +244,6 @@ public sealed class ServerManager
                         if (!Path.GetFullPath(installerJar).Equals(jar, StringComparison.OrdinalIgnoreCase)) File.Copy(installerJar, jar, true);
                     }
                     else await DownloadInstallerAsync(profile, jar, session, token).ConfigureAwait(false);
-                    // Fabric/NeoForge 安装器运行时会下载原版服务端 JAR，同样受出口地区限制
-                    await DownloadRegionPolicy.EnsureAllowedAsync(_http, token).ConfigureAwait(false);
                      await session.RunInstallerAsync(ServerCommands.Installer(profile, directory, jar, JavaTempDirectory), token).ConfigureAwait(false);
                 }
                 token.ThrowIfCancellationRequested();
@@ -426,7 +424,6 @@ public sealed class ServerManager
     private async Task DownloadDirectCoreAsync(ServerProfile profile, string directory, ServerSession session, CancellationToken token)
     {
          if (string.IsNullOrWhiteSpace(profile.MinecraftVersion)) throw new ArgumentException("请填写精确的 Minecraft 版本。");
-         if (profile.Loader == ServerLoader.Vanilla) await DownloadRegionPolicy.EnsureAllowedAsync(_http, token).ConfigureAwait(false);
          if (profile.Loader == ServerLoader.Spigot && string.IsNullOrWhiteSpace(profile.LoaderVersion))
              throw new ArgumentException("请选择 Spigot 版本。");
          var notice = ServerCoreCatalog.MirrorNotice(profile.Loader, DownloadSource);

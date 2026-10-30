@@ -199,6 +199,16 @@ public static class ModWatcher
         /// </summary>
         public List<string> fullLog = new();
 
+        private readonly object fullLogLock = new();
+
+        /// <summary>
+        ///     获取 fullLog 的快照，避免读取时与日志线程的写入冲突。
+        /// </summary>
+        public string[] GetFullLog()
+        {
+            lock (fullLogLock) return fullLog.ToArray();
+        }
+
         // 初始化
         public Process gameProcess;
 
@@ -337,7 +347,8 @@ public static class ModWatcher
                 waitingLog.Add(e.Data);
             }
 
-            if (e.Data is not null) fullLog.Add(e.Data);
+            if (e.Data is not null)
+                lock (fullLogLock) fullLog.Add(e.Data);
             if (realTime)
             {
                 LogRealTime(e.Data, ref lastLevel);
