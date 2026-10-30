@@ -3989,9 +3989,9 @@ Additionally, you must also agree to the PCL-MOON lobby privacy policy and the N
     <sys:String x:Key="Tools.Test.Crash.Title">Crash test</sys:String>
     <sys:String x:Key="Tools.Test.Dependency.Checking">Checking environment...</sys:String>
     <sys:String x:Key="Tools.Test.Dependency.Later">Later</sys:String>
-    <sys:String x:Key="Tools.Test.Dependency.MissingMessage">Required dependency &quot;{0}&quot; is missing.
+    <sys:String x:Key="Tools.Test.Dependency.MissingMessage">当前系统环境缺失软件运行所需依赖&quot;{0}&quot;
 
-Click OK to open the Microsoft download page.</sys:String>
+点击确定打开微软官网下载安装</sys:String>
     <sys:String x:Key="Tools.Test.Dependency.Title">Dependency check</sys:String>
     <sys:String x:Key="Tools.Test.Error.OperationFailed">A test utility operation failed. See the details below.</sys:String>
     <sys:String x:Key="Tools.Test.LaunchCount.Message">PCL-MOON has launched games for you {0} times.</sys:String>
