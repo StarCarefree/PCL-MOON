@@ -92,7 +92,11 @@ public partial class FormMain
     internal void SetBrowseVisible(bool visible)
     {
         if (PanBrowse is null) return;
-        if (visible) HybridMultiplayerView.Visibility = Visibility.Collapsed;
+        if (visible)
+        {
+            HybridMultiplayerView.Visibility = Visibility.Collapsed;
+            BtnExtraShutdown.ShowRefresh();
+        }
         PanBrowse.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
         var covered = visible || HybridMultiplayerView.Visibility == Visibility.Visible;
         PanMain.Visibility = covered ? Visibility.Hidden : Visibility.Visible;
@@ -106,6 +110,7 @@ public partial class FormMain
     internal void SetMultiplayerVisible(bool visible)
     {
         HybridMultiplayerView.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
+        BtnExtraShutdown.ShowRefresh();
         var covered = visible || _webUi.IsPresented;
         PanMain.Visibility = covered ? Visibility.Hidden : Visibility.Visible;
         PanMain.IsHitTestVisible = !covered;
@@ -236,7 +241,8 @@ public partial class FormMain
         {
             if (e.Route == "instance" && e.Instance is not null)
             {
-                if (ModMain.frmLaunchLeft?.PanLaunching.Visibility == Visibility.Visible)
+                // 点击正在启动的实例时保留启动进度，只在切到其他实例时退出进度页
+                if (ModMain.frmLaunchLeft?.PanLaunching.Visibility == Visibility.Visible && !ModLaunch.IsInstanceLaunching(e.Instance))
                     ModMain.frmLaunchLeft.PageChangeToLogin();
                 LauncherLibrary.SelectInstance(e.Instance);
                 await NavigateHybridAsync("games");

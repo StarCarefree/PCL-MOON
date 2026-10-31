@@ -156,9 +156,10 @@ public partial class HybridSidebar : UserControl
         NavigationRequested?.Invoke(this, new HybridNavigationEventArgs("instanceSettings", entry.Instance));
     }
 
-    private static bool IsVersionGear(DependencyObject? node)
+    private bool IsVersionGear(DependencyObject? node)
     {
-        var gear = Application.Current?.TryFindResource("Hybrid.VersionGear");
+        // 样式只在本控件资源中，从 Application 查找会得到 null 而误判
+        if (TryFindResource("Hybrid.VersionGear") is not Style gear) return false;
         while (node is not null and not ListBoxItem)
         {
             if (node is FrameworkElement element && ReferenceEquals(element.Style, gear)) return true;

@@ -2266,8 +2266,9 @@ public partial class FormMain
     public bool BtnExtraShutdown_ShowCheck()
     {
         var launchLeft = ModMain.frmLaunchLeft;
-        // 启动面板上已有关闭按钮或取消按钮时不重复显示
-        return ModWatcher.hasRunningMinecraft && launchLeft?.BtnShutdown.IsVisible != true && launchLeft?.PanLaunching.IsVisible != true;
+        // 启动面板上已有关闭按钮或取消按钮时不重复显示，多人游戏页也不显示
+        return ModWatcher.hasRunningMinecraft && launchLeft?.BtnShutdown.IsVisible != true && launchLeft?.PanLaunching.IsVisible != true
+               && HybridMultiplayerView.Visibility != Visibility.Visible;
     }
 
     // 游戏日志
