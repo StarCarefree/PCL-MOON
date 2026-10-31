@@ -72,7 +72,7 @@ public sealed class WebHostCompatibilityTest
         Assert.IsFalse(LauncherPageCatalog.Find("download.forge")!.WebImplemented);
         Assert.AreEqual(LauncherPageCatalog.Download, LauncherPageCatalog.Find("download.forge")!.NativePage);
         Assert.AreEqual(11, LauncherPageCatalog.Find("download.forge")!.NativeSubType);
-        Assert.AreEqual(1, LauncherPageCatalog.Find("tools.lobby")!.NativeSubType);
+        Assert.IsNull(LauncherPageCatalog.Find("tools.lobby"));
         Assert.AreEqual(3, LauncherPageCatalog.Find("tools.test")!.NativeSubType);
         Assert.IsNull(LauncherPageCatalog.Find("missing"));
     }

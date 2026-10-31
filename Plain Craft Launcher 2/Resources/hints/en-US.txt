@@ -1023,8 +1023,6 @@ PCL CE allows modifying save game difficulty, command permission, and difficulty
 
 PCL CE supports translating mod descriptions.
 
-PCL CE's multiplayer feature uses EasyTier for P2P hole punching.
-
 PCL CE can upgrade a game instance's Authlib during installation to fix Minecraft 1.16.5's multiplayer issues.
 
 Press F12 to temporarily re-display hidden settings.

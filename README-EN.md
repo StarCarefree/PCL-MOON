@@ -31,7 +31,6 @@ Version numbers do not track PCL or PCL CE. Report PCL-MOON issues to [this repo
 - **Native shell**: accounts, launch, the instance list, and instance settings stay on .NET 10 / WPF. WebView2 only supplements Browse. It does not cover the title bar or sidebar.
 - **Resource browse**: datapacks, maps, modpacks, shaders, and resource packs. MCL, CurseForge, Modrinth, and MCMod can be selected together. Downloads open the existing file list; the player chooses the version.
 - **Modpack catalog**: configure one `index.json` primary source and up to eight fallbacks. The first valid source wins; sources are not merged. A Quark share saves only the selected `.mrpack` / `.zip` into the drive folder `PCL-MOON`, and only after the user agrees to authorize.
-- **Multiplayer rooms**: the coordinator exchanges room, member, and route configuration. It does not relay game traffic, and it is not an FRP, ZeroTier, or EasyTier server. Hosts can publish IPv6, FRP, XTCP, ZeroTier, and EasyTier routes. One-click join is not available yet.
 - **Server management**: servers live under `servers/<id>/` in the launcher directory, separate from client instances, mods, and accounts. Vanilla, Paper, Purpur, or an author-provided server pack can be installed, with a console and `server.properties`. The launcher does not open firewall ports or port mappings.
 - **Launch animation**: on by default. Turn it off under Settings → Personalization → Basic. The original progress panel remains, and launching the game is unchanged.
 
@@ -79,14 +78,13 @@ Portable package:
 .\scripts\Publish-Portable.ps1 -Architecture x64 -Configuration Release -FixedRuntimeDirectory <FixedVersion-root>
 ```
 
-Build `x64` and `arm64` separately. The catalog service and room coordinator live in `pcl-moon-cloud/` and need Java 17 or later. See [pcl-moon-cloud/README.md](pcl-moon-cloud/README.md).
+Build `x64` and `arm64` separately. The catalog service lives in `pcl-moon-cloud/` and need Java 17 or later. See [pcl-moon-cloud/README.md](pcl-moon-cloud/README.md).
 
 ## Docs
 
 - [Native shell and browse page](docs/hybrid-ui.md)
 - [Five resource types](docs/resource-browse.md)
 - [Modpack catalog sources](docs/catalog-sources.md)
-- [Multiplayer rooms](docs/multiplayer-rooms.md)
 - [Server management](docs/server-management.md)
 - [Server core sources](docs/server-core-sources.md)
 - [Launch animation](docs/game-launch-animation.md)

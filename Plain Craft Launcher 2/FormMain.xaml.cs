@@ -217,7 +217,6 @@ public partial class FormMain
 
         var hwndSource = (HwndSource)PresentationSource.FromVisual(this);
         hwndSource.AddHook(WndProc);
-        AddClipboardFormatListener(hwndSource.Handle);
 
         ModAnimation.AniStart(new[]
         {
@@ -542,8 +541,6 @@ public partial class FormMain
                 return;
         }
 
-        // 关闭联机大厅
-        // Await LobbyController.CloseAsync().ConfigureAwait(False)
         // 关闭
         ModBase.RunInUiWait(() =>
         {
@@ -600,8 +597,6 @@ public partial class FormMain
         bool force = true, bool isUpdating = false)
     {
         // On Error Resume Next
-        // 关闭联机大厅
-        // Await LobbyController.CloseAsync().ConfigureAwait(False)
         ModBase.isProgramEnded = true;
         ModAnimation.AniControlEnabled += 1;
         if (UpdateManager.isUpdateWaitingRestart && !isUpdating)
@@ -1294,42 +1289,9 @@ public partial class FormMain
                     (ThemeManager.IsDarkMode != SystemTheme.IsSystemInDarkMode())) ThemeService.RefreshColorMode();
             }
         }
-        else if (msg == 0x031D && isWindowLoadFinished) // WM_CLIPBOARDUPDATE
-        {
-            TryPromptCopiedRoomInvite();
-        }
 
         return nint.Zero;
     }
-
-    private string? _promptedClipboard;
-    private bool _promptingClipboard;
-
-    private void TryPromptCopiedRoomInvite()
-    {
-        if (_promptingClipboard || !Clipboard.ContainsText()) return;
-        string text;
-        try { text = Clipboard.GetText(); }
-        catch (ExternalException) { return; }
-        var code = RoomFlowPresentation.RoomInviteCode(text);
-        if (code is null || text == _promptedClipboard || HybridRoomsView.OwnsClipboard(text)) return;
-        _promptedClipboard = text;
-        _promptingClipboard = true;
-        try
-        {
-            ShowWindowToTop();
-            _ = NavigateHybridAsync("rooms");
-            UpdateHybridShell();
-            HybridMultiplayerView.SelectRooms();
-            HybridRoomsView.OfferJoin(code);
-        }
-        finally { _promptingClipboard = false; }
-
-    }
-
-    [DllImport("user32.dll", SetLastError = true)]
-    private static extern bool AddClipboardFormatListener(nint hwnd);
-
 
     // 窗口隐藏与置顶
     public bool Hidden
@@ -1513,13 +1475,11 @@ public partial class FormMain
         SetupAbout = 4,
         SetupLog = 5,
         SetupFeedback = 6,
-        SetupGameLink = 7,
         SetupUpdate = 8,
         SetupJava = 9,
         SetupLauncherMisc = 10,
         SetupLauncherLanguage = 11,
 
-        ToolsGameLink = 1,
         ToolsTest = 3,
 
         VersionOverall = 0,
@@ -1741,7 +1701,7 @@ public partial class FormMain
     public void PageChange(PageStackData stack, PageSubType subType = PageSubType.Default)
     {
         _webUi.Hide();
-        SetRoomsVisible(false);
+        SetMultiplayerVisible(false);
         if (string.IsNullOrEmpty(PageNameGet(stack)))
         {
             // 切换到主页面

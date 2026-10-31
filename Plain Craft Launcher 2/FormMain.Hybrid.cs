@@ -18,7 +18,6 @@ public partial class FormMain
     private bool? _hybridGameLayout;
     private string? _hybridVersionPath;
     private string? _hybridVersionsFolder;
-    private HybridRooms HybridRoomsView => HybridMultiplayerView.Rooms;
     private bool _hybridShellStale;
 
     private void InitializeHybridShell()
@@ -36,7 +35,6 @@ public partial class FormMain
             _hybridTimer.Stop();
             _hybridTimer.Tick -= HybridTick;
             _webUi.Dispose();
-            HybridRoomsView.Dispose();
         };
         HybridAccountView.Closed += (_, _) => UpdateHybridShell();
         // 最小化/隐藏期间跳过的侧栏刷新在恢复时补一次
@@ -75,15 +73,8 @@ public partial class FormMain
         try
         {
             InstanceActivity.Tick();
-            if (dormant)
-            {
-                _hybridShellStale = true;
-                UpdateHybridRoomsPresence();
-            }
-            else
-            {
-                UpdateHybridShell();
-            }
+            if (dormant) _hybridShellStale = true;
+            else UpdateHybridShell();
         }
         catch (Exception ex) { ModBase.Log(ex, "更新原生侧栏失败", ModBase.LogLevel.Debug); }
         if (dormant || _packCheckRunning || PanMsgBackground.Visibility == Visibility.Visible || ModLaunch.isLaunching) return;
@@ -112,14 +103,12 @@ public partial class FormMain
         UpdateHybridShell();
     }
 
-    internal void SetRoomsVisible(bool visible)
+    internal void SetMultiplayerVisible(bool visible)
     {
-        var show = visible && HybridMultiplayerView.Visibility != Visibility.Visible;
         HybridMultiplayerView.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
         var covered = visible || _webUi.IsPresented;
         PanMain.Visibility = covered ? Visibility.Hidden : Visibility.Visible;
         PanMain.IsHitTestVisible = !covered;
-        if (show) HybridRoomsView.PlayPageSwitch();
         UpdateHybridShell();
     }
 
@@ -147,20 +136,12 @@ public partial class FormMain
         catch (Exception ex) { ModBase.Log(ex, "更新启动中的版本列表失败", ModBase.LogLevel.Debug); }
     }
 
-    private void UpdateHybridRoomsPresence()
-    {
-        if (HybridSidebarView is null || PanMain is null) return;
-        var account = ProfileService.Current;
-        var skin = account is null ? null : ModMain.frmLoginProfileSkin?.Skin;
-        HybridRoomsView.UpdateLocalState(account?.UserName ?? "Player", skin?.ImgBack?.Source, skin?.ImgFore?.Source, ModInstanceList.McMcInstanceSelected);
-    }
-
     internal void UpdateHybridShell()
     {
         if (HybridSidebarView is null || PanMain is null) return;
         var browse = _webUi.IsPresented;
         var page = (PageType)pageCurrent;
-        var route = HybridMultiplayerView.Visibility == Visibility.Visible ? "rooms" : browse ? "browse" : page switch
+        var route = HybridMultiplayerView.Visibility == Visibility.Visible ? "multiplayer" : browse ? "browse" : page switch
         {
             PageType.Download or PageType.CompDetail => "download",
             PageType.Setup => "settings",
@@ -172,7 +153,7 @@ public partial class FormMain
         var nextSection = route switch
         {
             "browse" => Lang.Text("Hybrid.Browse"),
-            "rooms" => "多人游戏",
+            "multiplayer" => "多人游戏",
             "settings" => Lang.Text("Main.Tab.Settings"),
             "download" => Lang.Text("Main.Tab.Download"),
             "tools" => Lang.Text("Main.Tab.Tools"),
@@ -197,7 +178,6 @@ public partial class FormMain
         HybridSidebarView.UpdateAccount(account?.UserName ?? Lang.Text("Hybrid.NotLoggedIn"),
             skin?.ImgBack?.Source, skin?.ImgFore?.Source);
         var selected = ModInstanceList.McMcInstanceSelected;
-        HybridRoomsView.UpdateLocalState(account?.UserName ?? "Player", skin?.ImgBack?.Source, skin?.ImgFore?.Source, selected);
         var versionPath = selected?.PathInstance ?? "";
         var versionChanged = _hybridVersionPath is not null && !string.Equals(_hybridVersionPath, versionPath, StringComparison.OrdinalIgnoreCase);
         _hybridVersionPath = versionPath;
@@ -284,7 +264,7 @@ public partial class FormMain
         if (route == "browse") { await ShowWebUiAsync(); return; }
         switch (route)
         {
-            case "rooms": _webUi.Hide(); SetRoomsVisible(true); break;
+            case "multiplayer": _webUi.Hide(); SetMultiplayerVisible(true); break;
             case "games":
                 _webUi.Hide();
                 var replayGames = (PageType)pageCurrent == PageType.Launch;

@@ -73,7 +73,7 @@ public partial class PageLaunchRight
                 break;
             case "actions":
                 var actions = new WrapPanel();
-                foreach (var (name, route) in new[] { ("＋ 安装版本", "download"), ("▦ 游戏管理", "versions"), ("↓ 下载任务", "tasks"), ("⌁ 联机大厅", "rooms"), ("⚙ 启动设置", "settings") })
+                foreach (var (name, route) in new[] { ("＋ 安装版本", "download"), ("▦ 游戏管理", "versions"), ("↓ 下载任务", "tasks"), ("⌁ 多人游戏", "multiplayer"), ("⚙ 启动设置", "settings") })
                 {
                     var button = DashboardToolButton(name, () => DashboardNavigate(route));
                     button.Margin = new Thickness(0, 0, 8, 8);
