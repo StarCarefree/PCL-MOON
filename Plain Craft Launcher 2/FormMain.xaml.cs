@@ -8,6 +8,7 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using PCL.Core.App;
+using PCL.Core.App.Essentials;
 using PCL.Core.Minecraft.Profile;
 using PCL.Core.App.IoC;
 using PCL.Core.App.Localization;
@@ -164,6 +165,12 @@ public partial class FormMain
         ModBase.Log("[Start] 第二阶段加载用时：" + (TimeUtils.GetTimeTick() - ModBase.applicationStartTick) + " ms");
         // 注册生命周期状态事件
         Lifecycle.When(LifecycleState.WindowCreated, FormMain_Loaded);
+        // 从其他目录打开启动器时，由新实例请求关闭当前实例
+        RpcService.AddFunction("exit", (_, _, _) =>
+        {
+            ModBase.RunInUi(() => EndProgram(false));
+            return RpcResponse.EmptySuccess;
+        });
     }
 
     private void FormMain_Loaded() // (sender As Object, e As RoutedEventArgs) Handles Me.Loaded
