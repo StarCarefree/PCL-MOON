@@ -57,6 +57,7 @@ public partial class PageLaunchLeft
         BtnMore.Click += BtnMore_Click;
         RefreshShutdown();
         BtnShutdown.IsVisibleChanged += (_, _) => ModMain.frmMain?.BtnExtraShutdown.ShowRefresh();
+        PanLaunching.IsVisibleChanged += (_, _) => ModMain.frmMain?.BtnExtraShutdown.ShowRefresh();
         Unloaded += (_, _) => _updatePulse?.Stop();
     }
 
