@@ -974,17 +974,27 @@ public static partial class ModLaunch
     private static Task<bool> _ConfirmMicrosoftRefreshFailureAsync(Exception exception, CancellationToken token)
     {
         token.ThrowIfCancellationRequested();
-        LogWrapper.Info("Profile","获取正版 OAuth Token 失败：" + exception);
+        LogWrapper.Info("Profile","刷新正版账号失败：" + exception);
         var reuseCachedProfile = false;
         ModBase.RunInUiWait(() =>
         {
             if (!isLaunching) return;
+            var message = exception switch
+            {
+                IdentityModelAuthenticationException => Lang.Text(
+                    "Minecraft.Launch.Login.RefreshAccountFailed.AuthenticationMessage", exception.Message),
+                System.Net.Http.HttpRequestException or TimeoutException => Lang.Text(
+                    "Minecraft.Launch.Login.RefreshAccountFailed.Message"),
+                _ => Lang.Text("Minecraft.Launch.Login.RefreshAccountFailed.OtherMessage", exception.Message)
+            };
             reuseCachedProfile = ModMain.MyMsgBox(
-                Lang.Text("Minecraft.Launch.Login.RefreshAccountFailed.Message"),
+                message,
                 Lang.Text("Minecraft.Launch.Login.RefreshAccountFailed.Title"), Lang.Text("Minecraft.Launch.Login.Continue"),
                 Lang.Text("Common.Action.Cancel")) == 1;
         });
-        return Task.FromResult(reuseCachedProfile);
+        token.ThrowIfCancellationRequested();
+        if (!reuseCachedProfile) throw new ThreadInterruptedException();
+        return Task.FromResult(true);
     }
 
 

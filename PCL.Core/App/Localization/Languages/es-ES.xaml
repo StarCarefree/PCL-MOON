@@ -12,4 +12,6 @@
 
     <sys:String x:Key="Setup.Launch.Advanced.PrefetchFiles">Lectura previa de archivos del juego al iniciar</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.PrefetchFiles.ToolTip">Durante el inicio, lee en segundo plano los archivos de mods y otros en la caché del sistema con prioridad de E/S baja, reduciendo la espera de disco en arranques en frío (por ejemplo, el primer inicio tras encender el equipo). Se omite automáticamente si hay poca memoria disponible. Desactívelo si nota que es más lento con un disco duro mecánico.</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Login.RefreshAccountFailed.AuthenticationMessage">El servicio de autenticación rechazó la solicitud de actualización de la cuenta.&#xA;{0}&#xA;&#xA;Puedes cancelar este inicio o continuar con los datos de inicio de sesión guardados, pero los servidores que requieren autenticación en línea podrían no estar disponibles.</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Login.RefreshAccountFailed.OtherMessage">Se produjo un error al actualizar la información de la cuenta.&#xA;{0}&#xA;&#xA;Puedes cancelar este inicio o continuar con los datos de inicio de sesión guardados, pero los servidores que requieren autenticación en línea podrían no estar disponibles.</sys:String>
 </ResourceDictionary>

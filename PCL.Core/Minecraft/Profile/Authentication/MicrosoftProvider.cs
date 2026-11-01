@@ -52,13 +52,8 @@ public sealed class MicrosoftProvider : IAuthenticateProvider
     public async Task<AuthorizeResult?> PollDeviceCodeAsync(DeviceCodeData data, CancellationToken token)
     {
         ArgumentNullException.ThrowIfNull(data);
-        using var response = await HttpRequest.CreatePost(TokenEndpoint)
-            .WithContent(new FormUrlEncodedContent(WithSecret(new Dictionary<string, string>
-            {
-                ["client_id"] = _clientId,
-                ["grant_type"] = "urn:ietf:params:oauth:grant-type:device_code",
-                ["device_code"] = data.DeviceCode ?? string.Empty
-            })))
+        using var response = await CreateTokenRequest("urn:ietf:params:oauth:grant-type:device_code",
+                "device_code", data.DeviceCode ?? string.Empty)
             .SendAsync(NetworkService.GetClient(NetworkService.MicrosoftEntraId), cancellationToken: token)
             .ConfigureAwait(false);
         var result = await response.AsJsonAsync<AuthorizeResult>(cancellationToken: token).ConfigureAwait(false);
@@ -101,14 +96,8 @@ public sealed class MicrosoftProvider : IAuthenticateProvider
     public async Task<AuthorizeResult> RefreshOAuthAsync(string refreshToken, CancellationToken token)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(refreshToken);
-        using var response = await HttpRequest.CreatePost(TokenEndpoint)
-            .WithContent(new FormUrlEncodedContent(WithSecret(new Dictionary<string, string>
-            {
-                ["client_id"] = _clientId,
-                ["grant_type"] = "refresh_token",
-                ["refresh_token"] = refreshToken,
-                ["scope"] = "XboxLive.signin offline_access"
-            })))
+        using var response = await CreateTokenRequest("refresh_token", "refresh_token", refreshToken,
+                "XboxLive.signin offline_access")
             .SendAsync(NetworkService.GetClient(NetworkService.MicrosoftEntraId), cancellationToken: token)
             .ConfigureAwait(false);
         var result = await response.AsJsonAsync<AuthorizeResult>(cancellationToken: token).ConfigureAwait(false)
@@ -118,12 +107,20 @@ public sealed class MicrosoftProvider : IAuthenticateProvider
         return result with { RefreshToken = result.RefreshToken ?? refreshToken };
     }
 
-    private static Dictionary<string, string> WithSecret(Dictionary<string, string> fields)
+    internal HttpRequestMessage CreateTokenRequest(string grantType, string credentialName, string credential,
+        string? scope = null)
     {
-        if (!string.IsNullOrWhiteSpace(Secrets.MSOAuthClientSecret))
-            fields["client_secret"] = Secrets.MSOAuthClientSecret;
-        return fields;
+        // 设备码登录属于公共客户端，刷新和换取令牌时均不能附带 client_secret。
+        var fields = new Dictionary<string, string>
+        {
+            ["client_id"] = _clientId,
+            ["grant_type"] = grantType,
+            [credentialName] = credential
+        };
+        if (scope is not null) fields["scope"] = scope;
+        return HttpRequest.CreatePost(TokenEndpoint).WithContent(new FormUrlEncodedContent(fields));
     }
+
     public async Task<AuthenticationResult> CompleteAsync(AuthorizeResult oauth, CancellationToken token)
     {
         if (oauth.IsError) throw new IdentityModelAuthenticationException(oauth.Error, oauth.ErrorDescription);

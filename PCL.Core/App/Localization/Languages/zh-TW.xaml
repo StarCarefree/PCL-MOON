@@ -2462,6 +2462,8 @@ PCL-MOON 的問題請向 PCL-MOON 回饋，不要提交到原版 PCL 或上游 P
     <sys:String x:Key="Minecraft.Launch.Login.PasswordRequired.Title">需要使用密碼登入</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.RefreshAccountFailed.Message">啟動器在嘗試重新整理帳戶資訊時遇到了網路錯誤。
 你可以選擇取消，檢查網路後再次啟動，也可以選擇忽略錯誤繼續啟動，但可能無法遊玩部分伺服器。</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Login.RefreshAccountFailed.AuthenticationMessage">驗證服務拒絕了帳戶重新整理請求。&#xA;{0}&#xA;&#xA;你可以選擇取消本次啟動，或使用已儲存的登入資訊繼續啟動，但可能無法遊玩需要正版驗證的伺服器。</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Login.RefreshAccountFailed.OtherMessage">重新整理帳戶資訊時發生錯誤。&#xA;{0}&#xA;&#xA;你可以選擇取消本次啟動，或使用已儲存的登入資訊繼續啟動，但可能無法遊玩需要正版驗證的伺服器。</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.RefreshAccountFailed.Title">帳戶資訊取得失敗</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.Register">註冊</sys:String>
 
