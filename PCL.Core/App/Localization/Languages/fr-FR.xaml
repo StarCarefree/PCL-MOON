@@ -2462,6 +2462,14 @@ PCL-MOON 的问题请向 PCL-MOON 反馈，不要提交到原版 PCL 或上游 P
     <sys:String x:Key="Minecraft.Launch.Login.PasswordRequired.Title">需要使用密码登录</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.RefreshAccountFailed.Message">启动器在尝试刷新账号信息时遇到了网络错误。
 你可以选择取消，检查网络后再次启动，也可以选择忽略错误继续启动，但可能无法游玩部分服务器。</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Login.RefreshAccountFailed.AuthenticationMessage">认证服务拒绝了账号刷新请求。
+{0}
+
+你可以选择取消本次启动，或使用已保存的登录信息继续启动，但可能无法游玩正版验证服务器。</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Login.RefreshAccountFailed.OtherMessage">刷新账号信息时发生错误。
+{0}
+
+你可以选择取消本次启动，或使用已保存的登录信息继续启动，但可能无法游玩正版验证服务器。</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.RefreshAccountFailed.Title">账号信息获取失败</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.Register">注册</sys:String>
 
