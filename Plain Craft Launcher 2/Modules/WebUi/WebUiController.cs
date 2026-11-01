@@ -18,6 +18,7 @@ namespace PCL;
 internal sealed partial class WebUiController : IDisposable
 {
     private WebView2? _view;
+    private HybridBrowseLoading? _loading;
     private LauncherLibrary? _library;
     private FormMain? _form;
     private DispatcherTimer? _timer;
@@ -25,6 +26,7 @@ internal sealed partial class WebUiController : IDisposable
     private DependencyPropertyDescriptor? _modalVisibility;
     private int _generation;
     private bool _ready;
+    private bool _revealed;
     private bool _disposed;
     private string _runtimeVersion = "";
     private bool _bundledRuntime;
@@ -91,8 +93,10 @@ internal sealed partial class WebUiController : IDisposable
             Environment.SetEnvironmentVariable(SystemWebView2Plan.LoaderOverride, folder);
             _runtimeVersion = CoreWebView2Environment.GetAvailableBrowserVersionString(folder);
             _library ??= new LauncherLibrary();
-            var view = new WebView2 { Focusable = true, DefaultBackgroundColor = System.Drawing.Color.FromArgb(255, 17, 19, 21) };
+            var view = new WebView2 { Focusable = true, DefaultBackgroundColor = System.Drawing.Color.FromArgb(255, 20, 20, 20) };
             _view = view;
+            _loading = new HybridBrowseLoading();
+            form.PanBrowse.Children.Add(_loading);
             form.PanBrowse.Children.Add(view);
             _modalVisibility = DependencyPropertyDescriptor.FromProperty(UIElement.VisibilityProperty, typeof(UIElement));
             _modalVisibility.AddValueChanged(form.PanMsgBackground, OnModalChanged);
@@ -132,16 +136,17 @@ internal sealed partial class WebUiController : IDisposable
             };
             core.NavigationCompleted += (_, e) => PostUi(() =>
             {
-                if (_disposed || generation != _generation || !e.IsSuccess) return;
-                _ready = true;
-                SendBootstrap(core);
-                _lastPresentation = null;
-                UpdatePresentation();
-                try { _library?.Capture(); }
-                catch (Exception ex) { ModBase.Log(ex, "浏览页首次扫描整合包失败", ModBase.LogLevel.Debug); }
-                Refresh(force: true);
-                SendPendingPluginBrowse();
-                if (IsPresented && form.PanMsgBackground.Visibility != Visibility.Visible) view.Focus();
+                if (_disposed || generation != _generation) return;
+                if (e.IsSuccess)
+                {
+                    _ready = true;
+                    SendBootstrap(core);
+                    try { _library?.Capture(); }
+                    catch (Exception ex) { ModBase.Log(ex, "浏览页首次扫描整合包失败", ModBase.LogLevel.Debug); }
+                    Refresh(force: true);
+                    SendPendingPluginBrowse();
+                }
+                Reveal(view, form, generation);
             });
             _timer = new DispatcherTimer(DispatcherPriority.Background, form.Dispatcher) { Interval = TimeSpan.FromMilliseconds(500) };
             _timer.Tick += OnTick;
@@ -168,6 +173,23 @@ internal sealed partial class WebUiController : IDisposable
         }
     }
 
+    // 页面首帧就绪后淡出骨架再显示 WebView，网页随后播放自身的进入动画
+    private void Reveal(WebView2 view, FormMain form, int generation)
+    {
+        if (_revealed) return;
+        void Show()
+        {
+            if (_disposed || generation != _generation || _revealed) return;
+            _revealed = true;
+            if (_loading is not null) { form.PanBrowse.Children.Remove(_loading); _loading = null; }
+            _lastPresentation = null;
+            UpdatePresentation();
+            if (IsPresented && form.PanMsgBackground.Visibility != Visibility.Visible) view.Focus();
+        }
+        if (_loading is null) Show();
+        else _loading.Dismiss(Show);
+    }
+
     public void Hide()
     {
         IsPresented = false;
@@ -183,8 +205,9 @@ internal sealed partial class WebUiController : IDisposable
         if (_view is null || _form is null) return;
         // A WPF overlay cannot cover WebView2's child HWND. Hide the browser during native modal dialogs.
         var visible = IsPresented && _form.PanMsgBackground.Visibility != Visibility.Visible;
-        _view.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
-        if (!_ready || _lastPresentation == visible || _view.CoreWebView2 is not { } core) return;
+        // 加载期间保持 Hidden：WebView 照常初始化和布局，但不遮住下方的骨架
+        _view.Visibility = !visible ? Visibility.Collapsed : _revealed ? Visibility.Visible : Visibility.Hidden;
+        if (!_ready || !_revealed || _lastPresentation == visible || _view.CoreWebView2 is not { } core) return;
         try
         {
             core.PostWebMessageAsJson(new JsonObject { ["type"] = "presentation", ["visible"] = visible }.ToJsonString());
@@ -368,6 +391,7 @@ internal sealed partial class WebUiController : IDisposable
     {
         ++_generation;
         _ready = false;
+        _revealed = false;
         _lastSnapshot = "";
         if (_timer is not null) { _timer.Stop(); _timer.Tick -= OnTick; _timer = null; }
         if (_form is not null)
@@ -375,7 +399,9 @@ internal sealed partial class WebUiController : IDisposable
             _form.Closed -= OnClosed;
             _modalVisibility?.RemoveValueChanged(_form.PanMsgBackground, OnModalChanged);
             if (_view is not null) _form.PanBrowse.Children.Remove(_view);
+            if (_loading is not null) _form.PanBrowse.Children.Remove(_loading);
         }
+        _loading = null;
         _modalVisibility = null;
         _view?.Dispose();
         _view = null;
