@@ -2466,6 +2466,14 @@ If this option is not available, please select {0}Set Password{1}, then log in a
     <sys:String x:Key="Minecraft.Launch.Login.PasswordRequired.Title">Password required</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.RefreshAccountFailed.Message">The launcher encountered a network error whilst trying to refresh account information.
 You can cancel, check your network, and try again, or ignore the error and continue launching, but some servers may not be playable.</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Login.RefreshAccountFailed.AuthenticationMessage">认证服务拒绝了账号刷新请求。
+{0}
+
+你可以选择取消本次启动，或使用已保存的登录信息继续启动，但可能无法游玩正版验证服务器。</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Login.RefreshAccountFailed.OtherMessage">刷新账号信息时发生错误。
+{0}
+
+你可以选择取消本次启动，或使用已保存的登录信息继续启动，但可能无法游玩正版验证服务器。</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.RefreshAccountFailed.Title">Failed to refresh account information</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.Register">Register</sys:String>
 
