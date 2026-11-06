@@ -7,9 +7,10 @@ namespace PCL.Core.Minecraft.Launcher;
 /// <summary>Experimental JAR lookup acceleration is strictly opt-in, never a default JVM tuning.</summary>
 public static class StartupAccelerationPolicy
 {
-    public static bool ShouldInject(int javaMajor, bool is64Bit, string arguments)
+    public static bool ShouldInject(int javaMajor, bool is64Bit, string arguments, bool hasForge)
     {
         if (javaMajor is not (17 or 21) || !is64Bit || string.IsNullOrEmpty(arguments)) return false;
+        if (javaMajor == 17 && !hasForge) return false;
         if (arguments.Count(ch => ch == '"') % 2 != 0 || arguments.Contains("\\\"", StringComparison.Ordinal)) return false;
         var enabled = false;
         var disabled = false;

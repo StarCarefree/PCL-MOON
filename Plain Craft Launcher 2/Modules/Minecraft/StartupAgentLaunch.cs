@@ -9,22 +9,23 @@ internal static class StartupAgentLaunch
 {
     private static readonly object ExtractLock = new();
 
-    internal static void Prepare(ProcessStartInfo process, int javaMajor, bool is64Bit)
+    internal static void Prepare(ProcessStartInfo process, int javaMajor, bool is64Bit, bool hasForge)
     {
-        if (!StartupAccelerationPolicy.ShouldInject(javaMajor, is64Bit, process.Arguments)) return;
+        if (!StartupAccelerationPolicy.ShouldInject(javaMajor, is64Bit, process.Arguments, hasForge)) return;
         try
         {
             using var resource = ModBase.GetResourceStream("Resources/pcl-moon-startup-agent.jar");
             using var buffer = new MemoryStream();
             resource.CopyTo(buffer);
             var bytes = buffer.ToArray();
-            var hash = Convert.ToHexStringLower(SHA256.HashData(bytes));
+            var digest = SHA256.HashData(bytes);
+            var hash = Convert.ToHexStringLower(digest);
             var directory = Path.Combine(ModBase.pathPure, "startup-agent");
             var path = Path.Combine(directory, "pcl-moon-startup-agent-" + hash + ".jar");
             lock (ExtractLock)
             {
                 Directory.CreateDirectory(directory);
-                if (!File.Exists(path) || !SHA256.HashData(File.ReadAllBytes(path)).AsSpan().SequenceEqual(SHA256.HashData(bytes)))
+                if (!File.Exists(path) || !SHA256.HashData(File.ReadAllBytes(path)).AsSpan().SequenceEqual(digest))
                 {
                     var pending = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
                     try
@@ -36,7 +37,7 @@ internal static class StartupAgentLaunch
                 }
             }
             process.Arguments = "-javaagent:\"" + path + "\" " + process.Arguments;
-            ModBase.Log("[Startup] 已按显式选择启用实验性启动索引/原始类读取缓存；不缓存转换结果，保留 Mod 转换与校验，实际收益以实例测试为准");
+            ModBase.Log("[Startup] 已按显式选择启用实验性启动索引/Forge 类读取优化；不缓存转换结果，保留 Mod 转换与校验，实际收益以实例测试为准");
         }
         catch (Exception error)
         {

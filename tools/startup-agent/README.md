@@ -6,15 +6,15 @@
 -Dpclmoon.startup.enabled=true
 ```
 
-启动器只对 **64 位 Java 17 / 21** 自动注入；其他 Java、外部参数文件、不完整引号或重复 Agent 保持原启动路径。Agent 以 Java 17 字节码编译，在 Java 17 和 21 分别验证。
+启动器只对 **64 位 Java 17 / 21** 自动注入，Java 17 还要求实例标记为 Forge；其他 Java、外部参数文件、不完整引号或重复 Agent 保持原启动路径。Agent 以 Java 17 字节码编译，在 Java 17 和 21 分别验证。
 
 ## 按运行环境选择路径
 
-- **Java 17：Forge 专用试验路径。** 不安装 JDK `URLClassPath` / `ZipFile` 查找补丁，避免在 Forge 模块加载上承担收益很小的通用索引开销。
-- **Java 21：原有保守 JAR 位索引、整条类路径缺失判断。** 动态目录、Manifest 扩展路径、自定义 handler 等绕过或失效；追加路径/关闭前后递增 generation，在途旧结果不得重新登记。
+- **Java 17：Forge 专用试验路径。** 不初始化 `NegativeCache`、不开放 JDK 加载器内部包，也不安装 `URLClassPath` / `ZipFile` 查找补丁。Forge 层关闭时不提取或追加 bootstrap helper。
+- **Java 21：保守 JAR 位索引、整条类路径缺失判断。** 单 JAR 累计 4 次缺失后才枚举，构建不持有全局缓存锁；整条类路径累计 4 次未被缓存拦截的失败后，复用条目哈希构建聚合索引，不再次枚举 JAR。条目哈希共享 2 MiB 预算，预算不足或并发构建时回退原查找/逐名称缺失缓存。动态目录、Manifest 扩展路径、自定义 handler 等仍绕过或失效；追加路径/关闭前后递增 generation，在途旧结果不得重新登记。
 - **Forge 原始字节正缓存：已移除。** 真实实例中 128 个已登记来源全部旁路、命中为 0，不值得保留资格检查与失效逻辑；现在只剩下面的哈希限定直接读取。
 - **Forge 直接读取：** 仅在 `securejarhandler 2.1.10` 的 `ModuleClassLoader.class` SHA-256 与已检查版本完全一致时，将 `getClassBytes` 的 Optional/Stream 包装替换为直接 open/readAllBytes/close。缺失返回空数组，读取/关闭异常和 suppressed 关系保留；后续 Access Transformer、Mixin、签名和 defineClass 仍执行。其他版本/已有字节码修改不启用此替换。
-- 直接读取路径已在真实 Forge 中确认执行。
+- 直接读取路径已在真实 Forge 中确认执行；只有 `metrics=true` 时才创建并更新读取计数器。
 
 ## 关闭与诊断
 
@@ -43,7 +43,19 @@ python -X utf8 scripts/test-benchmark-instance-startup.py
 dotnet test PCL.Core.Test/PCL.Core.Test.csproj -c Release --filter 'FullyQualifiedName~StartupAccelerationPolicyTest|FullyQualifiedName~JvmLaunchTuningTest' -p:UseSharedCompilation=false
 ```
 
-本轮 Java 17/21 各 10 组回归通过：资源/MR/碰撞、动态目录/Manifest、路径追加/关闭、重转换、实际计时器、204 项 Forge 缓存/变换检查及 14 项直接读取异常检查；测试包含 `-Xverify:all`。参数脚本 12 项、C# 策略相关 51 项通过。完整游戏加载、主菜单交互和存档运行是不同验收，不用“窗口出现”冒充全部完成。
+当前 Java 17/21 各 15 组回归覆盖：资源/MR/碰撞、动态目录/Manifest、路径追加/关闭、重转换、实际计时器、Forge 哈希门槛与读取异常、metrics 关闭及 Java 17 Forge 层关闭。Java 21 另覆盖延迟建表、聚合复用、预算耗尽、并发构建和停止后禁止重新登记；测试包含 `-Xverify:all`。完整游戏加载、主菜单交互和存档运行是不同验收，不用“窗口出现”冒充全部完成。
+
+## 索引性能对照
+
+```bash
+python -X utf8 tools/startup-agent/benchmark.py \
+  --java 'C:/Program Files/Zulu/zulu-21/bin/java.exe' \
+  --baseline-agent 'artifacts/test/startup-agent-opt/baseline-agent.jar' \
+  --candidate-agent 'Plain Craft Launcher 2/Resources/pcl-moon-startup-agent.jar' \
+  --output 'artifacts/test/startup-agent-opt/lookup-comparison-new' --rounds 6
+```
+
+输出目录必须不存在。工具交错运行无 Agent、旧 Agent、新 Agent；每个查询场景使用独立 JVM，并分别记录首次查询、完整查询循环和进程启动至退出耗时。metrics 关闭，测试输入为 32 个 JAR、每个 1,000 个资源，每场景 4,000 次查询。该合成负载不等于 Minecraft 启动时间；短负载中 Agent 的准备成本可能超过查询收益。
 
 ## 实例计时
 
@@ -62,4 +74,6 @@ cp 'Plain Craft Launcher 2/Resources/pcl-moon-startup-agent.jar' artifacts/test/
 
 输出目录必须不存在。`--jfr` 与 `--jvm-arg=-Dname=value` 用于独立诊断，不把带采样/统计的时间混入无采样组。`first_atlas` 只是首次图集创建日志，不是主菜单可交互时间；命令生成、原生库准备、登录及启动器准备时间不包含在 Java 进程阶段计时内。
 
-肉鸽生化去除启动优化 Mod 后的完整样本、限制与恢复说明见 [forge-roguelike-experiment.md](forge-roguelike-experiment.md)。
+2026-11-06 的索引优化、六轮新旧 Agent 对照及测试限制见 [optimization-validation.md](optimization-validation.md)。
+
+肉鸽生化去除启动优化 Mod 后的历史样本、限制与恢复说明见 [forge-roguelike-experiment.md](forge-roguelike-experiment.md)。
