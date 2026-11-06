@@ -34,7 +34,7 @@ with tempfile.TemporaryDirectory(prefix='pcl-moon-loader-tests-', dir=scratch) a
     agent = work / 'agent' / a.agent.name
     agent.parent.mkdir()
     shutil.copy2(a.agent.resolve(), agent)
-    def run(test, mode, flags=(), pre_agent=False, extra_args=()):
+    def run(test, mode, flags=(), pre_agent=False, extra_args=(), mmcss=False):
         directory = work / (test + '-' + mode)
         directory.mkdir()
         command = [str(java)]
@@ -42,6 +42,7 @@ with tempfile.TemporaryDirectory(prefix='pcl-moon-loader-tests-', dir=scratch) a
             command += ['-javaagent:' + str(fixture) + '=' + str(directory)]
         command += ['-javaagent:' + str(agent), '-Djava.io.tmpdir=' + str(directory), *flags,
                     '-cp', str(classes), test, str(directory), *extra_args]
+        if not mmcss: command.insert(1, '-Dpclmoon.startup.mmcss.disabled=true')
         print('TEST', test, mode, flush=True)
         subprocess.run(command, check=True, timeout=35)
     for test in ('LookupTest', 'ClassPathCacheTest'):
@@ -60,4 +61,17 @@ with tempfile.TemporaryDirectory(prefix='pcl-moon-loader-tests-', dir=scratch) a
     run('ForgeFastReadTest', 'forge-cache-off', ['-Dpclmoon.startup.forgeCache.disabled=true', '-Xverify:all'])
     run('ForgeFastReadTest', 'forge-fast-read-off', ['-Dpclmoon.startup.forgeFastRead.disabled=true', '-Xverify:all'])
     run('IndexBuildTest', 'index-build', ['-Dpclmoon.startup.metrics=true', '-Xverify:all'])
-print('PASS: all 15 startup-agent regression modes')
+    windows = os.name == 'nt'
+    run('MmcssTest', 'native-on', ['-Xverify:all'], extra_args=['on' if windows else 'off'], mmcss=True)
+    run('MmcssTest', 'native-off', ['-Dpclmoon.startup.mmcss.disabled=true', '-Xverify:all'], extra_args=['off'], mmcss=True)
+    run('MmcssTest', 'agent-off', ['-Dpclmoon.startup.disabled=true', '-Xverify:all'], extra_args=['off'], mmcss=True)
+    run('MmcssTest', 'non-windows', ['-Dos.name=Linux', '-Xverify:all'], extra_args=['off'], mmcss=True)
+    run('MmcssTest', 'forge-off', ['-Dpclmoon.startup.forgeCache.disabled=true', '-Xverify:all'],
+        extra_args=['on' if windows else 'off'], mmcss=True)
+    missing = work / 'missing-native.jar'
+    with zipfile.ZipFile(agent) as source, zipfile.ZipFile(missing, 'w', zipfile.ZIP_DEFLATED) as output:
+        for item in source.infolist():
+            if not item.filename.startswith('native/'): output.writestr(item, source.read(item))
+    agent = missing
+    run('MmcssTest', 'missing-native', ['-Xverify:all'], extra_args=['off'], mmcss=True)
+print('PASS: all 21 startup-agent regression modes')

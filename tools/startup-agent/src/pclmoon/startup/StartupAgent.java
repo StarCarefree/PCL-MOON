@@ -26,7 +26,9 @@ public final class StartupAgent {
                 return;
             }
             boolean forgeOnly = Runtime.version().feature() == 17;
-            if (forgeOnly && (Boolean.getBoolean("pclmoon.startup.forgeCache.disabled")
+            boolean mmcss = System.getProperty("os.name", "").startsWith("Windows")
+                && !Boolean.getBoolean("pclmoon.startup.mmcss.disabled");
+            if (forgeOnly && !mmcss && (Boolean.getBoolean("pclmoon.startup.forgeCache.disabled")
                     || Boolean.getBoolean("pclmoon.startup.forgeFastRead.disabled"))) return;
             Path helper = extractHelper();
             instrumentation.appendToBootstrapClassLoaderSearch(new JarFile(helper.toFile()));
@@ -42,6 +44,7 @@ public final class StartupAgent {
             instrumentation.redefineModule(javaBase, Set.of(helperModule), exports,
                 forgeOnly ? Collections.emptyMap() : Map.of("jdk.internal.loader", Set.of(helperModule)),
                 Collections.emptySet(), Collections.emptyMap());
+            if (mmcss) installMmcss(instrumentation, helperModule);
             long duration = Math.max(1000, Math.min(120000, Long.getLong("pclmoon.startup.durationMs", 60000L)));
             installForgeDirectRead(instrumentation, helperModule, duration);
             if (forgeOnly) {
@@ -91,8 +94,12 @@ public final class StartupAgent {
 
     /** Content-named helper beside the agent JAR: stable across launches, no per-run %TEMP% litter. */
     private static Path extractHelper() throws Exception {
+        return extractResource("/bootstrap-helper.jar", "pcl-moon-startup-helper-", ".jar");
+    }
+
+    private static Path extractResource(String resource, String prefix, String suffix) throws Exception {
         byte[] bytes;
-        try (InputStream input = StartupAgent.class.getResourceAsStream("/bootstrap-helper.jar")) {
+        try (InputStream input = StartupAgent.class.getResourceAsStream(resource)) {
             if (input == null) throw new IllegalStateException("Missing bootstrap helper");
             bytes = input.readAllBytes();
         }
@@ -101,7 +108,7 @@ public final class StartupAgent {
         Path directory = Path.of(source).getParent();
         if (directory == null) throw new IllegalStateException("Agent JAR has no parent directory");
         String tag = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes)).substring(0, 16);
-        Path target = directory.resolve("pcl-moon-startup-helper-" + tag + ".jar");
+        Path target = directory.resolve(prefix + tag + suffix);
         if (Files.isRegularFile(target) && Arrays.equals(Files.readAllBytes(target), bytes)) return target;
         Path pending = target.resolveSibling(target.getFileName() + "." + UUID.randomUUID().toString().replace("-", "") + ".tmp");
         Files.write(pending, bytes);
@@ -114,6 +121,31 @@ public final class StartupAgent {
             throw moveFailure;
         }
         return target;
+    }
+
+    private static void installMmcss(Instrumentation instrumentation, Module helperModule) {
+        MmcssTransformer transformer = null;
+        try {
+            String arch = System.getProperty("os.arch", "");
+            String platform = switch (arch) {
+                case "amd64", "x86_64" -> "windows-x64";
+                case "aarch64", "arm64" -> "windows-arm64";
+                default -> null;
+            };
+            if (platform == null) return;
+            Path dll = extractResource("/native/" + platform + "/mmcss.dll", "pcl-moon-mmcss-", ".dll");
+            Class.forName("pclmoon.startup.Mmcss", true, null)
+                .getMethod("configure", String.class).invoke(null, dll.toAbsolutePath().toString());
+            transformer = new MmcssTransformer(instrumentation, helperModule);
+            instrumentation.addTransformer(transformer, true);
+            for (Class<?> type : instrumentation.getAllLoadedClasses())
+                if ((type.getName().equals("org.lwjgl.glfw.GLFW") || type.getName().equals("org.lwjgl.opengl.Display"))
+                        && instrumentation.isModifiableClass(type)) instrumentation.retransformClasses(type);
+            System.err.println("[PCL-MOON MMCSS] awaiting presentation thread (Games)");
+        } catch (Throwable ignored) {
+            if (transformer != null) instrumentation.removeTransformer(transformer);
+            System.err.println("[PCL-MOON MMCSS] unavailable; original scheduling retained");
+        }
     }
 
     private static void installForgeDirectRead(Instrumentation instrumentation, Module helperModule, long duration) {
