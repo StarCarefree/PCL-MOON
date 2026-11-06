@@ -1,9 +1,6 @@
+﻿<?xml version="1.0"?>
 <!-- Formatted by xaml-lang-formatter at 2026-06-28T17:16:52. -->
-<ResourceDictionary
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:sys="clr-namespace:System;assembly=mscorlib"
-    xml:space="preserve">
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:sys="clr-namespace:System;assembly=mscorlib" xml:space="preserve">
 
     <!-- Meta -->
 
@@ -20,7 +17,11 @@
     <sys:String x:Key="Application.Control.Loading.UnknownError">未知錯誤</sys:String>
     <sys:String x:Key="Application.Control.MessageBox.Error.OperationFailed">訊息對話方塊操作失敗。請檢視錯誤詳情。</sys:String>
     <sys:String x:Key="Application.EnvironmentWarning.IKnow">我知道了</sys:String>
-    <sys:String x:Key="Application.EnvironmentWarning.Message">PCL-MOON 在啟動時偵測到環境問題：&#xA;&#xA;{0}&#xA;&#xA;不解決這些問題可能會導致部分功能無法正常運作……</sys:String>
+    <sys:String x:Key="Application.EnvironmentWarning.Message">PCL-MOON 在啟動時偵測到環境問題：
+
+{0}
+
+不解決這些問題可能會導致部分功能無法正常運作……</sys:String>
     <sys:String x:Key="Application.EnvironmentWarning.SocialSoftwareFolder">- PCL-MOON 正在 QQ、微信、TIM 等社交軟體的下載資料夾執行，請考慮移動到其他位置，否則可能導致遊戲存檔或設定遺失</sys:String>
     <sys:String x:Key="Application.EnvironmentWarning.System32Bit">- 目前系統為 32 位元，不受 PCL-MOON 和新版 Minecraft 支援，強烈建議重灌為 64 位元系統後再進行遊戲</sys:String>
     <sys:String x:Key="Application.EnvironmentWarning.TempFolder">- PCL-MOON 正在暫存資料夾執行，請將 PCL-MOON 從壓縮檔中解壓縮後再使用，否則可能導致遊戲存檔或設定遺失</sys:String>
@@ -101,11 +102,20 @@
 
     <!-- Config -->
 
-    <sys:String x:Key="Config.Error.InvalidFormat.RecoveryMessage">設定初始化失敗，目前位於 {0} 階段。&#xA;&#xA;設定檔 {1} 的內容出現問題，已備份到 {2}。&#xA;為盡可能防止重複故障，若存在上一版本，PCL-MOON 已嘗試將設定復原至上一版本。若曾手動更改過設定檔，請修復問題並取代目前的設定檔。&#xA;&#xA;如果你不知道發生了什麼事，可以先忽略。重新開啟啟動器後，相關設定項可能會復原為預設值，但通常不影響正常使用。</sys:String>
-    <sys:String x:Key="Config.Error.LoadFailed.DebugMessage">設定初始化失敗，目前位於 {0} 階段。&#xA;&#xA;設定系統無法完成初始化。請修復問題後重啟 PCL-MOON。</sys:String>
+    <sys:String x:Key="Config.Error.InvalidFormat.RecoveryMessage">設定初始化失敗，目前位於 {0} 階段。
+
+設定檔 {1} 的內容出現問題，已備份到 {2}。
+為盡可能防止重複故障，若存在上一版本，PCL-MOON 已嘗試將設定復原至上一版本。若曾手動更改過設定檔，請修復問題並取代目前的設定檔。
+
+如果你不知道發生了什麼事，可以先忽略。重新開啟啟動器後，相關設定項可能會復原為預設值，但通常不影響正常使用。</sys:String>
+    <sys:String x:Key="Config.Error.LoadFailed.DebugMessage">設定初始化失敗，目前位於 {0} 階段。
+
+設定系統無法完成初始化。請修復問題後重啟 PCL-MOON。</sys:String>
     <sys:String x:Key="Config.Error.LoadFailed.Message">設定系統在 {0} 階段發生錯誤。</sys:String>
     <sys:String x:Key="Config.Error.LoadFailed.Title">設定初始化失敗</sys:String>
-    <sys:String x:Key="Config.Error.SaveFailed.Message">無法儲存設定檔。&#xA;&#xA;路徑：{0}</sys:String>
+    <sys:String x:Key="Config.Error.SaveFailed.Message">無法儲存設定檔。
+
+路徑：{0}</sys:String>
     <sys:String x:Key="Config.Error.SaveFailed.Title">儲存設定檔失敗</sys:String>
 
     <!-- Crash -->
@@ -117,48 +127,68 @@
     <sys:String x:Key="Crash.Dialog.Title.Auto">Minecraft 出現錯誤</sys:String>
     <sys:String x:Key="Crash.Dialog.Title.Manual">錯誤報告分析結果</sys:String>
     <sys:String x:Key="Crash.Export.Failed.CopyDetails">複製詳細資訊</sys:String>
-    <sys:String x:Key="Crash.Export.Failed.Message">無法匯出錯誤報告。&#xA;&#xA;目標路徑：{0}</sys:String>
+    <sys:String x:Key="Crash.Export.Failed.Message">無法匯出錯誤報告。
+
+目標路徑：{0}</sys:String>
     <sys:String x:Key="Crash.Export.Failed.MessageWithoutPath">無法匯出錯誤報告，且未能取得目標路徑。</sys:String>
     <sys:String x:Key="Crash.Export.Failed.Title">匯出錯誤報告失敗</sys:String>
     <sys:String x:Key="Crash.Presentation.ListItem"> - {0}</sys:String>
-    <sys:String x:Key="Crash.Presentation.ReasonOnly">原因&#xA;{0}</sys:String>
-    <sys:String x:Key="Crash.Presentation.WithFollowUps">{0}&#xA;&#xA;{1}</sys:String>
-    <sys:String x:Key="Crash.Presentation.WithSuggestion">原因&#xA;{0}&#xA;&#xA;你可以嘗試&#xA;{1}</sys:String>
+    <sys:String x:Key="Crash.Presentation.ReasonOnly">原因
+{0}</sys:String>
+    <sys:String x:Key="Crash.Presentation.WithFollowUps">{0}
+
+{1}</sys:String>
+    <sys:String x:Key="Crash.Presentation.WithSuggestion">原因
+{0}
+
+你可以嘗試
+{1}</sys:String>
 
     <!-- Crash.Reason -->
 
-    <sys:String x:Key="Crash.Reason.ConfirmedMod.Multiple">以下模組導致了遊戲出錯：&#xA;{0}</sys:String>
+    <sys:String x:Key="Crash.Reason.ConfirmedMod.Multiple">以下模組導致了遊戲出錯：
+{0}</sys:String>
     <sys:String x:Key="Crash.Reason.ConfirmedMod.Single">模組 {0} 導致了遊戲出錯。</sys:String>
-    <sys:String x:Key="Crash.Reason.DuplicateMods.Known">偵測到重複安裝的模組：&#xA;{0}</sys:String>
+    <sys:String x:Key="Crash.Reason.DuplicateMods.Known">偵測到重複安裝的模組：
+{0}</sys:String>
     <sys:String x:Key="Crash.Reason.DuplicateMods.Unknown">可能安裝了重複的模組。</sys:String>
     <sys:String x:Key="Crash.Reason.ExtractedModFile">偵測到已被解壓縮的模組檔案。</sys:String>
     <sys:String x:Key="Crash.Reason.FabricError.Generic">Fabric 可能已經提供了錯誤資訊。</sys:String>
-    <sys:String x:Key="Crash.Reason.FabricError.WithDetail">Fabric 提供了以下錯誤資訊：&#xA;{0}</sys:String>
+    <sys:String x:Key="Crash.Reason.FabricError.WithDetail">Fabric 提供了以下錯誤資訊：
+{0}</sys:String>
     <sys:String x:Key="Crash.Reason.FabricSolution.Generic">Fabric 可能已經提供了解決方案。</sys:String>
-    <sys:String x:Key="Crash.Reason.FabricSolution.WithDetail">Fabric 提供了以下解決方案：&#xA;{0}</sys:String>
+    <sys:String x:Key="Crash.Reason.FabricSolution.WithDetail">Fabric 提供了以下解決方案：
+{0}</sys:String>
     <sys:String x:Key="Crash.Reason.FileOrContentValidationFailed">部分檔案或內容未能透過校驗。</sys:String>
     <sys:String x:Key="Crash.Reason.ForgeError.Generic">Forge 可能已經提供了錯誤資訊。</sys:String>
-    <sys:String x:Key="Crash.Reason.ForgeError.WithDetail">Forge 提供了以下錯誤資訊：&#xA;{0}</sys:String>
+    <sys:String x:Key="Crash.Reason.ForgeError.WithDetail">Forge 提供了以下錯誤資訊：
+{0}</sys:String>
     <sys:String x:Key="Crash.Reason.GraphicsDriver.Generic">顯示卡驅動可能導致遊戲無法正常執行。</sys:String>
     <sys:String x:Key="Crash.Reason.GraphicsDriver.IntelOrIntegrated">顯示卡驅動存在問題，或遊戲未使用獨立顯示卡。</sys:String>
     <sys:String x:Key="Crash.Reason.IncompatibleMods.Generic">可能與已安裝的模組不相容。</sys:String>
-    <sys:String x:Key="Crash.Reason.IncompatibleMods.WithDetail">與已安裝的模組不相容：&#xA;{0}</sys:String>
+    <sys:String x:Key="Crash.Reason.IncompatibleMods.WithDetail">與已安裝的模組不相容：
+{0}</sys:String>
     <sys:String x:Key="Crash.Reason.IncompleteForgeInstallation">Forge 安裝不完整，缺少必要檔案。</sys:String>
     <sys:String x:Key="Crash.Reason.InvalidModFileName">某個模組檔名包含 Java 不支援的特殊字元。</sys:String>
     <sys:String x:Key="Crash.Reason.JavaIncompatible">目前 Java 版本與遊戲或模組不相容。</sys:String>
     <sys:String x:Key="Crash.Reason.JavaTooNew">目前 Java 版本對該遊戲或載入器來說過高。</sys:String>
     <sys:String x:Key="Crash.Reason.ManualDebugCrash">這是手動觸發的除錯崩潰，遊戲本身通常沒有問題。</sys:String>
     <sys:String x:Key="Crash.Reason.MissingDependency.Generic">部分模組缺少前置，或與目前 Minecraft 版本不匹配。</sys:String>
-    <sys:String x:Key="Crash.Reason.MissingDependency.WithDetail">部分模組缺少前置，或與目前 Minecraft 版本不匹配：&#xA;{0}</sys:String>
+    <sys:String x:Key="Crash.Reason.MissingDependency.WithDetail">部分模組缺少前置，或與目前 Minecraft 版本不匹配：
+{0}</sys:String>
     <sys:String x:Key="Crash.Reason.MissingMixinBootstrap">缺少 MixinBootstrap，遊戲無法繼續載入。</sys:String>
     <sys:String x:Key="Crash.Reason.ModConfigCrash.Simple">模組 {0} 的設定讀取失敗。</sys:String>
     <sys:String x:Key="Crash.Reason.ModConfigCrash.WithConfig">模組 {0} 的設定檔 {1} 無法讀取。</sys:String>
-    <sys:String x:Key="Crash.Reason.ModInitializationFailed.Multiple">以下模組初始化失敗：&#xA;{0}</sys:String>
+    <sys:String x:Key="Crash.Reason.ModInitializationFailed.Multiple">以下模組初始化失敗：
+{0}</sys:String>
     <sys:String x:Key="Crash.Reason.ModInitializationFailed.Single">模組 {0} 初始化失敗。</sys:String>
     <sys:String x:Key="Crash.Reason.ModLoaderError.Generic">模組載入器可能已經提供了錯誤資訊。</sys:String>
-    <sys:String x:Key="Crash.Reason.ModLoaderError.WithDetail">模組載入器提供了以下錯誤資訊：&#xA;{0}</sys:String>
-    <sys:String x:Key="Crash.Reason.ModLoaderIncompatible">模組載入器版本與模組不相容：&#xA;{0}</sys:String>
-    <sys:String x:Key="Crash.Reason.ModMixinFailed.Multiple">以下模組的 Mixin 注入失敗：&#xA;{0}</sys:String>
+    <sys:String x:Key="Crash.Reason.ModLoaderError.WithDetail">模組載入器提供了以下錯誤資訊：
+{0}</sys:String>
+    <sys:String x:Key="Crash.Reason.ModLoaderIncompatible">模組載入器版本與模組不相容：
+{0}</sys:String>
+    <sys:String x:Key="Crash.Reason.ModMixinFailed.Multiple">以下模組的 Mixin 注入失敗：
+{0}</sys:String>
     <sys:String x:Key="Crash.Reason.ModMixinFailed.None">部分模組的 Mixin 注入失敗。</sys:String>
     <sys:String x:Key="Crash.Reason.ModMixinFailed.Single">模組 {0} 的 Mixin 注入失敗。</sys:String>
     <sys:String x:Key="Crash.Reason.ModRequiresJava11">部分已安裝模組需要 Java 11 或更高版本。</sys:String>
@@ -176,9 +206,11 @@
     <sys:String x:Key="Crash.Reason.SpecificBlock.Single">方塊 {0} 可能導致了遊戲出錯。</sys:String>
     <sys:String x:Key="Crash.Reason.SpecificEntity.Multiple">世界中的某些實體可能導致了遊戲出錯。</sys:String>
     <sys:String x:Key="Crash.Reason.SpecificEntity.Single">實體 {0} 可能導致了遊戲出錯。</sys:String>
-    <sys:String x:Key="Crash.Reason.StackKeyword.Multiple">PCL-MOON 在錯誤堆疊中找到了可能相關的關鍵字：&#xA;{0}</sys:String>
+    <sys:String x:Key="Crash.Reason.StackKeyword.Multiple">PCL-MOON 在錯誤堆疊中找到了可能相關的關鍵字：
+{0}</sys:String>
     <sys:String x:Key="Crash.Reason.StackKeyword.Single">PCL-MOON 在錯誤堆疊中找到了可能相關的關鍵字：{0}</sys:String>
-    <sys:String x:Key="Crash.Reason.SuspectedMod.Multiple">當機報告懷疑以下模組導致了遊戲出錯：&#xA;{0}</sys:String>
+    <sys:String x:Key="Crash.Reason.SuspectedMod.Multiple">當機報告懷疑以下模組導致了遊戲出錯：
+{0}</sys:String>
     <sys:String x:Key="Crash.Reason.SuspectedMod.Single">當機報告懷疑模組 {0} 導致了遊戲出錯。</sys:String>
     <sys:String x:Key="Crash.Reason.TooManyModsIdLimit">模組數量過多，超出了舊版 Minecraft 的 ID 限制。</sys:String>
     <sys:String x:Key="Crash.Reason.Unknown.Auto">PCL-MOON 無法確定遊戲出錯的具體原因。</sys:String>
@@ -186,7 +218,8 @@
     <sys:String x:Key="Crash.Reason.UnknownFinding">PCL-MOON 偵測到一個沒有詳細說明的錯誤原因：{0}</sys:String>
     <sys:String x:Key="Crash.Reason.UsingJdk">遊戲可能正在使用 JDK，或目前 Java 版本過高。</sys:String>
     <sys:String x:Key="Crash.Reason.UsingOpenJ9">目前使用的 OpenJ9 Java 可能與遊戲、模組或載入器不相容。</sys:String>
-    <sys:String x:Key="Crash.Reason.VeryShortOutput">遊戲輸出過短，PCL-MOON 無法獲得足夠的分析資訊。原始輸出：&#xA;{0}</sys:String>
+    <sys:String x:Key="Crash.Reason.VeryShortOutput">遊戲輸出過短，PCL-MOON 無法獲得足夠的分析資訊。原始輸出：
+{0}</sys:String>
     <sys:String x:Key="Crash.Reason.X86JavaMemoryLimit.OnX64Os">目前使用的是 32 位元 Java，無法分配遊戲所需的記憶體。</sys:String>
     <sys:String x:Key="Crash.Reason.X86JavaMemoryLimit.OnX86Os">目前使用的是 32 位元作業系統，無法為遊戲提供所需的記憶體。</sys:String>
 
@@ -222,6 +255,15 @@
     <sys:String x:Key="Crash.Report.JarInJarMod.DuplicateNone">無</sys:String>
     <sys:String x:Key="Crash.Report.JarInJarMod.DuplicateSection">=== 潛在重複模組===</sys:String>
     <sys:String x:Key="Crash.Report.JarInJarMod.JarInJarNone">未發現 Jar-in-Jar 資訊</sys:String>
+    <sys:String x:Key="Crash.Report.JarInJarMod.WarningSection">=== 依赖警告（缺失前置 / 版本不符）===</sys:String>
+    <sys:String x:Key="Crash.Report.JarInJarMod.WarningNone">未发现依赖问题。</sys:String>
+    <sys:String x:Key="Crash.Report.JarInJarMod.WarningMissing">缺少前置 [{0}]</sys:String>
+    <sys:String x:Key="Crash.Report.JarInJarMod.WarningMismatch">前置版本不符 [{0}]</sys:String>
+    <sys:String x:Key="Crash.Report.JarInJarMod.WarningDisabled">前置被禁用 [{0}]</sys:String>
+    <sys:String x:Key="Crash.Report.JarInJarMod.ConflictSection">=== 冲突关系（不兼容 / 不建议共存）===</sys:String>
+    <sys:String x:Key="Crash.Report.JarInJarMod.ConflictNone">未发现冲突。</sys:String>
+    <sys:String x:Key="Crash.Report.JarInJarMod.ConflictIncompatible">不兼容</sys:String>
+    <sys:String x:Key="Crash.Report.JarInJarMod.ConflictDiscouraged">不建议共存</sys:String>
     <sys:String x:Key="Crash.Report.JarInJarMod.JarInJarSection">=== Jar-in-Jar 資訊（僅啟用模組）===</sys:String>
     <sys:String x:Key="Crash.Report.JarInJarMod.ModListSection">=== 模組清單 ===</sys:String>
 
@@ -274,7 +316,8 @@
     <!-- Download.Comp -->
 
     <sys:String x:Key="Download.Comp.Error.OperationFailed">資源下載操作失敗。請檢視錯誤詳情。</sys:String>
-    <sys:String x:Key="Download.Comp.Hint.ModrinthUnreachable">無法連線到 Modrinth，所以目前僅顯示了來自 CurseForge 的內容，搜尋結果可能不全。&#xA;請稍後再試，或使用 VPN 以改善網路環境。</sys:String>
+    <sys:String x:Key="Download.Comp.Hint.ModrinthUnreachable">無法連線到 Modrinth，所以目前僅顯示了來自 CurseForge 的內容，搜尋結果可能不全。
+請稍後再試，或使用 VPN 以改善網路環境。</sys:String>
     <sys:String x:Key="Download.Comp.Link.ResolveFailed">未能識別或取得該資源連結</sys:String>
     <sys:String x:Key="Download.Comp.Search.Hint">搜尋資源</sys:String>
     <sys:String x:Key="Download.Comp.Sort.Downloads">下載量</sys:String>
@@ -389,11 +432,16 @@
 
     <!-- Download.Comp.Dependency -->
 
-    <sys:String x:Key="Download.Comp.Dependency.Abort.Message">安裝已中止。&#xA;&#xA;原因：&#xA;{0}</sys:String>
+    <sys:String x:Key="Download.Comp.Dependency.Abort.Message">安裝已中止。
+
+原因：
+{0}</sys:String>
     <sys:String x:Key="Download.Comp.Dependency.Abort.Title">安裝已中止</sys:String>
     <sys:String x:Key="Download.Comp.Dependency.Install.Cancel">取消安裝</sys:String>
     <sys:String x:Key="Download.Comp.Dependency.Install.ListItem">- {0}（{1}）- {2} v{3}</sys:String>
-    <sys:String x:Key="Download.Comp.Dependency.Install.Message">此模組需要以下必需前置：&#xA;&#xA;{0}</sys:String>
+    <sys:String x:Key="Download.Comp.Dependency.Install.Message">此模組需要以下必需前置：
+
+{0}</sys:String>
     <sys:String x:Key="Download.Comp.Dependency.Install.Title">安裝模組前置確認</sys:String>
     <sys:String x:Key="Download.Comp.Dependency.Install.WithDependencies">安裝模組與必需前置</sys:String>
     <sys:String x:Key="Download.Comp.Dependency.Install.WithoutDependencies">僅下載模組本體（不建議）</sys:String>
@@ -402,7 +450,9 @@
     <sys:String x:Key="Download.Comp.Dependency.ResolveFailed.Title">前置解析失敗</sys:String>
     <sys:String x:Key="Download.Comp.Dependency.Unresolved.ContinueWithoutDependencies">繼續下載</sys:String>
     <sys:String x:Key="Download.Comp.Dependency.Unresolved.ListItem">- {0} {1}: {2}</sys:String>
-    <sys:String x:Key="Download.Comp.Dependency.Unresolved.Message">以下必需前置無法解析：&#xA;&#xA;{0}</sys:String>
+    <sys:String x:Key="Download.Comp.Dependency.Unresolved.Message">以下必需前置無法解析：
+
+{0}</sys:String>
     <sys:String x:Key="Download.Comp.Dependency.Unresolved.Title">無法安裝必需前置</sys:String>
 
     <!-- Download.Comp.Detail -->
@@ -417,7 +467,8 @@
     <sys:String x:Key="Download.Comp.Detail.DescriptionNoTranslation">目前資源的簡介暫無譯文</sys:String>
     <sys:String x:Key="Download.Comp.Detail.DescriptionTranslating">正在取得 {0} 的簡介譯文……</sys:String>
     <sys:String x:Key="Download.Comp.Detail.DescriptionTranslationFailed">取得譯文失敗</sys:String>
-    <sys:String x:Key="Download.Comp.Detail.DescriptionTranslationResult">原文：{0}&#xA;譯文：{1}</sys:String>
+    <sys:String x:Key="Download.Comp.Detail.DescriptionTranslationResult">原文：{0}
+譯文：{1}</sys:String>
     <sys:String x:Key="Download.Comp.Detail.DownloadFile">下載檔案</sys:String>
     <sys:String x:Key="Download.Comp.Detail.DownloadModpackFile">下載模組包檔案</sys:String>
     <sys:String x:Key="Download.Comp.Detail.DownloadResource">{0}下載：{1}</sys:String>
@@ -446,7 +497,12 @@
     <sys:String x:Key="Download.Comp.Detail.SelectWorldInstallLocation">選擇世界安裝位置 (saves 資料夾)</sys:String>
     <sys:String x:Key="Download.Comp.Detail.SelectedVersion">所選版本：{0}{1}</sys:String>
     <sys:String x:Key="Download.Comp.Detail.Task.Cancelled">已取消模組包安裝：{0}</sys:String>
-    <sys:String x:Key="Download.Comp.Detail.Task.Failed">模組包安裝失敗。&#xA;&#xA;任務：{0}&#xA;&#xA;詳細資訊：&#xA;{1}</sys:String>
+    <sys:String x:Key="Download.Comp.Detail.Task.Failed">模組包安裝失敗。
+
+任務：{0}
+
+詳細資訊：
+{1}</sys:String>
     <sys:String x:Key="Download.Comp.Detail.TranslateDescription">翻譯簡介</sys:String>
     <sys:String x:Key="Download.Comp.Detail.Unfavorite">從我的最愛中移除</sys:String>
     <sys:String x:Key="Download.Comp.Detail.VersionGroup.Old">遠古版</sys:String>
@@ -462,7 +518,7 @@
     <sys:String x:Key="Download.Comp.Detail.CompItem.AncientVersion">遠古版本</sys:String>
     <sys:String x:Key="Download.Comp.Detail.CompItem.Any">任意</sys:String>
     <sys:String x:Key="Download.Comp.Detail.CompItem.EditionSuffix"> 版</sys:String>
-    <sys:String x:Key="Download.Comp.Detail.CompItem.PreviewSuffix">預覽版</sys:String>
+    <sys:String x:Key="Download.Comp.Detail.CompItem.PreviewSuffix"> 預覽版</sys:String>
     <sys:String x:Key="Download.Comp.Detail.CompItem.SnapshotOnly">僅快照版本</sys:String>
     <sys:String x:Key="Download.Comp.Detail.CompItem.Unknown">未知</sys:String>
     <sys:String x:Key="Download.Comp.Detail.CompItem.UnknownVersion">未知實例</sys:String>
@@ -511,9 +567,14 @@
 
     <!-- Download.Comp.Favorites.Dialog -->
 
-    <sys:String x:Key="Download.Comp.Favorites.Dialog.BulkDownload.Content">批次下載功能仍舊處於測試狀態。&#xA;使用此功能下載模組不會自動下載前置項。&#xA;請在下載前仔細思考自己的需求，並仔細檢查自己的選擇，避免下載錯誤導致時間和網路流量的浪費。</sys:String>
+    <sys:String x:Key="Download.Comp.Favorites.Dialog.BulkDownload.Content">批次下載功能仍舊處於測試狀態。
+使用此功能下載模組不會自動下載前置項。
+請在下載前仔細思考自己的需求，並仔細檢查自己的選擇，避免下載錯誤導致時間和網路流量的浪費。</sys:String>
     <sys:String x:Key="Download.Comp.Favorites.Dialog.BulkDownload.Title">確定使用此功能？</sys:String>
-    <sys:String x:Key="Download.Comp.Favorites.Dialog.Delete.Confirm">確認刪除我的最愛資料夾 {0}？&#xA;此資料夾有 {1} 個專案&#xA;資料夾 ID 為 {2}&#xA;此操作不可逆！</sys:String>
+    <sys:String x:Key="Download.Comp.Favorites.Dialog.Delete.Confirm">確認刪除我的最愛資料夾 {0}？
+此資料夾有 {1} 個專案
+資料夾 ID 為 {2}
+此操作不可逆！</sys:String>
     <sys:String x:Key="Download.Comp.Favorites.Dialog.Delete.Title">刪除確認</sys:String>
     <sys:String x:Key="Download.Comp.Favorites.Dialog.EditNote.Title">修改備註</sys:String>
     <sys:String x:Key="Download.Comp.Favorites.Dialog.GetFailed.Content">由於線上資源被刪除或網路問題等因素導致以下資源未取得成功（以資源的 ID 展示）</sys:String>
@@ -521,7 +582,7 @@
     <sys:String x:Key="Download.Comp.Favorites.Dialog.GetFailed.Remove">移除這些我的最愛專案</sys:String>
     <sys:String x:Key="Download.Comp.Favorites.Dialog.GetFailed.Title">部分我的最愛專案取得失敗</sys:String>
     <sys:String x:Key="Download.Comp.Favorites.Dialog.Import.CurrentFolder">目前資料夾</sys:String>
-    <sys:String x:Key="Download.Comp.Favorites.Dialog.Import.Hint">例如 ["8787"]</sys:String>
+    <sys:String x:Key="Download.Comp.Favorites.Dialog.Import.Hint">例如 [&quot;8787&quot;]</sys:String>
     <sys:String x:Key="Download.Comp.Favorites.Dialog.Import.Input">輸入分享的我的最愛</sys:String>
     <sys:String x:Key="Download.Comp.Favorites.Dialog.Import.New">新資料夾名稱</sys:String>
     <sys:String x:Key="Download.Comp.Favorites.Dialog.Import.NewFolder">新資料夾</sys:String>
@@ -566,8 +627,10 @@
     <sys:String x:Key="Download.Comp.List.NoMatchingResults">沒有符合條件的結果</sys:String>
     <sys:String x:Key="Download.Comp.List.NoResults">無搜尋結果，請嘗試搜尋英文名稱</sys:String>
     <sys:String x:Key="Download.Comp.List.NoResultsSimple">沒有搜尋結果</sys:String>
-    <sys:String x:Key="Download.Comp.List.Source.CurseForgeUnavailable">無法連線到 CurseForge，所以目前僅顯示了來自 Modrinth 的內容，搜尋結果可能不全。&#xA;請稍後再試，或使用 VPN 以改善網路環境。</sys:String>
-    <sys:String x:Key="Download.Comp.List.Source.ModrinthUnavailable">無法連線到 Modrinth，所以目前僅顯示了來自 CurseForge 的內容，搜尋結果可能不全。&#xA;請稍後再試，或使用 VPN 以改善網路環境。</sys:String>
+    <sys:String x:Key="Download.Comp.List.Source.CurseForgeUnavailable">無法連線到 CurseForge，所以目前僅顯示了來自 Modrinth 的內容，搜尋結果可能不全。
+請稍後再試，或使用 VPN 以改善網路環境。</sys:String>
+    <sys:String x:Key="Download.Comp.List.Source.ModrinthUnavailable">無法連線到 Modrinth，所以目前僅顯示了來自 CurseForge 的內容，搜尋結果可能不全。
+請稍後再試，或使用 VPN 以改善網路環境。</sys:String>
     <sys:String x:Key="Download.Comp.List.Source.ResourceFetch">社群資源取得：{0}</sys:String>
 
     <!-- Download.Comp.List.Loading -->
@@ -630,7 +693,9 @@
     <sys:String x:Key="Download.Install.Hint.MinecraftBack">點擊 Minecraft 項即可返回遊戲主版本選擇畫面！</sys:String>
     <sys:String x:Key="Download.Install.InstanceIsolation.Warning.Cancel">取消下載</sys:String>
     <sys:String x:Key="Download.Install.InstanceIsolation.Warning.Continue">繼續</sys:String>
-    <sys:String x:Key="Download.Install.InstanceIsolation.Warning.Message">你尚未開啟實例隔離，多個 Minecraft 實例會共用同一個模組資料夾。&#xD;因此，遊戲可能會因為讀取到與目前實例不符的模組而崩潰。&#xD;推薦先在 設定 → 啟動選項 → 預設實例隔離 中開啟實例隔離！</sys:String>
+    <sys:String x:Key="Download.Install.InstanceIsolation.Warning.Message">你尚未開啟實例隔離，多個 Minecraft 實例會共用同一個模組資料夾。
+因此，遊戲可能會因為讀取到與目前實例不符的模組而崩潰。
+推薦先在 設定 → 啟動選項 → 預設實例隔離 中開啟實例隔離！</sys:String>
     <sys:String x:Key="Download.Install.InstanceIsolation.Warning.Title">實例隔離提示</sys:String>
     <sys:String x:Key="Download.Install.StartDownload">開始下載</sys:String>
 
@@ -709,7 +774,8 @@
     <sys:String x:Key="Download.Version.Cleanroom.Intro.Title">Cleanroom 簡介</sys:String>
     <sys:String x:Key="Download.Version.Cleanroom.LoadingList">正在取得 Cleanroom 清單</sys:String>
     <sys:String x:Key="Download.Version.DownloadServer">下載伺服器端</sys:String>
-    <sys:String x:Key="Download.Version.Fabric.Intro.Description">Fabric Loader 是新版 Minecraft 下的輕量化模組載入器，你需要先安裝它才能安裝各種 Fabric 模組。&#xA;本頁面提供 Fabric 安裝器下載，在下載後你需要手動開啟安裝器進行安裝。</sys:String>
+    <sys:String x:Key="Download.Version.Fabric.Intro.Description">Fabric Loader 是新版 Minecraft 下的輕量化模組載入器，你需要先安裝它才能安裝各種 Fabric 模組。
+本頁面提供 Fabric 安裝器下載，在下載後你需要手動開啟安裝器進行安裝。</sys:String>
     <sys:String x:Key="Download.Version.Fabric.Intro.Title">Fabric 簡介</sys:String>
     <sys:String x:Key="Download.Version.Fabric.LoadingList">正在取得 Fabric 清單</sys:String>
     <sys:String x:Key="Download.Version.Forge.Intro.Description">Forge 是一個模組載入器，你需要先安裝 Forge 才能安裝各種 Forge 模組。</sys:String>
@@ -722,20 +788,23 @@
     <sys:String x:Key="Download.Version.Installer.Fabric.Filter">Fabric 安裝器 (*.jar)|*.jar</sys:String>
     <sys:String x:Key="Download.Version.Installer.LabyMod.Filter">LabyMod 安裝器 (*.jar)|*.jar</sys:String>
     <sys:String x:Key="Download.Version.Installer.LegacyFabric.Filter">LegacyFabric 安裝器 (*.jar)|*.jar</sys:String>
-    <sys:String x:Key="Download.Version.LabyMod.Intro.Description">LabyMod 是 Minecraft 下的最佳化用戶端。&#xA;本頁面提供 LabyMod 安裝器下載，在下載後你需要手動開啟安裝器進行安裝。</sys:String>
+    <sys:String x:Key="Download.Version.LabyMod.Intro.Description">LabyMod 是 Minecraft 下的最佳化用戶端。
+本頁面提供 LabyMod 安裝器下載，在下載後你需要手動開啟安裝器進行安裝。</sys:String>
     <sys:String x:Key="Download.Version.LabyMod.Intro.Title">LabyMod 簡介</sys:String>
     <sys:String x:Key="Download.Version.LabyMod.LoadingList">正在取得 LabyMod 清單</sys:String>
     <sys:String x:Key="Download.Version.Latest.Development">最新預覽版，釋出於 {0}</sys:String>
     <sys:String x:Key="Download.Version.Latest.Release">最新正式版，釋出於 {0}</sys:String>
     <sys:String x:Key="Download.Version.Latest.Title">最新版本</sys:String>
-    <sys:String x:Key="Download.Version.LegacyFabric.Intro.Description">Legacy Fabric 是 Fabric 的舊版本移植，你需要先安裝它才能安裝各種 Legacy Fabric 模組。&#xA;本頁面提供 Legacy Fabric 安裝器下載，在下載後你需要手動開啟安裝器進行安裝。</sys:String>
+    <sys:String x:Key="Download.Version.LegacyFabric.Intro.Description">Legacy Fabric 是 Fabric 的舊版本移植，你需要先安裝它才能安裝各種 Legacy Fabric 模組。
+本頁面提供 Legacy Fabric 安裝器下載，在下載後你需要手動開啟安裝器進行安裝。</sys:String>
     <sys:String x:Key="Download.Version.LegacyFabric.Intro.Title">Legacy Fabric 簡介</sys:String>
     <sys:String x:Key="Download.Version.LegacyFabric.LoadingList">正在取得 Legacy Fabric 清單</sys:String>
     <sys:String x:Key="Download.Version.LiteLoader.Intro.Description">與 Forge 類似，LiteLoader 可以用於載入舊版本 Minecraft 中的 LiteLoader 模組。</sys:String>
     <sys:String x:Key="Download.Version.LiteLoader.Intro.Title">LiteLoader 簡介</sys:String>
     <sys:String x:Key="Download.Version.LiteLoader.LoadingList">正在取得 LiteLoader 清單</sys:String>
     <sys:String x:Key="Download.Version.LoadingList">正在取得版本清單</sys:String>
-    <sys:String x:Key="Download.Version.NeoForge.Intro.Description">NeoForge 是 Minecraft 1.20.1+ 的模組載入器，你需要先安裝它才能安裝各種 NeoForge 模組，它也與一些 Forge 模組相容。&#xA;本頁面提供 NeoForge 安裝器下載，在下載後你需要手動開啟安裝器進行安裝。</sys:String>
+    <sys:String x:Key="Download.Version.NeoForge.Intro.Description">NeoForge 是 Minecraft 1.20.1+ 的模組載入器，你需要先安裝它才能安裝各種 NeoForge 模組，它也與一些 Forge 模組相容。
+本頁面提供 NeoForge 安裝器下載，在下載後你需要手動開啟安裝器進行安裝。</sys:String>
     <sys:String x:Key="Download.Version.NeoForge.Intro.Title">NeoForge 簡介</sys:String>
     <sys:String x:Key="Download.Version.NeoForge.LoadingList">正在取得 NeoForge 清單</sys:String>
     <sys:String x:Key="Download.Version.OpenWebsite">開啟官網</sys:String>
@@ -767,20 +836,25 @@
 
     <!-- Event -->
 
-    <sys:String x:Key="Event.Download.Confirm">即將從該網址下載檔案：&#xA;{0}</sys:String>
-    <sys:String x:Key="Event.Error.DownloadUrlRequired">EventData 必須為以 http:// 或 https:// 開頭的網址。&#xA;PCL-MOON 不支援其他下載協議。</sys:String>
+    <sys:String x:Key="Event.Download.Confirm">即將從該網址下載檔案：
+{0}</sys:String>
+    <sys:String x:Key="Event.Error.DownloadUrlRequired">EventData 必須為以 http:// 或 https:// 開頭的網址。
+PCL-MOON 不支援其他下載協議。</sys:String>
     <sys:String x:Key="Event.Error.ExecutionFailed">事件執行失敗（{0}, {1}）</sys:String>
     <sys:String x:Key="Event.Error.FileNotFound">未找到 EventData 指向的本機檔案：{0}</sys:String>
     <sys:String x:Key="Event.Error.MissingArgs">EventType {0} 需要至少 2 個以 | 分割的參數，例如 {1}</sys:String>
     <sys:String x:Key="Event.Error.Title">事件執行失敗</sys:String>
-    <sys:String x:Key="Event.Error.UnknownType">未知的事件型別：{0}&#xA;請檢查事件型別填寫是否正確，或 PCL-MOON 是否為最新版本。</sys:String>
-    <sys:String x:Key="Event.Error.UrlRequired">EventData 必須為一個網址。&#xA;如果想要啟動程式，請將 EventType 改為 OpenFile。</sys:String>
+    <sys:String x:Key="Event.Error.UnknownType">未知的事件型別：{0}
+請檢查事件型別填寫是否正確，或 PCL-MOON 是否為最新版本。</sys:String>
+    <sys:String x:Key="Event.Error.UrlRequired">EventData 必須為一個網址。
+如果想要啟動程式，請將 EventType 改為 OpenFile。</sys:String>
     <sys:String x:Key="Event.LaunchGame.SelectVersion">請先選擇一個 Minecraft 實例！</sys:String>
     <sys:String x:Key="Event.LaunchGame.Starting">正在啟動 {0}……</sys:String>
     <sys:String x:Key="Event.OpenUrl.Opening">正在開啟中，請稍候：{0}</sys:String>
     <sys:String x:Key="Event.Refresh.NotSupported">目前頁面不支援重新整理操作！</sys:String>
     <sys:String x:Key="Event.Refresh.Success">已重新整理！</sys:String>
-    <sys:String x:Key="Event.Safety.ConfirmMessage">即將執行：{0}&#xA;請在確認沒有安全隱患後再繼續。</sys:String>
+    <sys:String x:Key="Event.Safety.ConfirmMessage">即將執行：{0}
+請在確認沒有安全隱患後再繼續。</sys:String>
     <sys:String x:Key="Event.Safety.ContinueAlways">繼續且今後不再要求確認</sys:String>
     <sys:String x:Key="Event.Safety.DangerousSettingBlocked">自訂首頁不能寫入高危設定：{0}</sys:String>
     <sys:String x:Key="Event.Safety.Title">執行確認</sys:String>
@@ -797,7 +871,9 @@
     <sys:String x:Key="Instance.Install.Action.StartReset">開始重設</sys:String>
     <sys:String x:Key="Instance.Install.Error.OperationFailed">實例安裝操作失敗。請檢視錯誤詳情。</sys:String>
     <sys:String x:Key="Instance.Install.NoExtraInstall">無附加安裝</sys:String>
-    <sys:String x:Key="Instance.Install.Reset.Message">你正在重設目前實例。&#xA;PCL-MOON 將會重新連線下載該實例所需的檔案，並重新安裝模組載入器（如有）。&#xA;此操作不會使你的存檔、模組、資源包等資訊遺失。</sys:String>
+    <sys:String x:Key="Instance.Install.Reset.Message">你正在重設目前實例。
+PCL-MOON 將會重新連線下載該實例所需的檔案，並重新安裝模組載入器（如有）。
+此操作不會使你的存檔、模組、資源包等資訊遺失。</sys:String>
     <sys:String x:Key="Instance.Install.Reset.Title">重設此實例</sys:String>
 
     <!-- Instance.Export -->
@@ -806,15 +882,26 @@
     <sys:String x:Key="Instance.Export.ExportTask.Prefix">匯出模組包：</sys:String>
     <sys:String x:Key="Instance.Export.ModrinthWarning">受 Modrinth 模組包規範限制，匯出的模組包中不會包含 OptiFine。</sys:String>
     <sys:String x:Key="Instance.Export.MrpackFilter">Modrinth 模組包檔案(*.mrpack)|*.mrpack</sys:String>
-    <sys:String x:Key="Instance.Export.NetCheckAllFailed.Message">連線取得檔案資訊失敗，是否繼續匯出？&#xA;&#xA;若繼續，所有檔案都將被直接打包。&#xA;由於二次分發可能違反使用協議，請盡量不要公開發布匯出的模組包！</sys:String>
+    <sys:String x:Key="Instance.Export.NetCheckAllFailed.Message">連線取得檔案資訊失敗，是否繼續匯出？
+
+若繼續，所有檔案都將被直接打包。
+由於二次分發可能違反使用協議，請盡量不要公開發布匯出的模組包！</sys:String>
     <sys:String x:Key="Instance.Export.NetCheckAllFailed.Title">檔案資訊取得失敗</sys:String>
-    <sys:String x:Key="Instance.Export.NetCheckPartialFailed.Message">連線取得部分檔案資訊失敗，是否繼續匯出？&#xA;&#xA;若繼續，無法取得資訊的檔案將被直接打包。&#xA;由於二次分發可能違反使用協議，請盡量不要公開發布匯出的模組包！</sys:String>
+    <sys:String x:Key="Instance.Export.NetCheckPartialFailed.Message">連線取得部分檔案資訊失敗，是否繼續匯出？
+
+若繼續，無法取得資訊的檔案將被直接打包。
+由於二次分發可能違反使用協議，請盡量不要公開發布匯出的模組包！</sys:String>
     <sys:String x:Key="Instance.Export.NetCheckPartialFailed.Title">部分檔案資訊取得失敗</sys:String>
     <sys:String x:Key="Instance.Export.OptionList.FromConfig">從設定檔中讀取</sys:String>
     <sys:String x:Key="Instance.Export.OptionListTitle">匯出內容清單</sys:String>
     <sys:String x:Key="Instance.Export.PackName">模組包名稱</sys:String>
     <sys:String x:Key="Instance.Export.PackPathInvalid.Title">無法使用設定檔中指定的匯出路徑</sys:String>
-    <sys:String x:Key="Instance.Export.PackPathInvalid.WithDetail">無法使用設定檔中指定的匯出路徑。&#xA;&#xA;指定的路徑：{0}&#xA;&#xA;詳細資訊：&#xA;{1}</sys:String>
+    <sys:String x:Key="Instance.Export.PackPathInvalid.WithDetail">無法使用設定檔中指定的匯出路徑。
+
+指定的路徑：{0}
+
+詳細資訊：
+{1}</sys:String>
     <sys:String x:Key="Instance.Export.PackVersion">模組包版本</sys:String>
     <sys:String x:Key="Instance.Export.PathError">指定的路徑：{0}</sys:String>
     <sys:String x:Key="Instance.Export.ReadFailed">讀取設定檔失敗：{0}</sys:String>
@@ -833,13 +920,18 @@
     <!-- Instance.Export.Advanced -->
 
     <sys:String x:Key="Instance.Export.Advanced.BundleFiles">打包資源檔案，以避免在匯入時下載</sys:String>
-    <sys:String x:Key="Instance.Export.Advanced.BundleFiles.ToolTip">將模組、資源包、光影包的檔案直接放入模組包中，這樣在匯入時就無需連線下載它們。&#xA;建議僅在無法穩定連線 CurseForge 或 Modrinth 時才考慮勾選。</sys:String>
-    <sys:String x:Key="Instance.Export.Advanced.BundleHint">建議僅在無法穩定連線 CurseForge 或 Modrinth 時才打包資源檔案。&#xA;請不要公開發布含資源檔案的模組包，這會違反部分模組的使用協議！</sys:String>
-    <sys:String x:Key="Instance.Export.Advanced.ConfigHint">設定檔中含有未在此處列出的選項，例如精準控制匯出的檔案、設定模組包存放位置等。&#xA;請先選擇「儲存設定檔」，然後編輯儲存的設定檔。</sys:String>
+    <sys:String x:Key="Instance.Export.Advanced.BundleFiles.ToolTip">將模組、資源包、光影包的檔案直接放入模組包中，這樣在匯入時就無需連線下載它們。
+建議僅在無法穩定連線 CurseForge 或 Modrinth 時才考慮勾選。</sys:String>
+    <sys:String x:Key="Instance.Export.Advanced.BundleHint">建議僅在無法穩定連線 CurseForge 或 Modrinth 時才打包資源檔案。
+請不要公開發布含資源檔案的模組包，這會違反部分模組的使用協議！</sys:String>
+    <sys:String x:Key="Instance.Export.Advanced.ConfigHint">設定檔中含有未在此處列出的選項，例如精準控制匯出的檔案、設定模組包存放位置等。
+請先選擇「儲存設定檔」，然後編輯儲存的設定檔。</sys:String>
     <sys:String x:Key="Instance.Export.Advanced.ExportConfig">儲存設定檔</sys:String>
     <sys:String x:Key="Instance.Export.Advanced.ImportConfig">讀取設定檔</sys:String>
     <sys:String x:Key="Instance.Export.Advanced.Modrinth">Modrinth 上傳模式</sys:String>
-    <sys:String x:Key="Instance.Export.Advanced.Modrinth.ToolTip">如果你想要打包上傳到 Modrinth，勾選此項會生成完全符合 Modrinth 要求的模組包檔案。&#xA;由於 Modrinth 要求，只能從 CurseForge 下載的資源將無法連線下載，會被直接放入模組包中。&#xA;此外，勾選後也不能在模組包中包含 PCL-MOON 啟動器檔案。</sys:String>
+    <sys:String x:Key="Instance.Export.Advanced.Modrinth.ToolTip">如果你想要打包上傳到 Modrinth，勾選此項會生成完全符合 Modrinth 要求的模組包檔案。
+由於 Modrinth 要求，只能從 CurseForge 下載的資源將無法連線下載，會被直接放入模組包中。
+此外，勾選後也不能在模組包中包含 PCL-MOON 啟動器檔案。</sys:String>
     <sys:String x:Key="Instance.Export.Advanced.Title">進階選項</sys:String>
 
     <!-- Instance.Export.Config -->
@@ -932,14 +1024,17 @@
 
     <sys:String x:Key="Instance.Overall.Category.AprilFools">愚人節實例</sys:String>
     <sys:String x:Key="Instance.Overall.Category.Hidden">從實例清單中隱藏</sys:String>
-    <sys:String x:Key="Instance.Overall.Category.Hidden.ToolTip">該實例預設將不會在實例清單中顯示。&#xA;在實例清單頁面按下 F11，即可檢視所有隱藏的實例。</sys:String>
+    <sys:String x:Key="Instance.Overall.Category.Hidden.ToolTip">該實例預設將不會在實例清單中顯示。
+在實例清單頁面按下 F11，即可檢視所有隱藏的實例。</sys:String>
     <sys:String x:Key="Instance.Overall.Category.LessUsed">不常用實例</sys:String>
     <sys:String x:Key="Instance.Overall.Category.Modable">可安裝模組的實例</sys:String>
     <sys:String x:Key="Instance.Overall.Category.Regular">一般實例</sys:String>
     <sys:String x:Key="Instance.Overall.Category.Title">分類</sys:String>
     <sys:String x:Key="Instance.Overall.Delete.ConfirmMessage">你確認要刪除實例 {0} 嗎？</sys:String>
-    <sys:String x:Key="Instance.Overall.Delete.ConfirmMessageIsolated">你確認要刪除實例 {0} 嗎？&#xA;由於該實例開啟了實例隔離，刪除時該實例對應的存檔、資源包、模組等檔案也將被一併刪除！</sys:String>
-    <sys:String x:Key="Instance.Overall.Delete.ConfirmMessageIsolatedPermanent">你確認要永久刪除實例 {0} 嗎？&#xA;由於該實例開啟了實例隔離，刪除時該實例對應的存檔、資源包、模組等檔案也將被一併刪除！</sys:String>
+    <sys:String x:Key="Instance.Overall.Delete.ConfirmMessageIsolated">你確認要刪除實例 {0} 嗎？
+由於該實例開啟了實例隔離，刪除時該實例對應的存檔、資源包、模組等檔案也將被一併刪除！</sys:String>
+    <sys:String x:Key="Instance.Overall.Delete.ConfirmMessageIsolatedPermanent">你確認要永久刪除實例 {0} 嗎？
+由於該實例開啟了實例隔離，刪除時該實例對應的存檔、資源包、模組等檔案也將被一併刪除！</sys:String>
     <sys:String x:Key="Instance.Overall.Delete.ConfirmMessagePermanent">你確認要永久刪除實例 {0} 嗎？</sys:String>
     <sys:String x:Key="Instance.Overall.Delete.ConfirmTitle">實例刪除確認</sys:String>
     <sys:String x:Key="Instance.Overall.Delete.PermanentSuccess">實例 {0} 已永久刪除！</sys:String>
@@ -950,11 +1045,14 @@
     <sys:String x:Key="Instance.Overall.EditDescription">修改實例描述</sys:String>
     <sys:String x:Key="Instance.Overall.Error.OperationFailed">實例概覽操作失敗。請檢視錯誤詳情。</sys:String>
     <sys:String x:Key="Instance.Overall.Favorite">加入我的最愛</sys:String>
-    <sys:String x:Key="Instance.Overall.Hide.ConfirmMessage">確認要從實例清單中隱藏該實例嗎？隱藏該實例後，它將不再出現於 PCL-MOON 顯示的實例清單中。&#xA;此後，在實例清單頁面按下 F11 才可以檢視被隱藏的實例。</sys:String>
+    <sys:String x:Key="Instance.Overall.Hide.ConfirmMessage">確認要從實例清單中隱藏該實例嗎？隱藏該實例後，它將不再出現於 PCL-MOON 顯示的實例清單中。
+此後，在實例清單頁面按下 F11 才可以檢視被隱藏的實例。</sys:String>
     <sys:String x:Key="Instance.Overall.Hide.ConfirmTitle">隱藏實例提示</sys:String>
     <sys:String x:Key="Instance.Overall.Name.EditTitle">重新命名實例</sys:String>
     <sys:String x:Key="Instance.Overall.Name.RenameSuccess">重新命名成功！</sys:String>
-    <sys:String x:Key="Instance.Overall.Patch.ConfirmMessage">你確認要對 {0} 的核心檔案進行修補嗎？&#xA;修補遊戲核心可能導致遊戲崩潰等問題。&#xA;在修補核心後，檔案校驗會自動關閉。</sys:String>
+    <sys:String x:Key="Instance.Overall.Patch.ConfirmMessage">你確認要對 {0} 的核心檔案進行修補嗎？
+修補遊戲核心可能導致遊戲崩潰等問題。
+在修補核心後，檔案校驗會自動關閉。</sys:String>
     <sys:String x:Key="Instance.Overall.Patch.ConfirmTitle">修補提示</sys:String>
     <sys:String x:Key="Instance.Overall.Patch.Patching">正在修補遊戲核心，這可能需要一段時間</sys:String>
     <sys:String x:Key="Instance.Overall.Patch.SelectFile.Filter">壓縮檔案(*.jar;*.zip)|*.jar;*.zip</sys:String>
@@ -962,7 +1060,8 @@
     <sys:String x:Key="Instance.Overall.Patch.Success">修補遊戲核心成功</sys:String>
     <sys:String x:Key="Instance.Overall.Personalization.Title">個人化</sys:String>
     <sys:String x:Key="Instance.Overall.Rename">修改實例名</sys:String>
-    <sys:String x:Key="Instance.Overall.Reset.ConfirmMessage">你確認要重設實例 {0} 嗎？&#xA;PCL-MOON 將會嘗試重新從網際網路取得此實例的資源檔案資訊，並重新執行自動安裝。</sys:String>
+    <sys:String x:Key="Instance.Overall.Reset.ConfirmMessage">你確認要重設實例 {0} 嗎？
+PCL-MOON 將會嘗試重新從網際網路取得此實例的資源檔案資訊，並重新執行自動安裝。</sys:String>
     <sys:String x:Key="Instance.Overall.Reset.ConfirmTitle">實例重設確認</sys:String>
     <sys:String x:Key="Instance.Overall.Reset.NotSupported">該實例暫不支援重設！</sys:String>
     <sys:String x:Key="Instance.Overall.Reset.QuiltUnsupported">無法重設：目前啟動器已不再支援 Quilt 載入器。</sys:String>
@@ -1022,9 +1121,12 @@
     <sys:String x:Key="Instance.Overall.Manage.Delete">刪除實例</sys:String>
     <sys:String x:Key="Instance.Overall.Manage.ExportLaunchScript">匯出啟動指令碼</sys:String>
     <sys:String x:Key="Instance.Overall.Manage.PatchCore">修補核心</sys:String>
-    <sys:String x:Key="Instance.Overall.Manage.Reinstall.ToolTip">重新從網際網路取得此實例的安裝資訊，並執行自動安裝。&#xA;你的存檔、模組、資源包等資訊不會遺失。&#xA;若遊戲因 Libraries 等資源缺失無法啟動，請嘗試此項。</sys:String>
+    <sys:String x:Key="Instance.Overall.Manage.Reinstall.ToolTip">重新從網際網路取得此實例的安裝資訊，並執行自動安裝。
+你的存檔、模組、資源包等資訊不會遺失。
+若遊戲因 Libraries 等資源缺失無法啟動，請嘗試此項。</sys:String>
     <sys:String x:Key="Instance.Overall.Manage.RepairFiles">補全檔案</sys:String>
-    <sys:String x:Key="Instance.Overall.Manage.RepairFiles.ToolTip">校驗實例依賴檔案是否完整，並重新下載 Assets 索引與缺失、校驗失敗的檔案。&#xA;若遊戲缺失音效，請嘗試此項。</sys:String>
+    <sys:String x:Key="Instance.Overall.Manage.RepairFiles.ToolTip">校驗實例依賴檔案是否完整，並重新下載 Assets 索引與缺失、校驗失敗的檔案。
+若遊戲缺失音效，請嘗試此項。</sys:String>
     <sys:String x:Key="Instance.Overall.Manage.TestGame">測試遊戲</sys:String>
     <sys:String x:Key="Instance.Overall.Manage.Title">進階管理</sys:String>
 
@@ -1033,7 +1135,10 @@
     <sys:String x:Key="Instance.Overall.Repair.Cancelled.WithTaskName">{0}已取消！</sys:String>
     <sys:String x:Key="Instance.Overall.Repair.DisableVerificationHint">請先關閉 [實例設定 → 設定 → 高階啟動選項 → 關閉檔案校驗]，然後再嘗試補全檔案！</sys:String>
     <sys:String x:Key="Instance.Overall.Repair.Failed">失敗：</sys:String>
-    <sys:String x:Key="Instance.Overall.Repair.Failed.WithDetail">{0}失敗。&#xA;&#xA;詳細資訊：&#xA;{1}</sys:String>
+    <sys:String x:Key="Instance.Overall.Repair.Failed.WithDetail">{0}失敗。
+
+詳細資訊：
+{1}</sys:String>
     <sys:String x:Key="Instance.Overall.Repair.Processing">正在處理中，請稍候！</sys:String>
     <sys:String x:Key="Instance.Overall.Repair.Success">成功！</sys:String>
     <sys:String x:Key="Instance.Overall.Repair.Success.WithTaskName">{0}成功！</sys:String>
@@ -1044,9 +1149,11 @@
     <sys:String x:Key="Instance.Resource.BackToParent">返回上級</sys:String>
     <sys:String x:Key="Instance.Resource.CancelSelection">取消選取</sys:String>
     <sys:String x:Key="Instance.Resource.CheckMods">檢查模組</sys:String>
-    <sys:String x:Key="Instance.Resource.CheckMods.ToolTip">快速檢查模組的版本要求、重複、前置缺失等問題。&#xA;結果僅供參考，由於部分模組標註的資訊有誤，可能並不準確。</sys:String>
+    <sys:String x:Key="Instance.Resource.CheckMods.ToolTip">快速檢查模組的版本要求、重複、前置缺失等問題。
+結果僅供參考，由於部分模組標註的資訊有誤，可能並不準確。</sys:String>
     <sys:String x:Key="Instance.Resource.Datapack.DownloadNew">下載新資料包</sys:String>
-    <sys:String x:Key="Instance.Resource.Datapack.Empty.Description">你可以從已經下載好的檔案安裝資料包。&#xA;資料包需要放置在存檔的 datapacks 資料夾中才能生效。</sys:String>
+    <sys:String x:Key="Instance.Resource.Datapack.Empty.Description">你可以從已經下載好的檔案安裝資料包。
+資料包需要放置在存檔的 datapacks 資料夾中才能生效。</sys:String>
     <sys:String x:Key="Instance.Resource.Datapack.Empty.Title">尚未安裝資料包</sys:String>
     <sys:String x:Key="Instance.Resource.Datapack.ExportInfo.ToolTip">匯出詳細的資料包資訊</sys:String>
     <sys:String x:Key="Instance.Resource.Datapack.Loading">正在載入資料包清單</sys:String>
@@ -1058,10 +1165,17 @@
     <sys:String x:Key="Instance.Resource.Disable">停用</sys:String>
     <sys:String x:Key="Instance.Resource.DownloadNew">下載新資源</sys:String>
     <sys:String x:Key="Instance.Resource.Ed.FileConflict">存在檔案衝突</sys:String>
-    <sys:String x:Key="Instance.Resource.Ed.FileConflict.Message">目前同時存在啟用和停用的兩個模組檔案：&#xA; - {0}&#xA; - {1}&#xA;&#xA;注意，這兩個檔案的內容並不相同。&#xA;在手動刪除或重新命名其中一個檔案後，才能繼續操作。</sys:String>
+    <sys:String x:Key="Instance.Resource.Ed.FileConflict.Message">目前同時存在啟用和停用的兩個模組檔案：
+ - {0}
+ - {1}
+
+注意，這兩個檔案的內容並不相同。
+在手動刪除或重新命名其中一個檔案後，才能繼續操作。</sys:String>
     <sys:String x:Key="Instance.Resource.Ed.ToggleFailed">由於檔案被佔用，模組的狀態切換失敗，請嘗試關閉正在執行的遊戲後再試！</sys:String>
-    <sys:String x:Key="Instance.Resource.Empty.Description">你可以從已經下載好的檔案安裝資源。&#xA;如果你已經安裝了資源，可能是實例隔離設定有誤，請在設定中調整實例隔離選項。</sys:String>
-    <sys:String x:Key="Instance.Resource.Empty.DescriptionWithDownload">你可以下載新的資源，也可以從已經下載好的檔案安裝資源。&#xA;如果你已經安裝了資源，可能是實例隔離設定有誤，請在設定中調整實例隔離選項。</sys:String>
+    <sys:String x:Key="Instance.Resource.Empty.Description">你可以從已經下載好的檔案安裝資源。
+如果你已經安裝了資源，可能是實例隔離設定有誤，請在設定中調整實例隔離選項。</sys:String>
+    <sys:String x:Key="Instance.Resource.Empty.DescriptionWithDownload">你可以下載新的資源，也可以從已經下載好的檔案安裝資源。
+如果你已經安裝了資源，可能是實例隔離設定有誤，請在設定中調整實例隔離選項。</sys:String>
     <sys:String x:Key="Instance.Resource.Empty.Title">尚未安裝資源</sys:String>
     <sys:String x:Key="Instance.Resource.EmptyFolder.Description">你可以從已經下載好的檔案安裝資源</sys:String>
     <sys:String x:Key="Instance.Resource.EmptyFolder.Title">該資料夾為空</sys:String>
@@ -1069,7 +1183,8 @@
     <sys:String x:Key="Instance.Resource.Error.OperationFailed">資源管理操作失敗。請檢視錯誤詳情。</sys:String>
     <sys:String x:Key="Instance.Resource.Export.FilesFilter">文字檔案(*.txt)|*.txt|CSV 檔案(*.csv)|*.csv</sys:String>
     <sys:String x:Key="Instance.Resource.Export.Mode.Csv">CSV 格式</sys:String>
-    <sys:String x:Key="Instance.Resource.Export.Mode.Message">TXT 格式：僅匯出目前的資源檔案名資訊，通常足夠他人取得已安裝的資源資訊&#xA;CSV 格式：匯出詳細的資源資訊，包括其檔名、專案 ID、檔案內版本資訊等詳細資訊</sys:String>
+    <sys:String x:Key="Instance.Resource.Export.Mode.Message">TXT 格式：僅匯出目前的資源檔案名資訊，通常足夠他人取得已安裝的資源資訊
+CSV 格式：匯出詳細的資源資訊，包括其檔名、專案 ID、檔案內版本資訊等詳細資訊</sys:String>
     <sys:String x:Key="Instance.Resource.Export.Mode.Title">選擇匯出模式</sys:String>
     <sys:String x:Key="Instance.Resource.Export.Mode.Txt">TXT 格式</sys:String>
     <sys:String x:Key="Instance.Resource.Export.SelectSaveLocation">選擇儲存位置</sys:String>
@@ -1080,11 +1195,49 @@
     <sys:String x:Key="Instance.Resource.List.Loading">正在載入資源清單</sys:String>
     <sys:String x:Key="Instance.Resource.Loading">正在載入資源清單</sys:String>
     <sys:String x:Key="Instance.Resource.Mod.Disabled.GoDownload">轉到下載畫面</sys:String>
-    <sys:String x:Key="Instance.Resource.Mod.Disabled.Message">你需要先安裝 Forge、Fabric 等模組載入器才能使用模組，請在下載頁面安裝這些實例。&#xA;如果你已經安裝過了模組載入器，那麼你很可能選擇了錯誤的實例，請點擊實例選擇按鈕切換實例。</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.Disabled.Message">你需要先安裝 Forge、Fabric 等模組載入器才能使用模組，請在下載頁面安裝這些實例。
+如果你已經安裝過了模組載入器，那麼你很可能選擇了錯誤的實例，請點擊實例選擇按鈕切換實例。</sys:String>
     <sys:String x:Key="Instance.Resource.Mod.Disabled.SelectInstance">實例選擇</sys:String>
     <sys:String x:Key="Instance.Resource.Mod.Disabled.Title">該實例不可使用模組</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Entry">模组关系</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Entry.ToolTip">查看模组的依赖关系、缺失前置与内嵌（Jar-in-Jar）结构</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Message">这里概览模组间的依赖关系与内嵌结构。禁用或删除模组时会提示受影响的依赖项。</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.ParsePending.Title">模组仍在解析</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.ParsePending.Message">内嵌模组关系仍在后台解析，此时禁用或删除的连带依赖检测可能不完整，可能遗漏应一并处理的模组。是否仍要继续？</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Empty.Title">没有可分析的模组关系</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Empty.Message">当前实例的模组均无依赖声明或内嵌模组，或模组列表尚未加载完成。</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Section.Warnings">警告</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Section.Conflicts">冲突关系</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Conflict.Tooltip">「不兼容」：两者无法同时加载，一起安装会导致游戏崩溃或无法启动，需卸载其一。
+「不建议共存」：可以一起加载，但作者标注了兼容性问题，可能出现异常或功能失效。</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Conflict.Incompatible">不兼容</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Conflict.Discouraged">不建议共存</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Conflict.Pair">{0} 与 {1}</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Section.Relations">模组关系</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Section.Bundled">内嵌模组</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Warning.Missing">{0} 缺少前置：{1}</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Warning.VersionMismatch">{0} 前置版本不符：{1}</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Warning.VersionMismatch.Detail">{0} {1}（检测到：{2}）</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Warning.Disabled">{0} 的前置被禁用：{1}</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Dep.Installed">已安装</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Dep.Disabled">已禁用</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Dep.Bundled">内嵌提供</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Dep.VersionMismatch">版本不符</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Dep.Missing">缺失</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Dep.Optional">[可选]</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Bundled.Current">✓ 当前实例使用</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Bundled.Incompatible">⚠ 不适配当前版本</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Bundled.Versions">{0} 个版本</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Bundled.From">[内置 · 来自 {0}]</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Search.Hint">搜索模组：名称 / ModId / 依赖</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Cascade.OnlySelf">仅操作此模组</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Cascade.WithDisable">连带禁用依赖它的模组</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Cascade.WithDelete">连带删除依赖它的模组</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Cascade.DisableTitle">禁用此模组会影响 {0} 个依赖它的模组，请选择处理方式</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Cascade.DeleteTitle">删除此模组会影响 {0} 个依赖它的模组，请选择处理方式</sys:String>
     <sys:String x:Key="Instance.Resource.Schematic.DownloadMod">下載投影模組</sys:String>
-    <sys:String x:Key="Instance.Resource.Schematic.Unavailable.Message">你可能需要先安裝投影模組，如果已經安裝過了投影模組請先啟動一次遊戲。&#xA;也可能是你選擇錯了實例，請點擊實例選擇按鈕切換實例。</sys:String>
+    <sys:String x:Key="Instance.Resource.Schematic.Unavailable.Message">你可能需要先安裝投影模組，如果已經安裝過了投影模組請先啟動一次遊戲。
+也可能是你選擇錯了實例，請點擊實例選擇按鈕切換實例。</sys:String>
     <sys:String x:Key="Instance.Resource.Schematic.Unavailable.Title">該實例不可使用投影原理圖</sys:String>
     <sys:String x:Key="Instance.Resource.Search.Hint">搜尋資源：名稱 / 描述 / 標籤</sys:String>
     <sys:String x:Key="Instance.Resource.SelectAll">全選</sys:String>
@@ -1145,7 +1298,8 @@
     <sys:String x:Key="Instance.Resource.Item.InfoUnavailable">存在錯誤，無法取得資訊</sys:String>
     <sys:String x:Key="Instance.Resource.Item.OpenChangelogFailed">開啟更新紀錄出現錯誤</sys:String>
     <sys:String x:Key="Instance.Resource.Item.Update">更新</sys:String>
-    <sys:String x:Key="Instance.Resource.Item.UpdateCompare">目前版本：{0} ({1})&#xA;最新版本：{2} ({3})</sys:String>
+    <sys:String x:Key="Instance.Resource.Item.UpdateCompare">目前版本：{0} ({1})
+最新版本：{2} ({3})</sys:String>
     <sys:String x:Key="Instance.Resource.Item.UpdateConfirm.Message">是否要更新 {0}？</sys:String>
     <sys:String x:Key="Instance.Resource.Item.UpdateConfirm.Title">更新確認</sys:String>
     <sys:String x:Key="Instance.Resource.Item.UpdateToolTip">點擊以更新，右鍵檢視更新紀錄。</sys:String>
@@ -1161,7 +1315,10 @@
     <sys:String x:Key="Instance.Resource.Item.Info.DetailedError">詳細的錯誤資訊：</sys:String>
     <sys:String x:Key="Instance.Resource.Item.Info.EmptyFolder">空資料夾</sys:String>
     <sys:String x:Key="Instance.Resource.Item.Info.FailedMessage">無法讀取此資源的資訊。</sys:String>
-    <sys:String x:Key="Instance.Resource.Item.Info.FailedMessage.WithDetail">無法讀取此資源的資訊。&#xA;&#xA;詳細的錯誤資訊：&#xA;{0}</sys:String>
+    <sys:String x:Key="Instance.Resource.Item.Info.FailedMessage.WithDetail">無法讀取此資源的資訊。
+
+詳細的錯誤資訊：
+{0}</sys:String>
     <sys:String x:Key="Instance.Resource.Item.Info.FailedTitle">資源讀取失敗</sys:String>
     <sys:String x:Key="Instance.Resource.Item.Info.File">檔案：{0}（{1}）</sys:String>
     <sys:String x:Key="Instance.Resource.Item.Info.FolderNotFound">資料夾不存在</sys:String>
@@ -1206,7 +1363,11 @@
     <sys:String x:Key="Instance.Resource.Update.Task.Title">資源更新：{0}</sys:String>
     <sys:String x:Key="Instance.Resource.Update.WaitingForUpdate">正在更新資源</sys:String>
     <sys:String x:Key="Instance.Resource.Update.Warning.Confirm">我已了解風險，繼續更新</sys:String>
-    <sys:String x:Key="Instance.Resource.Update.Warning.Message">新版本模組可能不與舊存檔或其他模組相容，這可能導致遊戲崩潰，甚至永久損壞存檔！&#xA;如果你在遊玩模組包，請千萬不要自行更新模組！&#xA;&#xA;在更新前，請先備份存檔，並檢查模組的更新紀錄。&#xA;如果更新後出現問題，你也可以在資源回收筒找回更新前的模組。</sys:String>
+    <sys:String x:Key="Instance.Resource.Update.Warning.Message">新版本模組可能不與舊存檔或其他模組相容，這可能導致遊戲崩潰，甚至永久損壞存檔！
+如果你在遊玩模組包，請千萬不要自行更新模組！
+
+在更新前，請先備份存檔，並檢查模組的更新紀錄。
+如果更新後出現問題，你也可以在資源回收筒找回更新前的模組。</sys:String>
     <sys:String x:Key="Instance.Resource.Update.Warning.Title">模組更新警告</sys:String>
 
     <!-- Instance.Saves -->
@@ -1263,12 +1424,16 @@
     <sys:String x:Key="Instance.Saves.Datapack.Delete.PermanentSingle">已徹底刪除 {0}！</sys:String>
     <sys:String x:Key="Instance.Saves.Datapack.Delete.RecycleMultiple">已將 {0} 個專案刪除到資源回收筒！</sys:String>
     <sys:String x:Key="Instance.Saves.Datapack.Delete.RecycleSingle">已將 {0} 刪除到資源回收筒！</sys:String>
-    <sys:String x:Key="Instance.Saves.Datapack.Export.Mode.Message">TXT 格式：僅匯出目前的資料包檔名資訊&#xA;CSV 格式：匯出詳細的資料包資訊，包括檔名、專案 ID、版本資訊等詳細資訊</sys:String>
+    <sys:String x:Key="Instance.Saves.Datapack.Export.Mode.Message">TXT 格式：僅匯出目前的資料包檔名資訊
+CSV 格式：匯出詳細的資料包資訊，包括檔名、專案 ID、版本資訊等詳細資訊</sys:String>
     <sys:String x:Key="Instance.Saves.Datapack.Info.Author">作者：</sys:String>
     <sys:String x:Key="Instance.Saves.Datapack.Info.DatapackId">資料包 ID：</sys:String>
     <sys:String x:Key="Instance.Saves.Datapack.Info.File">檔案：</sys:String>
     <sys:String x:Key="Instance.Saves.Datapack.Info.ReadFailed">無法讀取此資料包的資訊。</sys:String>
-    <sys:String x:Key="Instance.Saves.Datapack.Info.ReadFailed.WithDetail">無法讀取此資料包的資訊。&#xA;&#xA;詳細錯誤：&#xA;{0}</sys:String>
+    <sys:String x:Key="Instance.Saves.Datapack.Info.ReadFailed.WithDetail">無法讀取此資料包的資訊。
+
+詳細錯誤：
+{0}</sys:String>
     <sys:String x:Key="Instance.Saves.Datapack.Info.ReadFailedTitle">資料包讀取失敗</sys:String>
     <sys:String x:Key="Instance.Saves.Datapack.Info.Version">版本：</sys:String>
     <sys:String x:Key="Instance.Saves.Datapack.Install.FileDialog.Filter">資料包檔案(*.zip)|*.zip</sys:String>
@@ -1282,7 +1447,10 @@
     <sys:String x:Key="Instance.Saves.Datapack.Update.Task.Title">資料包更新：{0}</sys:String>
     <sys:String x:Key="Instance.Saves.Datapack.Update.UnsafeFilesSkipped">已跳過 {0} 個檔名不安全的資料包更新。</sys:String>
     <sys:String x:Key="Instance.Saves.Datapack.Update.Warning.Confirm">我已了解風險，繼續更新</sys:String>
-    <sys:String x:Key="Instance.Saves.Datapack.Update.Warning.Message">新版本資料包可能不與舊存檔或其他資料包相容，這可能導致遊戲崩潰或存檔損壞！&#xA;&#xA;在更新前，請先備份存檔。&#xA;如果更新後出現問題，你也可以在資源回收筒找回更新前的資料包。</sys:String>
+    <sys:String x:Key="Instance.Saves.Datapack.Update.Warning.Message">新版本資料包可能不與舊存檔或其他資料包相容，這可能導致遊戲崩潰或存檔損壞！
+
+在更新前，請先備份存檔。
+如果更新後出現問題，你也可以在資源回收筒找回更新前的資料包。</sys:String>
     <sys:String x:Key="Instance.Saves.Datapack.Update.Warning.Title">資料包更新警告</sys:String>
 
     <!-- Instance.Saves.Info -->
@@ -1360,7 +1528,10 @@
     <sys:String x:Key="Instance.Server.ReadFileFailed">讀取 servers.dat 檔案失敗</sys:String>
     <sys:String x:Key="Instance.Server.RefreshAll">重新整理所有伺服器</sys:String>
     <sys:String x:Key="Instance.Server.RefreshFailed">重新整理伺服器清單失敗</sys:String>
-    <sys:String x:Key="Instance.Server.RefreshFailed.WithDetail">重新整理伺服器清單失敗。&#xA;&#xA;詳細錯誤：&#xA;{0}</sys:String>
+    <sys:String x:Key="Instance.Server.RefreshFailed.WithDetail">重新整理伺服器清單失敗。
+
+詳細錯誤：
+{0}</sys:String>
     <sys:String x:Key="Instance.Server.RefreshInfo">重新整理伺服器資訊</sys:String>
     <sys:String x:Key="Instance.Server.RefreshingList">正在重新整理伺服器清單，請稍候...</sys:String>
     <sys:String x:Key="Instance.Server.Removed">伺服器已移除</sys:String>
@@ -1382,7 +1553,8 @@
     <sys:String x:Key="Instance.Server.Card.Offline">離線</sys:String>
     <sys:String x:Key="Instance.Server.Card.RefreshingStatus">正在重新整理伺服器 {0} 的狀態...</sys:String>
     <sys:String x:Key="Instance.Server.Card.Remove">移除</sys:String>
-    <sys:String x:Key="Instance.Server.Card.RemoveConfirmMessage">你確認要移除伺服器 {0} 嗎？&#xA;'{1}' 將從您的清單中移除，包括遊戲內清單，且無法復原。</sys:String>
+    <sys:String x:Key="Instance.Server.Card.RemoveConfirmMessage">你確認要移除伺服器 {0} 嗎？
+'{1}' 將從您的清單中移除，包括遊戲內清單，且無法復原。</sys:String>
     <sys:String x:Key="Instance.Server.Card.RemoveConfirmTitle">移除伺服器確認</sys:String>
     <sys:String x:Key="Instance.Server.Card.ServerOffline">伺服器離線</sys:String>
 
@@ -1398,43 +1570,95 @@
     <!-- Instance.Setup.Advanced -->
 
     <sys:String x:Key="Instance.Setup.Advanced.Classpath">Classpath 頭部附加</sys:String>
-    <sys:String x:Key="Instance.Setup.Advanced.Classpath.ToolTip">文字方塊中的內容將被作為 Classpath 新增到該實例的啟動參數中的 Classpath 頭部。&#xA;需要使用絕對路徑。若有多個，請以半形（英文）分號分隔。</sys:String>
+    <sys:String x:Key="Instance.Setup.Advanced.Classpath.ToolTip">文字方塊中的內容將被作為 Classpath 新增到該實例的啟動參數中的 Classpath 頭部。
+需要使用絕對路徑。若有多個，請以半形（英文）分號分隔。</sys:String>
     <sys:String x:Key="Instance.Setup.Advanced.DisableFileVerification">關閉檔案校驗</sys:String>
-    <sys:String x:Key="Instance.Setup.Advanced.DisableFileVerification.ToolTip">完全不更改 Assets；不校驗 Libraries、第三方登入庫與實例主 Jar 檔案是否被修改。&#xA;如果你沒有修改相關檔案，請勿勾選此項。</sys:String>
-    <sys:String x:Key="Instance.Setup.Advanced.GameArgs.ToolTip">文字方塊中的內容將會被直接拼合在啟動參數的末尾。&#xA;例如，輸入 --demo 則會以試玩模式啟動遊戲。&#xA;支援 Minecraft 實例 JSON 中的字串取代標記，例如 ${library_directory}。&#xA;&#xA;若留空，則跟隨全域設定的值。</sys:String>
+    <sys:String x:Key="Instance.Setup.Advanced.DisableFileVerification.ToolTip">完全不更改 Assets；不校驗 Libraries、第三方登入庫與實例主 Jar 檔案是否被修改。
+如果你沒有修改相關檔案，請勿勾選此項。</sys:String>
+    <sys:String x:Key="Instance.Setup.Advanced.GameArgs.ToolTip">文字方塊中的內容將會被直接拼合在啟動參數的末尾。
+例如，輸入 --demo 則會以試玩模式啟動遊戲。
+支援 Minecraft 實例 JSON 中的字串取代標記，例如 ${library_directory}。
+
+若留空，則跟隨全域設定的值。</sys:String>
     <sys:String x:Key="Instance.Setup.Advanced.IgnoreJavaCompatibility">忽略 Java 相容性警告</sys:String>
     <sys:String x:Key="Instance.Setup.Advanced.IgnoreJavaCompatibility.ToolTip">如果手動選擇了與目前實例不相容的 Java，則自動跳過相容性警告對話方塊，強制使用手動選擇的 Java。</sys:String>
-    <sys:String x:Key="Instance.Setup.Advanced.JvmArgs.ToolTip">啟動 Minecraft 時使用的額外 JVM 參數，在沒有確定把握的情況下請不要嘗試修改。&#xA;支援 Minecraft 實例 JSON 中的字串取代標記，例如 ${library_directory}。&#xA;&#xA;若留空，則跟隨全域設定的值。</sys:String>
-    <sys:String x:Key="Instance.Setup.Advanced.PreLaunchCommand.ToolTip">該項不會覆蓋全域設定：啟動時會先執行全域設定的指令，再執行實例設定的指令。&#xA;&#xA;在 Minecraft 啟動前執行特定指令或程式，語法與 Windows 的指令提示字元一致。&#xA;&#xA;可以使用以下取代標記實現相對路徑（路徑均以 \ 結尾）：&#xA; · {path}：PCL-MOON 的 exe 檔案所在的資料夾&#xA; · {minecraft}：.minecraft 資料夾&#xA; · {verpath}：實例資料夾（.minecraft\versions\實例名\）&#xA; · {verindie}：開啟實例隔離時等同實例資料夾，未開啟時等同 .minecraft 資料夾&#xA; · {java}：遊戲執行時的 Java 資料夾&#xA;&#xA;除此之外，也支援以下取代標記：&#xA; · {user}：玩家名字&#xA; · {login}：玩家的登入方式&#xA; · {uuid}：玩家的 UUID&#xA; · {name}：遊戲實例名&#xA; · {date}、{time}：目前的系統時間&#xA; · {version}：遊戲對應的原版版本號&#xA;&#xA;例如：&#xA; · "{verpath}test.exe" ：執行實例資料夾下的 test.exe 程式&#xA; · "{java}java.exe" -jar "{verpath}test.jar" ：用 Java 執行實例資料夾下的 test.jar&#xA; · notepad "{verindie}options.txt" ：使用記事本開啟該實例的設定檔&#xA;&#xA;涉及路徑的操作最好都打上雙引號，以避免路徑中的空格導致執行失敗。&#xA;執行指令時，指令列所在的目錄是目前的 .minecraft 資料夾。</sys:String>
+    <sys:String x:Key="Instance.Setup.Advanced.JvmArgs.ToolTip">啟動 Minecraft 時使用的額外 JVM 參數，在沒有確定把握的情況下請不要嘗試修改。
+支援 Minecraft 實例 JSON 中的字串取代標記，例如 ${library_directory}。
+
+若留空，則跟隨全域設定的值。</sys:String>
+    <sys:String x:Key="Instance.Setup.Advanced.PreLaunchCommand.ToolTip">該項不會覆蓋全域設定：啟動時會先執行全域設定的指令，再執行實例設定的指令。
+
+在 Minecraft 啟動前執行特定指令或程式，語法與 Windows 的指令提示字元一致。
+
+可以使用以下取代標記實現相對路徑（路徑均以 \ 結尾）：
+ · {path}：PCL-MOON 的 exe 檔案所在的資料夾
+ · {minecraft}：.minecraft 資料夾
+ · {verpath}：實例資料夾（.minecraft\versions\實例名\）
+ · {verindie}：開啟實例隔離時等同實例資料夾，未開啟時等同 .minecraft 資料夾
+ · {java}：遊戲執行時的 Java 資料夾
+
+除此之外，也支援以下取代標記：
+ · {user}：玩家名字
+ · {login}：玩家的登入方式
+ · {uuid}：玩家的 UUID
+ · {name}：遊戲實例名
+ · {date}、{time}：目前的系統時間
+ · {version}：遊戲對應的原版版本號
+
+例如：
+ · &quot;{verpath}test.exe&quot; ：執行實例資料夾下的 test.exe 程式
+ · &quot;{java}java.exe&quot; -jar &quot;{verpath}test.jar&quot; ：用 Java 執行實例資料夾下的 test.jar
+ · notepad &quot;{verindie}options.txt&quot; ：使用記事本開啟該實例的設定檔
+
+涉及路徑的操作最好都打上雙引號，以避免路徑中的空格導致執行失敗。
+執行指令時，指令列所在的目錄是目前的 .minecraft 資料夾。</sys:String>
     <sys:String x:Key="Instance.Setup.Advanced.UseDebugLog4j">使用除錯級別 log4j 設定檔</sys:String>
-    <sys:String x:Key="Instance.Setup.Advanced.UseDebugLog4j.Message">本選項會修改遊戲日誌層級修改為最低，大量日誌輸出會消耗大量磁碟空間並可能影響遊戲效能。這也可能帶來一定安全風險。如果你不知道你在做什麼，不要修改此選項！&#xA;你確認要繼續修改嗎？</sys:String>
+    <sys:String x:Key="Instance.Setup.Advanced.UseDebugLog4j.Message">本選項會修改遊戲日誌層級修改為最低，大量日誌輸出會消耗大量磁碟空間並可能影響遊戲效能。這也可能帶來一定安全風險。如果你不知道你在做什麼，不要修改此選項！
+你確認要繼續修改嗎？</sys:String>
     <sys:String x:Key="Instance.Setup.Advanced.UseGlobalProxy">跟隨啟動器網路 Proxy 設定</sys:String>
-    <sys:String x:Key="Instance.Setup.Advanced.UseGlobalProxy.ToolTip">使用 [設定-其他-網路-HTTP Proxy] 中填寫的 Proxy 來啟動遊戲。&#xA;錯誤的全域設定將會導致無法登入！</sys:String>
+    <sys:String x:Key="Instance.Setup.Advanced.UseGlobalProxy.ToolTip">使用 [設定-其他-網路-HTTP Proxy] 中填寫的 Proxy 來啟動遊戲。
+錯誤的全域設定將會導致無法登入！</sys:String>
 
     <!-- Instance.Setup.Options -->
 
-    <sys:String x:Key="Instance.Setup.Options.CustomInfo.ToolTip">該資訊會顯示在遊戲主介面的左下角，與 F3 除錯頁面的左上角。&#xA;若留空，則跟隨全域設定的值。</sys:String>
+    <sys:String x:Key="Instance.Setup.Options.CustomInfo.ToolTip">該資訊會顯示在遊戲主介面的左下角，與 F3 除錯頁面的左上角。
+若留空，則跟隨全域設定的值。</sys:String>
     <sys:String x:Key="Instance.Setup.Options.InstanceIsolation">實例隔離</sys:String>
-    <sys:String x:Key="Instance.Setup.Options.InstanceIsolation.Disabled.ToolTip">與其餘關閉隔離的實例共享存檔、模組等檔案。&#xA;若存在多個安裝了模組的實例，可能會由於模組衝突而導致崩潰。</sys:String>
+    <sys:String x:Key="Instance.Setup.Options.InstanceIsolation.Disabled.ToolTip">與其餘關閉隔離的實例共享存檔、模組等檔案。
+若存在多個安裝了模組的實例，可能會由於模組衝突而導致崩潰。</sys:String>
     <sys:String x:Key="Instance.Setup.Options.InstanceIsolation.Enabled">開啟</sys:String>
-    <sys:String x:Key="Instance.Setup.Options.InstanceIsolation.Enabled.ToolTip">與其他實例的存檔、模組等檔案相互獨立，互不干涉。&#xA;這會使你無法跨實例共享存檔，但可以規避模組衝突問題。</sys:String>
-    <sys:String x:Key="Instance.Setup.Options.InstanceIsolation.Message">調整實例隔離後，你可能得把遊戲存檔、模組等檔案手動遷移到新的遊戲資料夾中。&#xA;如果修改後發現存檔消失，把這項設定改回來就能復原。&#xA;如果你不會遷移存檔，不建議修改這項設定！</sys:String>
+    <sys:String x:Key="Instance.Setup.Options.InstanceIsolation.Enabled.ToolTip">與其他實例的存檔、模組等檔案相互獨立，互不干涉。
+這會使你無法跨實例共享存檔，但可以規避模組衝突問題。</sys:String>
+    <sys:String x:Key="Instance.Setup.Options.InstanceIsolation.Message">調整實例隔離後，你可能得把遊戲存檔、模組等檔案手動遷移到新的遊戲資料夾中。
+如果修改後發現存檔消失，把這項設定改回來就能復原。
+如果你不會遷移存檔，不建議修改這項設定！</sys:String>
     <sys:String x:Key="Instance.Setup.Options.WindowTitle.Default">預設視窗標題</sys:String>
     <sys:String x:Key="Instance.Setup.Options.WindowTitle.Default.ToolTip">遊戲視窗標題是否保留預設。</sys:String>
-    <sys:String x:Key="Instance.Setup.Options.WindowTitle.ToolTip">自訂遊戲視窗的標題，若留空則跟隨全域設定的值。&#xA;支援以下取代標記：&#xA; · {user}：玩家名字&#xA; · {login}：玩家的登入方式&#xA; · {name}：遊戲實例名&#xA; · {date}、{time}：目前的系統時間&#xA; · {version}：遊戲對應的原版版本號&#xA;注意：如果你的實例安裝了 Modern UI 模組，那麼這裡的設定將會失效</sys:String>
+    <sys:String x:Key="Instance.Setup.Options.WindowTitle.ToolTip">自訂遊戲視窗的標題，若留空則跟隨全域設定的值。
+支援以下取代標記：
+ · {user}：玩家名字
+ · {login}：玩家的登入方式
+ · {name}：遊戲實例名
+ · {date}、{time}：目前的系統時間
+ · {version}：遊戲對應的原版版本號
+注意：如果你的實例安裝了 Modern UI 模組，那麼這裡的設定將會失效</sys:String>
 
     <!-- Instance.Setup.Options.Java -->
 
     <sys:String x:Key="Instance.Setup.Options.Java">遊戲 Java</sys:String>
     <sys:String x:Key="Instance.Setup.Options.Java.AutoSelect">自動選擇適合的 Java</sys:String>
-    <sys:String x:Key="Instance.Setup.Options.Java.Details.ToolTip">路徑: {0}&#xA;版本: {1}&#xA;來源: {2}</sys:String>
-    <sys:String x:Key="Instance.Setup.Options.Java.InvalidPathToolTip">無效路徑: {0}&#xA;點擊此項重新選擇有效 Java</sys:String>
+    <sys:String x:Key="Instance.Setup.Options.Java.Details.ToolTip">路徑: {0}
+版本: {1}
+來源: {2}</sys:String>
+    <sys:String x:Key="Instance.Setup.Options.Java.InvalidPathToolTip">無效路徑: {0}
+點擊此項重新選擇有效 Java</sys:String>
     <sys:String x:Key="Instance.Setup.Options.Java.LoadFailed">清單載入失敗，請重試</sys:String>
     <sys:String x:Key="Instance.Setup.Options.Java.Loading">載入中……</sys:String>
     <sys:String x:Key="Instance.Setup.Options.Java.NoRuntime">未偵測到可用的 Java 執行時</sys:String>
     <sys:String x:Key="Instance.Setup.Options.Java.NoRuntime.ToolTip">請在設定中手動指定 Java 路徑，或點擊「掃描」按鈕重新偵測</sys:String>
     <sys:String x:Key="Instance.Setup.Options.Java.PathOutOfRange">超出路徑允許範圍，請選擇啟動器資料夾或其子資料夾下的檔案</sys:String>
-    <sys:String x:Key="Instance.Setup.Options.Java.RelativePathToolTip">相對路徑: {0}&#xA;解析路徑: {1}</sys:String>
+    <sys:String x:Key="Instance.Setup.Options.Java.RelativePathToolTip">相對路徑: {0}
+解析路徑: {1}</sys:String>
     <sys:String x:Key="Instance.Setup.Options.Java.SelectRelative">選擇啟動器資料夾下的 Java</sys:String>
     <sys:String x:Key="Instance.Setup.Options.Java.SelectRelative.Invalid">選擇啟動器資料夾下的 Java（目前路徑無效）</sys:String>
     <sys:String x:Key="Instance.Setup.Options.Java.SelectRelative.WithJava">啟動器資料夾下的 Java | {0}</sys:String>
@@ -1447,15 +1671,22 @@
     <sys:String x:Key="Instance.Setup.Server.AuthServer.AutoFormatted">已自動格式化驗證伺服器位址！</sys:String>
     <sys:String x:Key="Instance.Setup.Server.AuthServer.Hint">Yggdrasil API 認證伺服器的完整網址</sys:String>
     <sys:String x:Key="Instance.Setup.Server.AutoJoin">自動進入伺服器</sys:String>
-    <sys:String x:Key="Instance.Setup.Server.AutoJoin.ToolTip">在開啟 Minecraft 後自動進入某伺服器。&#xA;用英文冒號間隔 IP 與通訊埠，例如「87.87.87.87:12345」。</sys:String>
+    <sys:String x:Key="Instance.Setup.Server.AutoJoin.ToolTip">在開啟 Minecraft 後自動進入某伺服器。
+用英文冒號間隔 IP 與通訊埠，例如「87.87.87.87:12345」。</sys:String>
     <sys:String x:Key="Instance.Setup.Server.CreateProfile">建立檔案</sys:String>
-    <sys:String x:Key="Instance.Setup.Server.HttpWarning">使用 HTTP 協議進行登入操作可能面臨登入密碼在未加密的情況下被明文傳輸的安全風險。&#xA;如果沒有特殊需求，請始終考慮使用 HTTPS 協議！</sys:String>
+    <sys:String x:Key="Instance.Setup.Server.HttpWarning">使用 HTTP 協議進行登入操作可能面臨登入密碼在未加密的情況下被明文傳輸的安全風險。
+如果沒有特殊需求，請始終考慮使用 HTTPS 協議！</sys:String>
     <sys:String x:Key="Instance.Setup.Server.LittleSkin.Name">LittleSkin 登入</sys:String>
     <sys:String x:Key="Instance.Setup.Server.LittleSkin.Override.Continue">繼續</sys:String>
-    <sys:String x:Key="Instance.Setup.Server.LittleSkin.Override.Message">即將把第三方登入設定覆蓋為 LittleSkin 登入。&#xA;除非你是服主，或服主要求你這樣做，否則請勿繼續。&#xA;&#xA;是否確實需要覆蓋目前設定？</sys:String>
+    <sys:String x:Key="Instance.Setup.Server.LittleSkin.Override.Message">即將把第三方登入設定覆蓋為 LittleSkin 登入。
+除非你是服主，或服主要求你這樣做，否則請勿繼續。
+
+是否確實需要覆蓋目前設定？</sys:String>
     <sys:String x:Key="Instance.Setup.Server.LittleSkin.Override.Title">設定覆蓋確認</sys:String>
     <sys:String x:Key="Instance.Setup.Server.LockLoginMethod">鎖定驗證方式</sys:String>
-    <sys:String x:Key="Instance.Setup.Server.LockLoginMethod.Message">你正在選擇鎖定此實例的驗證方式。鎖定後，將無法再更改此實例的驗證方式要求，啟動此實例將必須使用指定的驗證方式。&#xA;此功能可能會幫助一些服主吧。&#xA;是否繼續？</sys:String>
+    <sys:String x:Key="Instance.Setup.Server.LockLoginMethod.Message">你正在選擇鎖定此實例的驗證方式。鎖定後，將無法再更改此實例的驗證方式要求，啟動此實例將必須使用指定的驗證方式。
+此功能可能會幫助一些服主吧。
+是否繼續？</sys:String>
     <sys:String x:Key="Instance.Setup.Server.LockLoginMethod.Title">鎖定驗證方式確認</sys:String>
     <sys:String x:Key="Instance.Setup.Server.LoginLockHint">目前實例的驗證方式已鎖定，無法再次更改。請使用要求的驗證方式啟動遊戲。</sys:String>
     <sys:String x:Key="Instance.Setup.Server.LoginMethod.AuthOnly">僅第三方驗證（Authlib-Injector）</sys:String>
@@ -1468,7 +1699,8 @@
     <sys:String x:Key="Instance.Setup.Server.Register.Hint">註冊帳戶的網頁位址，如 https://xxxxx.xxx/auth/register</sys:String>
     <sys:String x:Key="Instance.Setup.Server.RestrictLogin">限制驗證方式</sys:String>
     <sys:String x:Key="Instance.Setup.Server.SetLittleSkin">設定為 LittleSkin</sys:String>
-    <sys:String x:Key="Instance.Setup.Server.SslWarning">未啟用 SSL 證書驗證可能導致登入密碼面臨被第三方截獲的安全風險。&#xA;如果沒有特殊需求，請始終考慮啟用 SSL 證書驗證！</sys:String>
+    <sys:String x:Key="Instance.Setup.Server.SslWarning">未啟用 SSL 證書驗證可能導致登入密碼面臨被第三方截獲的安全風險。
+如果沒有特殊需求，請始終考慮啟用 SSL 證書驗證！</sys:String>
     <sys:String x:Key="Instance.Setup.Server.Title">伺服器</sys:String>
 
     <!-- Launch -->
@@ -1478,7 +1710,10 @@
     <sys:String x:Key="Launch.Error.Title">啟動失敗</sys:String>
     <sys:String x:Key="Launch.Right.CommunityHint.HidePrompt">若要永久隱藏此提示，請輸入 PCL-MOON。</sys:String>
     <sys:String x:Key="Launch.Right.CommunityHint.InputTitle">輸入 PCL-MOON</sys:String>
-    <sys:String x:Key="Launch.Right.CommunityHint.Message">你正在使用 PCL-MOON。它基於上游 PCL CE（PCL 社群版）繼續開發，不是原版 PCL，也不是 PCL CE 本體。&#xA;&#xA;上游 PCL CE 相對原版 PCL 是獨立維護路線，體驗會有出入。PCL-MOON 沿用它的啟動、帳號與版本能力，並加上自己的主介面、瀏覽和整合包服務。&#xA;PCL-MOON 的問題請向 PCL-MOON 回饋，不要提交到原版 PCL 或上游 PCL CE 儲存庫。</sys:String>
+    <sys:String x:Key="Launch.Right.CommunityHint.Message">你正在使用 PCL-MOON。它基於上游 PCL CE（PCL 社群版）繼續開發，不是原版 PCL，也不是 PCL CE 本體。
+
+上游 PCL CE 相對原版 PCL 是獨立維護路線，體驗會有出入。PCL-MOON 沿用它的啟動、帳號與版本能力，並加上自己的主介面、瀏覽和整合包服務。
+PCL-MOON 的問題請向 PCL-MOON 回饋，不要提交到原版 PCL 或上游 PCL CE 儲存庫。</sys:String>
     <sys:String x:Key="Launch.Right.CommunityHint.Title">PCL-MOON 提示</sys:String>
     <sys:String x:Key="Launch.Right.CommunityHint.WrongInput">不太對哦……</sys:String>
     <sys:String x:Key="Launch.Right.Log.Title">啟動日誌</sys:String>
@@ -1504,7 +1739,10 @@
     <sys:String x:Key="Launch.Account.Auth.InvalidServer">輸入的驗證伺服器位址無效</sys:String>
     <sys:String x:Key="Launch.Account.Auth.Login">登入</sys:String>
     <sys:String x:Key="Launch.Account.Auth.LoginFailed">第三方登入嘗試失敗</sys:String>
-    <sys:String x:Key="Launch.Account.Auth.LoginFailed.WithDetail">第三方登入嘗試失敗。&#xA;&#xA;原始錯誤資訊：&#xA;{0}</sys:String>
+    <sys:String x:Key="Launch.Account.Auth.LoginFailed.WithDetail">第三方登入嘗試失敗。
+
+原始錯誤資訊：
+{0}</sys:String>
     <sys:String x:Key="Launch.Account.Auth.Logout">退出登入</sys:String>
     <sys:String x:Key="Launch.Account.Auth.Password">密碼</sys:String>
     <sys:String x:Key="Launch.Account.Auth.Preset.LittleSkin">預設 - LittleSkin</sys:String>
@@ -1520,8 +1758,15 @@
     <sys:String x:Key="Launch.Account.LoginDialog.CopyCode">複製代號</sys:String>
     <sys:String x:Key="Launch.Account.LoginDialog.Error.Init">微軟驗證對話方塊初始化失敗</sys:String>
     <sys:String x:Key="Launch.Account.LoginDialog.Error.Load">微軟驗證對話方塊載入失敗</sys:String>
-    <sys:String x:Key="Launch.Account.LoginDialog.MicrosoftInstructions">登入網頁將自動開啟，請在網頁中輸入授權碼 {0}（將自動複製）。&#xA;&#xA;如果網路環境不佳，網頁可能一直載入不出來，屆時請使用 VPN 並重試。&#xA;你也可以用其他裝置開啟 {1} 並輸入上述授權碼。</sys:String>
-    <sys:String x:Key="Launch.Account.LoginDialog.MicrosoftInstructions.WithAutoFill">登入網頁將自動開啟，授權碼將自動填充。&#xA;&#xA;如果網路環境不佳，網頁可能一直載入不出來，屆時請使用 VPN 並重試。&#xA;如果沒有自動填充，請在頁面內貼上此授權碼 {0}（將自動複製）&#xA;你也可以用其他裝置開啟 {1} 並輸入授權碼。</sys:String>
+    <sys:String x:Key="Launch.Account.LoginDialog.MicrosoftInstructions">登入網頁將自動開啟，請在網頁中輸入授權碼 {0}（將自動複製）。
+
+如果網路環境不佳，網頁可能一直載入不出來，屆時請使用 VPN 並重試。
+你也可以用其他裝置開啟 {1} 並輸入上述授權碼。</sys:String>
+    <sys:String x:Key="Launch.Account.LoginDialog.MicrosoftInstructions.WithAutoFill">登入網頁將自動開啟，授權碼將自動填充。
+
+如果網路環境不佳，網頁可能一直載入不出來，屆時請使用 VPN 並重試。
+如果沒有自動填充，請在頁面內貼上此授權碼 {0}（將自動複製）
+你也可以用其他裝置開啟 {1} 並輸入授權碼。</sys:String>
     <sys:String x:Key="Launch.Account.LoginDialog.MinecraftLogin">登入 Minecraft</sys:String>
     <sys:String x:Key="Launch.Account.LoginDialog.PollingFailed">微軟驗證輪詢失敗</sys:String>
     <sys:String x:Key="Launch.Account.LoginDialog.ReopenWebpage">重新開啟網頁</sys:String>
@@ -1532,9 +1777,14 @@
 
     <sys:String x:Key="Launch.Account.Microsoft.Error.OperationFailed">Microsoft 登入操作失敗。請檢視錯誤詳情。</sys:String>
     <sys:String x:Key="Launch.Account.Microsoft.Error.Unknown">未知錯誤！</sys:String>
-    <sys:String x:Key="Launch.Account.Microsoft.LoginFailed.Message">微軟登入驗證失敗，請考慮在 [設定 → 其他] 中關閉 [在微軟登入時驗證 SSL 證書]，然後再試。&#xA;&#xA;原始錯誤資訊：</sys:String>
+    <sys:String x:Key="Launch.Account.Microsoft.LoginFailed.Message">微軟登入驗證失敗，請考慮在 [設定 → 其他] 中關閉 [在微軟登入時驗證 SSL 證書]，然後再試。
+
+原始錯誤資訊：</sys:String>
     <sys:String x:Key="Launch.Account.Microsoft.LoginFailed.Title">微軟登入嘗試失敗</sys:String>
-    <sys:String x:Key="Launch.Account.Microsoft.LoginFailed.WithDetail">微軟登入驗證失敗。&#xA;&#xA;原始錯誤資訊：&#xA;{0}</sys:String>
+    <sys:String x:Key="Launch.Account.Microsoft.LoginFailed.WithDetail">微軟登入驗證失敗。
+
+原始錯誤資訊：
+{0}</sys:String>
     <sys:String x:Key="Launch.Account.Microsoft.Purchase">»   購買游戲</sys:String>
     <sys:String x:Key="Launch.Account.Microsoft.Start">開始微軟驗證</sys:String>
     <sys:String x:Key="Launch.Account.Microsoft.Website">»   前往官網</sys:String>
@@ -1543,7 +1793,9 @@
 
     <sys:String x:Key="Launch.Account.Offline.Back">返回</sys:String>
     <sys:String x:Key="Launch.Account.Offline.Create">建立</sys:String>
-    <sys:String x:Key="Launch.Account.Offline.InvalidPlayerId.Message">你輸入的玩家 ID 不符合標準（3 - 16 位，只可以包含英文字母、數字與下劃線），可能導致部分版本的遊戲無法啟動或發生錯誤。&#xA;強烈建議使用規範的玩家 ID！&#xA;如果你堅持，仍然可以繼續建立檔案。</sys:String>
+    <sys:String x:Key="Launch.Account.Offline.InvalidPlayerId.Message">你輸入的玩家 ID 不符合標準（3 - 16 位，只可以包含英文字母、數字與下劃線），可能導致部分版本的遊戲無法啟動或發生錯誤。
+強烈建議使用規範的玩家 ID！
+如果你堅持，仍然可以繼續建立檔案。</sys:String>
     <sys:String x:Key="Launch.Account.Offline.InvalidPlayerId.Title">玩家 ID 不符合規範</sys:String>
     <sys:String x:Key="Launch.Account.Offline.InvalidUuid">UUID 不符合要求：{0}</sys:String>
     <sys:String x:Key="Launch.Account.Offline.PlayerId">玩家 ID</sys:String>
@@ -1551,7 +1803,8 @@
     <sys:String x:Key="Launch.Account.Offline.Uuid.Custom.Input.ToolTip">應為 32 個十六進位字元，且不含連字號</sys:String>
     <sys:String x:Key="Launch.Account.Offline.Uuid.Custom.ToolTip">適用於高階使用者，如果你不知道這是什麼，請不要選擇此項</sys:String>
     <sys:String x:Key="Launch.Account.Offline.Uuid.Legacy">舊版</sys:String>
-    <sys:String x:Key="Launch.Account.Offline.Uuid.Legacy.ToolTip">使用舊版 PCL-MOON 的 UUID 生成規則&#xA;若從舊版 PCL-MOON 升級，且單人存檔的部分資訊遺失，可嘗試此項</sys:String>
+    <sys:String x:Key="Launch.Account.Offline.Uuid.Legacy.ToolTip">使用舊版 PCL-MOON 的 UUID 生成規則
+若從舊版 PCL-MOON 升級，且單人存檔的部分資訊遺失，可嘗試此項</sys:String>
     <sys:String x:Key="Launch.Account.Offline.Uuid.Standard">行業規範</sys:String>
     <sys:String x:Key="Launch.Account.Offline.Uuid.Standard.ToolTip">[推薦] 生成的 UUID 與 HMCL、BakaXL 和 Bukkit 等其他軟體一致</sys:String>
     <sys:String x:Key="Launch.Account.Offline.UuidStandard">UUID 標準</sys:String>
@@ -1567,7 +1820,8 @@
     <sys:String x:Key="Launch.Account.Profile.RequireMicrosoftHint">需要先進行一次微軟驗證才能使用其他驗證方式</sys:String>
     <sys:String x:Key="Launch.Account.Profile.Created">檔案建立成功！</sys:String>
     <sys:String x:Key="Launch.Account.Profile.Delete">刪除檔案</sys:String>
-    <sys:String x:Key="Launch.Account.Profile.DeleteConfirm.Message">你正在選擇刪除此檔案，該操作無法復原。&#xA;確定繼續？</sys:String>
+    <sys:String x:Key="Launch.Account.Profile.DeleteConfirm.Message">你正在選擇刪除此檔案，該操作無法復原。
+確定繼續？</sys:String>
     <sys:String x:Key="Launch.Account.Profile.DeleteConfirm.Title">刪除檔案確認</sys:String>
     <sys:String x:Key="Launch.Account.Profile.Deleted">檔案刪除成功！</sys:String>
     <sys:String x:Key="Launch.Account.Profile.EditServerName.Message">請輸入新的驗證伺服器名稱</sys:String>
@@ -1637,7 +1891,8 @@
 
     <sys:String x:Key="Launch.Homepage.Error.Download">下載首頁失敗（{0}）</sys:String>
     <sys:String x:Key="Launch.Homepage.Error.ExternalFile">讀取外部檔案失敗：{0}</sys:String>
-    <sys:String x:Key="Launch.Homepage.LoadFailed.Message">首頁內容編寫有誤，請根據下列錯誤資訊進行檢查：&#xA;{0}</sys:String>
+    <sys:String x:Key="Launch.Homepage.LoadFailed.Message">首頁內容編寫有誤，請根據下列錯誤資訊進行檢查：
+{0}</sys:String>
     <sys:String x:Key="Launch.Homepage.LoadFailed.Retry">重試</sys:String>
     <sys:String x:Key="Launch.Homepage.LoadFailed.Title">載入首頁介面失敗</sys:String>
     <sys:String x:Key="Launch.Homepage.Loading">正在載入首頁……</sys:String>
@@ -1692,6 +1947,7 @@
 
     <!-- Launch.Skin.Cape.Name -->
 
+    <sys:String x:Key="Launch.Skin.Cape.Name.Aurora">极光披风</sys:String>
     <sys:String x:Key="Launch.Skin.Cape.Name.Builder">建造者披風</sys:String>
     <sys:String x:Key="Launch.Skin.Cape.Name.CherryBlossom">櫻花披風</sys:String>
     <sys:String x:Key="Launch.Skin.Cape.Name.Cobalt">Cobalt 披風</sys:String>
@@ -1701,6 +1957,7 @@
     <sys:String x:Key="Launch.Skin.Cape.Name.FifteenthAnniversary">15 週年紀念披風</sys:String>
     <sys:String x:Key="Launch.Skin.Cape.Name.Followers">追隨者披風</sys:String>
     <sys:String x:Key="Launch.Skin.Cape.Name.Founders">創始人披風</sys:String>
+    <sys:String x:Key="Launch.Skin.Cape.Name.Hero">英雄披风</sys:String>
     <sys:String x:Key="Launch.Skin.Cape.Name.Home">家園披風</sys:String>
     <sys:String x:Key="Launch.Skin.Cape.Name.MapMaker">Realms 地圖製作者披風</sys:String>
     <sys:String x:Key="Launch.Skin.Cape.Name.Mcc">MCC 15 週年披風</sys:String>
@@ -1719,6 +1976,7 @@
     <sys:String x:Key="Launch.Skin.Cape.Name.PurpleHeart">紫色愛心披風</sys:String>
     <sys:String x:Key="Launch.Skin.Cape.Name.Translator">Crowdin 翻譯者披風</sys:String>
     <sys:String x:Key="Launch.Skin.Cape.Name.TranslatorChinese">Crowdin 中文翻譯者披風</sys:String>
+    <sys:String x:Key="Launch.Skin.Cape.Name.Twisted">扭曲披风</sys:String>
     <sys:String x:Key="Launch.Skin.Cape.Name.Vanilla">原版披風</sys:String>
     <sys:String x:Key="Launch.Skin.Cape.Name.Yearn">渴望披風</sys:String>
     <sys:String x:Key="Launch.Skin.Cape.Name.ZombieHorse">殭屍馬披風</sys:String>
@@ -1727,11 +1985,17 @@
 
     <sys:String x:Key="Launch.Skin.Change.Busy">正在更改外觀中，請稍候！</sys:String>
     <sys:String x:Key="Launch.Skin.Change.Error.MsRefresh">更改外觀後重新整理外觀失敗</sys:String>
-    <sys:String x:Key="Launch.Skin.Change.FailedWithDetail">更改外觀失敗。&#xA;&#xA;詳細資訊：&#xA;{0}</sys:String>
+    <sys:String x:Key="Launch.Skin.Change.FailedWithDetail">更改外觀失敗。
+
+詳細資訊：
+{0}</sys:String>
     <sys:String x:Key="Launch.Skin.Change.LoginFailed">登入失敗，無法更改外觀！</sys:String>
     <sys:String x:Key="Launch.Skin.Change.Reauthenticating">正在登入，將在登入完成後繼續更改外觀……</sys:String>
     <sys:String x:Key="Launch.Skin.Change.Starting">正在更改外觀……</sys:String>
-    <sys:String x:Key="Launch.Skin.Change.Timeout.WithDetail">更改外觀失敗：與 Mojang 外觀伺服器的連線超時，請檢查網路連線。&#xA;&#xA;詳細資訊：&#xA;{0}</sys:String>
+    <sys:String x:Key="Launch.Skin.Change.Timeout.WithDetail">更改外觀失敗：與 Mojang 外觀伺服器的連線超時，請檢查網路連線。
+
+詳細資訊：
+{0}</sys:String>
     <sys:String x:Key="Launch.Skin.Change.ToolTip">點擊更換外觀（右鍵檢視更多選項）</sys:String>
 
     <!-- Launch.Status -->
@@ -1748,73 +2012,6 @@
     <sys:String x:Key="Launch.Status.Title.Launching">正在啟動遊戲</sys:String>
     <sys:String x:Key="Launch.Status.Trivia">你知道嗎</sys:String>
     <sys:String x:Key="Launch.Status.Trivia.Placeholder">這是一段測試用的小提示文字，它應該足夠長以讓它有兩行。</sys:String>
-
-    <!-- Link -->
-
-    <sys:String x:Key="Link.Connection.Local">本機</sys:String>
-    <sys:String x:Key="Link.Connection.P2P">P2P</sys:String>
-    <sys:String x:Key="Link.Connection.Relay">中繼</sys:String>
-    <sys:String x:Key="Link.Connection.Unknown">未知</sys:String>
-    <sys:String x:Key="Link.Natayark.TokenFetchEmpty">取得 AccessToken 與 RefreshToken 失敗，返回內容為空</sys:String>
-    <sys:String x:Key="Link.Natayark.TokenParseFailed">取得 AccessToken 與 RefreshToken 失敗，解析返回內容失敗</sys:String>
-    <sys:String x:Key="Link.Natayark.UserInfoFetchEmpty">取得 Natayark 使用者資訊失敗，返回內容為空</sys:String>
-    <sys:String x:Key="Link.Natayark.UserInfoParseFailed">取得 Natayark 使用者資訊失敗，解析返回內容失敗</sys:String>
-    <sys:String x:Key="Link.Quality.Good">優秀</sys:String>
-    <sys:String x:Key="Link.Quality.GoodDescription">目前網路環境不會影響連線體驗&#xA;該網路環境適合作為大廳建立者</sys:String>
-    <sys:String x:Key="Link.Quality.Normal">一般</sys:String>
-    <sys:String x:Key="Link.Quality.NormalDescription">目前網路環境可能會影響您的連線體驗</sys:String>
-    <sys:String x:Key="Link.Quality.Poor">較差</sys:String>
-    <sys:String x:Key="Link.Quality.PoorDescription">部分路由器和防火牆設定可能會影響您的連線體驗</sys:String>
-
-    <!-- Link.Lobby -->
-
-    <sys:String x:Key="Link.Lobby.CreateLobbyFailed">建立大廳失敗，請檢查日誌或向開發者回饋。</sys:String>
-    <sys:String x:Key="Link.Lobby.CreateRoomFailed">在建立房間的時候遇到了問題，請檢視日誌並將此問題回饋給開發者！</sys:String>
-    <sys:String x:Key="Link.Lobby.InitFailed">大廳服務初始化失敗，請檢查網路連線。</sys:String>
-    <sys:String x:Key="Link.Lobby.InvalidCodeFormat">大廳編號格式不正確，請檢查後再試！</sys:String>
-    <sys:String x:Key="Link.Lobby.JoinFailed">加入大廳失敗，可能是大廳不存在或已被解散</sys:String>
-    <sys:String x:Key="Link.Lobby.LoginRequired">請先登入 Natayark ID 再使用大廳！</sys:String>
-    <sys:String x:Key="Link.Lobby.MotdDesc"> - {0}</sys:String>
-    <sys:String x:Key="Link.Lobby.MotdFormat">PCL-MOON 大廳{0}</sys:String>
-    <sys:String x:Key="Link.Lobby.UnsupportedType">不支援的大廳型別: {0}</sys:String>
-    <sys:String x:Key="Link.Lobby.WorldNameFormat">{0} / {1} ({2})</sys:String>
-
-    <!-- Link.Mod -->
-
-    <sys:String x:Key="Link.Mod.AccountBanned">你的 Natayark Network 帳戶狀態異常，可能已被封禁！</sys:String>
-    <sys:String x:Key="Link.Mod.DownloadComplete">連線元件下載完成！</sys:String>
-    <sys:String x:Key="Link.Mod.DownloadEasyTierFailed">下載 EasyTier 依賴檔案失敗，請檢查網路連線</sys:String>
-    <sys:String x:Key="Link.Mod.DownloadingDeps">正在下載連線依賴元件，請稍後...</sys:String>
-    <sys:String x:Key="Link.Mod.DownloadingEasyTier">正在下載 EasyTier，請稍後...</sys:String>
-    <sys:String x:Key="Link.Mod.EasyTierNotReady">EasyTier 尚未下載完成，請等待其下載完成後再試！</sys:String>
-    <sys:String x:Key="Link.Mod.InvalidPlayerId">Minecraft 玩家 ID 不可包含分隔符號 (|) ！</sys:String>
-    <sys:String x:Key="Link.Mod.LobbyUnavailable">大廳功能暫不可用，請稍後再試</sys:String>
-    <sys:String x:Key="Link.Mod.LoginFirst">請先前往連線設定並登入至 Natayark Network 再進行連線！</sys:String>
-    <sys:String x:Key="Link.Mod.NaidFetchFailed">嘗試取得 Natayark ID 資訊失敗</sys:String>
-    <sys:String x:Key="Link.Mod.ReLoginRequired">請重新登入 Natayark Network 帳戶再試！</sys:String>
-    <sys:String x:Key="Link.Mod.RealNameRequired">請先前往 Natayark 帳戶中心進行實名驗證再嘗試操作！</sys:String>
-    <sys:String x:Key="Link.Mod.Task.CleanCache">清理快取與冗餘元件</sys:String>
-    <sys:String x:Key="Link.Mod.Task.DownloadEasyTier">下載 EasyTier</sys:String>
-    <sys:String x:Key="Link.Mod.Task.ExtractFiles">解壓縮檔</sys:String>
-    <sys:String x:Key="Link.Mod.Task.FetchAnnouncement">大廳公告取得</sys:String>
-    <sys:String x:Key="Link.Mod.Task.InitLobby">大廳初始化</sys:String>
-    <sys:String x:Key="Link.Mod.Task.InitLobbyUi">大廳介面初始化</sys:String>
-    <sys:String x:Key="Link.Mod.Task.RefreshUi">重新整理介面</sys:String>
-    <sys:String x:Key="Link.Mod.UsernameOrLogin">請先前往設定輸入一個使用者名稱，或登入至 Natayark Network 再進行連線！</sys:String>
-
-    <!-- Link.Nat -->
-
-    <!-- Link.Nat.Type -->
-
-    <sys:String x:Key="Link.Nat.Type.FullCone">中等（完全圓錐）</sys:String>
-    <sys:String x:Key="Link.Nat.Type.Open">開放</sys:String>
-    <sys:String x:Key="Link.Nat.Type.PortRestricted">中等（埠受限圓錐）</sys:String>
-    <sys:String x:Key="Link.Nat.Type.Restricted">中等（受限圓錐）</sys:String>
-    <sys:String x:Key="Link.Nat.Type.Symmetric">嚴格（對稱）</sys:String>
-    <sys:String x:Key="Link.Nat.Type.SymmetricEasy">嚴格（寬鬆對稱）</sys:String>
-    <sys:String x:Key="Link.Nat.Type.SymmetricFirewall">嚴格（對稱防火牆）</sys:String>
-    <sys:String x:Key="Link.Nat.Type.UdpBlocked">嚴格（阻止 UDP）</sys:String>
-    <sys:String x:Key="Link.Nat.Type.Unknown">未知</sys:String>
 
     <!-- LogPage -->
 
@@ -1867,8 +2064,15 @@
     <sys:String x:Key="Main.HiddenFeature.Disabled">功能隱藏設定已暫時關閉！</sys:String>
     <sys:String x:Key="Main.HiddenFeature.Enabled">功能隱藏設定已重新開啟！</sys:String>
     <sys:String x:Key="Main.ShutdownMinecraft.Success">已關閉執行中的 Minecraft！</sys:String>
-    <sys:String x:Key="Main.SpecialVersion.CiHint">目前執行的 PCL-MOON 為 CI 自動建置版本。&#xA;此版本包含最新的錯誤修正、最佳化與新功能，但效能和穩定性較差，不適合日常使用或製作模組包。&#xA;&#xA;除非社群開發者要求，或您確實需要使用，否則請下載最新穩定版。</sys:String>
-    <sys:String x:Key="Main.SpecialVersion.DebugHint">目前執行的 PCL-MOON 為 Debug 版本。&#xA;該版本僅適合開發者除錯執行，可能會有嚴重的效能下降以及各種奇怪的網路問題。&#xA;&#xA;非開發者使用者使用該版本造成的一切問題均不被社群支援，相關 issue 可能會被直接關閉。&#xA;除非您是開發者，否則請立即刪除該版本，並下載最新穩定版使用。</sys:String>
+    <sys:String x:Key="Main.SpecialVersion.CiHint">目前執行的 PCL-MOON 為 CI 自動建置版本。
+此版本包含最新的錯誤修正、最佳化與新功能，但效能和穩定性較差，不適合日常使用或製作模組包。
+
+除非社群開發者要求，或您確實需要使用，否則請下載最新穩定版。</sys:String>
+    <sys:String x:Key="Main.SpecialVersion.DebugHint">目前執行的 PCL-MOON 為 Debug 版本。
+該版本僅適合開發者除錯執行，可能會有嚴重的效能下降以及各種奇怪的網路問題。
+
+非開發者使用者使用該版本造成的一切問題均不被社群支援，相關 issue 可能會被直接關閉。
+除非您是開發者，否則請立即刪除該版本，並下載最新穩定版使用。</sys:String>
     <sys:String x:Key="Main.SpecialVersion.HideHintNotice">可以新增 PCL_DISABLE_DEBUG_HINT 環境變數 (任意值) 來隱藏這個提示。</sys:String>
     <sys:String x:Key="Main.SpecialVersion.IUnderstand">我清楚我在做什麼</sys:String>
     <sys:String x:Key="Main.SpecialVersion.OpenDownloadPageAndExit">開啟最新版下載頁並退出</sys:String>
@@ -1877,7 +2081,19 @@
     <sys:String x:Key="Main.Tab.Launch">啟動</sys:String>
     <sys:String x:Key="Main.Tab.Settings">設定</sys:String>
     <sys:String x:Key="Main.Tab.Tools">工具</sys:String>
-    <sys:String x:Key="Main.Telemetry.Message">啟用遙測資料收集後，啟動器將會收集並上報錯誤與裝置環境資訊，這可以幫助開發者修復潛在的問題、更好的進行規劃和開發。&#xA;若啟用此功能，我們將會收集以下資訊：&#xA;&#xA;- 啟動器內出現的錯誤&#xA;- 啟動器版本資訊與識別碼&#xA;- Windows 系統版本與架構&#xA;- 已安裝的實體記憶體大小&#xA;- NAT 與 IPv6 支援情況&#xA;- 是否使用過原版 PCL、HMCL 或 BakaXL&#xA;&#xA;這些資料均不與你關聯，我們也絕不會向第三方出售資料。&#xA;如果不希望啟用遙測，可以選擇拒絕。這不會影響其他功能的正常使用，但可能會影響開發者修復潛在 Bug。&#xA;你可以隨時在啟動器設定中調整這項設定。</sys:String>
+    <sys:String x:Key="Main.Telemetry.Message">啟用遙測資料收集後，啟動器將會收集並上報錯誤與裝置環境資訊，這可以幫助開發者修復潛在的問題、更好的進行規劃和開發。
+若啟用此功能，我們將會收集以下資訊：
+
+- 啟動器內出現的錯誤
+- 啟動器版本資訊與識別碼
+- Windows 系統版本與架構
+- 已安裝的實體記憶體大小
+- NAT 與 IPv6 支援情況
+- 是否使用過原版 PCL、HMCL 或 BakaXL
+
+這些資料均不與你關聯，我們也絕不會向第三方出售資料。
+如果不希望啟用遙測，可以選擇拒絕。這不會影響其他功能的正常使用，但可能會影響開發者修復潛在 Bug。
+你可以隨時在啟動器設定中調整這項設定。</sys:String>
     <sys:String x:Key="Main.Telemetry.Title">啟用遙測資料收集</sys:String>
     <sys:String x:Key="Main.Title.GameLog">即時日誌</sys:String>
     <sys:String x:Key="Main.Title.InstanceSelect">實例選擇</sys:String>
@@ -1894,7 +2110,8 @@
     <!-- Main.FileDrag -->
 
     <sys:String x:Key="Main.FileDrag.AuthlibInvalid">輸入的 Authlib 驗證伺服器不符合網址格式 ({0})！</sys:String>
-    <sys:String x:Key="Main.FileDrag.CreateAuthlibProfile">是否要建立新的第三方驗證檔案？&#xA;驗證伺服器位址：{0}</sys:String>
+    <sys:String x:Key="Main.FileDrag.CreateAuthlibProfile">是否要建立新的第三方驗證檔案？
+驗證伺服器位址：{0}</sys:String>
     <sys:String x:Key="Main.FileDrag.CreateAuthlibProfileTitle">建立新的第三方驗證檔案</sys:String>
     <sys:String x:Key="Main.FileDrag.ExtractFirst">請將檔案解壓縮後再拖入！</sys:String>
     <sys:String x:Key="Main.FileDrag.FileNotFound">拖入的檔案不存在：{0}</sys:String>
@@ -1932,7 +2149,7 @@
     <!-- Minecraft.Download -->
 
     <sys:String x:Key="Minecraft.Download.Loader.NewForge">新版 Forge</sys:String>
-    <sys:String x:Key="Minecraft.Download.ServerBatch.InstructionEula">如果提示 "You need to agree to the EULA"，請編輯 eula.txt 同意協議!</sys:String>
+    <sys:String x:Key="Minecraft.Download.ServerBatch.InstructionEula">如果提示 &quot;You need to agree to the EULA&quot;，請編輯 eula.txt 同意協議!</sys:String>
     <sys:String x:Key="Minecraft.Download.ServerBatch.InstructionJavaPath">如果服務端立即停止，請右鍵編輯該指令碼，使用!JAVA_HOME!取代%JAVA_HOME%</sys:String>
     <sys:String x:Key="Minecraft.Download.ServerBatch.InstructionPclSettings">你可以在 PCL-MOON 的 [設定 → 啟動選項 → 啟動器內 Java 路徑] 中將此版本選為合適的 Java 並啟用!</sys:String>
     <sys:String x:Key="Minecraft.Download.ServerBatch.ServerStopped">服務端已停止。</sys:String>
@@ -1981,7 +2198,9 @@
     <!-- Minecraft.Download.Modpack -->
 
     <sys:String x:Key="Minecraft.Download.Modpack.BundledLauncher.DoNotUse">不換用</sys:String>
-    <sys:String x:Key="Minecraft.Download.Modpack.BundledLauncher.Message">模組包裡似乎內建了啟動器，是否換用它繼續安裝？&#xD;&#xA;即將開啟：{0}</sys:String>
+    <sys:String x:Key="Minecraft.Download.Modpack.BundledLauncher.Message">模組包裡似乎內建了啟動器，是否換用它繼續安裝？
+
+即將開啟：{0}</sys:String>
     <sys:String x:Key="Minecraft.Download.Modpack.BundledLauncher.Title">換用模組包啟動器？</sys:String>
     <sys:String x:Key="Minecraft.Download.Modpack.BundledLauncher.UseBundled">換用</sys:String>
     <sys:String x:Key="Minecraft.Download.Modpack.EncryptedArchiveUnsupported">PCL-MOON 無法處理加密的壓縮檔，請在解壓縮後重新壓縮為不加密的 zip 格式再試</sys:String>
@@ -2000,7 +2219,9 @@
     <sys:String x:Key="Minecraft.Download.Modpack.OptionalFile.Message">是否要下載模組包中的可選檔案 {0}？</sys:String>
     <sys:String x:Key="Minecraft.Download.Modpack.OptionalFile.Skip">跳過</sys:String>
     <sys:String x:Key="Minecraft.Download.Modpack.OptionalFile.Title">下載可選檔案</sys:String>
-    <sys:String x:Key="Minecraft.Download.Modpack.PathOutsideInstance.Message">模組包的檔案路徑超出了實例資料夾，請向模組包作者回饋此問題！&#xD;&#xA;錯誤的檔案：{0}</sys:String>
+    <sys:String x:Key="Minecraft.Download.Modpack.PathOutsideInstance.Message">模組包的檔案路徑超出了實例資料夾，請向模組包作者回饋此問題！
+
+錯誤的檔案：{0}</sys:String>
     <sys:String x:Key="Minecraft.Download.Modpack.PathOutsideInstance.Title">檔案路徑校驗失敗</sys:String>
     <sys:String x:Key="Minecraft.Download.Modpack.QuiltUnsupported">無法安裝模組包：目前啟動器已不再支援 Quilt 載入器。</sys:String>
     <sys:String x:Key="Minecraft.Download.Modpack.RarUnsupported">PCL-MOON 無法處理 rar 格式的壓縮檔，請在解壓縮後重新壓縮為 zip 格式再試</sys:String>
@@ -2157,13 +2378,18 @@
     <sys:String x:Key="Minecraft.Launch.Cancelled">已取消啟動！</sys:String>
     <sys:String x:Key="Minecraft.Launch.DemoMode">遊戲將以試玩模式啟動！</sys:String>
     <sys:String x:Key="Minecraft.Launch.Donate.Decline">但是我拒絕</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Donate.Message">PCL-MOON 已經為你啟動了 {0} 次遊戲啦！&#xA;如果 PCL-MOON 還算好用的話，也許可以考慮贊助一下 PCL 原作者……&#xA;如果沒有大家的支援，PCL 很難在免費、無任何廣告的情況下維持數年的更新（磕頭）……！</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Donate.Message">PCL-MOON 已經為你啟動了 {0} 次遊戲啦！
+如果 PCL-MOON 還算好用的話，也許可以考慮贊助一下 PCL 原作者……
+如果沒有大家的支援，PCL 很難在免費、無任何廣告的情況下維持數年的更新（磕頭）……！</sys:String>
     <sys:String x:Key="Minecraft.Launch.Donate.Support">支援一下！</sys:String>
     <sys:String x:Key="Minecraft.Launch.Donate.Title">{0} 次啟動！</sys:String>
     <sys:String x:Key="Minecraft.Launch.ExportScript.Cancelled">已取消匯出啟動指令碼！</sys:String>
     <sys:String x:Key="Minecraft.Launch.ExportScript.Success">匯出啟動指令碼成功！</sys:String>
     <sys:String x:Key="Minecraft.Launch.PurchaseHint.Later">下次一定</sys:String>
-    <sys:String x:Key="Minecraft.Launch.PurchaseHint.Message">看起來你似乎沒買游戲...&#xA;如果覺得 Minecraft 還不錯，可以購買支援一下，畢竟開發遊戲也真的很不容易...不要一直接嫖啦。&#xA;&#xA;在驗證一個微軟帳戶後，就不會出現這個提示了！</sys:String>
+    <sys:String x:Key="Minecraft.Launch.PurchaseHint.Message">看起來你似乎沒買游戲...
+如果覺得 Minecraft 還不錯，可以購買支援一下，畢竟開發遊戲也真的很不容易...不要一直接嫖啦。
+
+在驗證一個微軟帳戶後，就不會出現這個提示了！</sys:String>
     <sys:String x:Key="Minecraft.Launch.PurchaseHint.Purchase">支援！</sys:String>
     <sys:String x:Key="Minecraft.Launch.PurchaseHint.Title">考慮購買一下游戲？</sys:String>
     <sys:String x:Key="Minecraft.Launch.Success">{0} 啟動成功！</sys:String>
@@ -2173,7 +2399,8 @@
     <sys:String x:Key="Minecraft.Launch.Error.AlreadyLaunching">已有遊戲正在啟動中！</sys:String>
     <sys:String x:Key="Minecraft.Launch.Error.CancelProcess">取消啟動結束程式失敗</sys:String>
     <sys:String x:Key="Minecraft.Launch.Error.CannotConnectAuthServer">無法連線到第三方登入伺服器（{0}）</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Error.CannotConnectAuthServerWithDetail">無法連線到第三方登入伺服器（{0}）&#xA;詳細資訊：</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Error.CannotConnectAuthServerWithDetail">無法連線到第三方登入伺服器（{0}）
+詳細資訊：</sys:String>
     <sys:String x:Key="Minecraft.Launch.Error.CannotLaunch">無法啟動 Minecraft：{0}</sys:String>
     <sys:String x:Key="Minecraft.Launch.Error.CustomCommand">執行自訂指令失敗</sys:String>
     <sys:String x:Key="Minecraft.Launch.Error.DispatcherUnavailable">啟動器介面不可用，無法執行此操作。</sys:String>
@@ -2189,7 +2416,10 @@
     <sys:String x:Key="Minecraft.Launch.Error.PrioritySet">設定程式優先順序失敗</sys:String>
     <sys:String x:Key="Minecraft.Launch.Error.Proxy">新增 Proxy 資訊到遊戲失敗，放棄加入</sys:String>
     <sys:String x:Key="Minecraft.Launch.Error.RefreshInfo">重新整理啟動資訊失敗</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Error.SpecialMessage.WithDetail">啟動失敗。&#xA;&#xA;錯誤資訊：&#xA;{0}</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Error.SpecialMessage.WithDetail">啟動失敗。
+
+錯誤資訊：
+{0}</sys:String>
     <sys:String x:Key="Minecraft.Launch.Error.UpdateOptionsFailed">更新 options.txt 失敗。請檢視錯誤詳情。</sys:String>
     <sys:String x:Key="Minecraft.Launch.Error.UpdateProfilesFailed">更新 launcher_profiles.json 失敗。請檢視錯誤詳情。</sys:String>
     <sys:String x:Key="Minecraft.Launch.Error.WatcherOperationFailed">Minecraft 執行監控失敗。請檢視錯誤詳情。</sys:String>
@@ -2197,7 +2427,8 @@
     <!-- Minecraft.Launch.Java -->
 
     <sys:String x:Key="Minecraft.Launch.Java.AutoDownload.Action">自動下載</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Java.AutoDownload.Message">PCL-MOON 未找到 {0}，是否需要自動下載？&#xA;如果已經安裝了 {0}，可以在 設定 → 啟動選項 → 遊戲 Java 中手動匯入。</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.AutoDownload.Message">PCL-MOON 未找到 {0}，是否需要自動下載？
+如果已經安裝了 {0}，可以在 設定 → 啟動選項 → 遊戲 Java 中手動匯入。</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.AutoDownload.Title">自動下載 Java？</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.Compatibility.CheckFailed">檢查 Java 相容性失敗。請檢視錯誤詳情。</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.Compatibility.GlobalSelectedOutOfRange">全域指定的 Java（{0}）超出版本要求範圍 [{1}, {2}]，可能導致遊戲崩潰。</sys:String>
@@ -2206,11 +2437,16 @@
     <sys:String x:Key="Minecraft.Launch.Java.Compatibility.NoMinimum">無下限</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.Compatibility.RelativePathSelectedOutOfRange">實例相對路徑指定的 Java（{0}）超出版本要求範圍 [{1}, {2}]，可能導致遊戲崩潰。</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.InstallManuallyHint">請自行搜尋並安裝</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Java.NeedJava7">你需要安裝 Java 7 才能啟動該版本。&#xA;請自行搜尋並安裝 Java 7，安裝後在 設定 → 啟動選項 → 遊戲 Java 中重新搜尋或匯入。</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Java.NeedJava8U141OrLater">你需要安裝 Java 8u141 或更高版本的 Java 8 才能啟動該版本。&#xA;請自行搜尋並安裝，安裝後在 設定 → 啟動選項 → 遊戲 Java 中重新搜尋或匯入。</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Java.NeedJava8U141ToU320">你需要安裝 Java 8u141 ~ 8u320 才能啟動該版本。&#xA;請自行搜尋並安裝，安裝後在 設定 → 啟動選項 → 遊戲 Java 中重新搜尋或匯入。</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Java.NeedLegacyJavaFixerOrJava7">你需要先安裝 LegacyJavaFixer 模組，或安裝 Java 7 才能啟動該版本。&#xA;請自行搜尋並安裝 Java 7，安裝後在 設定 → 啟動選項 → 遊戲 Java 中重新搜尋或匯入。</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Java.NotFound.Manual.Message">PCL-MOON 未找到 {0}。&#xA;請自行搜尋並安裝 {0}，安裝後在 設定 → 啟動選項 → 遊戲 Java 中重新搜尋或匯入。</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.NeedJava7">你需要安裝 Java 7 才能啟動該版本。
+請自行搜尋並安裝 Java 7，安裝後在 設定 → 啟動選項 → 遊戲 Java 中重新搜尋或匯入。</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.NeedJava8U141OrLater">你需要安裝 Java 8u141 或更高版本的 Java 8 才能啟動該版本。
+請自行搜尋並安裝，安裝後在 設定 → 啟動選項 → 遊戲 Java 中重新搜尋或匯入。</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.NeedJava8U141ToU320">你需要安裝 Java 8u141 ~ 8u320 才能啟動該版本。
+請自行搜尋並安裝，安裝後在 設定 → 啟動選項 → 遊戲 Java 中重新搜尋或匯入。</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.NeedLegacyJavaFixerOrJava7">你需要先安裝 LegacyJavaFixer 模組，或安裝 Java 7 才能啟動該版本。
+請自行搜尋並安裝 Java 7，安裝後在 設定 → 啟動選項 → 遊戲 Java 中重新搜尋或匯入。</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.NotFound.Manual.Message">PCL-MOON 未找到 {0}。
+請自行搜尋並安裝 {0}，安裝後在 設定 → 啟動選項 → 遊戲 Java 中重新搜尋或匯入。</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.NotFound.Title">未找到 Java</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.Task.Download">下載 Java</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.Task.DownloadFiles">下載 Java 檔案</sys:String>
@@ -2223,11 +2459,15 @@
     <sys:String x:Key="Minecraft.Launch.Login.Failed">登入失敗</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.Hint">登入提示</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.IKnow">我知道了</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Login.PasswordRequired.Message">請在登入時選擇 {0}其他登入方法{1}，然後選擇 {0}使用我的密碼{1}。&#xA;如果沒有該選項，請選擇 {0}設定密碼{1}，設定完畢後再登入。</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Login.PasswordRequired.Message">請在登入時選擇 {0}其他登入方法{1}，然後選擇 {0}使用我的密碼{1}。
+如果沒有該選項，請選擇 {0}設定密碼{1}，設定完畢後再登入。</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.PasswordRequired.Relogin">重新登入</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.PasswordRequired.SetPassword">設定密碼</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.PasswordRequired.Title">需要使用密碼登入</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Login.RefreshAccountFailed.Message">啟動器在嘗試重新整理帳戶資訊時遇到了網路錯誤。&#xA;你可以選擇取消，檢查網路後再次啟動，也可以選擇忽略錯誤繼續啟動，但可能無法遊玩部分伺服器。</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Login.RefreshAccountFailed.Message">啟動器在嘗試重新整理帳戶資訊時遇到了網路錯誤。
+你可以選擇取消，檢查網路後再次啟動，也可以選擇忽略錯誤繼續啟動，但可能無法遊玩部分伺服器。</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Login.RefreshAccountFailed.AuthenticationMessage">驗證服務拒絕了帳戶重新整理請求。&#xA;{0}&#xA;&#xA;你可以選擇取消本次啟動，或使用已儲存的登入資訊繼續啟動，但可能無法遊玩需要正版驗證的伺服器。</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Login.RefreshAccountFailed.OtherMessage">重新整理帳戶資訊時發生錯誤。&#xA;{0}&#xA;&#xA;你可以選擇取消本次啟動，或使用已儲存的登入資訊繼續啟動，但可能無法遊玩需要正版驗證的伺服器。</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.RefreshAccountFailed.Title">帳戶資訊取得失敗</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.Register">註冊</sys:String>
 
@@ -2237,37 +2477,61 @@
     <sys:String x:Key="Minecraft.Launch.Login.Auth.FailedTitle">第三方驗證失敗</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.Auth.InvalidProfile">選擇的角色 {0} 無效！</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.Auth.LoginFailed">登入失敗：{0}</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Login.Auth.LoginFailed.WithDetail">第三方驗證登入失敗。&#xA;&#xA;詳細資訊：&#xA;{0}</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Login.Auth.LoginFailed.WithDetail">第三方驗證登入失敗。
+
+詳細資訊：
+{0}</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.Auth.NetworkFailed.Message">第三方驗證登入失敗，請檢查你的網路狀況是否良好。</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Login.Auth.NetworkFailed.WithDetail">第三方驗證登入失敗，請檢查網路連線。&#xA;&#xA;詳細資訊：&#xA;{0}</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Login.Auth.NetworkFailed.WithDetail">第三方驗證登入失敗，請檢查網路連線。
+
+詳細資訊：
+{0}</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.Auth.NoProfile">$你還沒有建立角色，請在建立角色後再試！</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.Auth.NoProfileCannotSwitch">你還沒有建立角色，無法更換！</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.Auth.OnlyOneProfile">你的帳戶中只有一個角色，無法更換！</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.Auth.RefreshFailed">重新整理登入失敗</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Login.Auth.RefreshFailed.WithDetail">重新整理登入失敗。&#xA;&#xA;詳細資訊：&#xA;{0}</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Login.Auth.RefreshFailed.WithDetail">重新整理登入失敗。
+
+詳細資訊：
+{0}</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.Auth.SecondRefreshFailed">二輪重新整理登入失敗</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.Auth.SelectProfile">選擇使用的角色</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Login.Auth.Timeout.DetailMessage">$登入失敗：連線登入伺服器超時。&#xA;請檢查你的網路狀況是否良好，或嘗試使用 VPN！&#xA;詳細資訊：</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Login.Auth.Timeout.Message">登入失敗：連線登入伺服器超時。&#xA;請檢查你的網路狀況是否良好，或嘗試使用 VPN！</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Login.Auth.Timeout.WithDetail">登入失敗：連線登入伺服器超時。&#xA;請檢查網路連線，或嘗試使用 VPN。&#xA;&#xA;詳細資訊：&#xA;{0}</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Login.Auth.ValidationFailed.WithDetail">驗證登入失敗。&#xA;&#xA;詳細資訊：&#xA;{0}</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Login.Auth.Timeout.DetailMessage">$登入失敗：連線登入伺服器超時。
+請檢查你的網路狀況是否良好，或嘗試使用 VPN！
+詳細資訊：</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Login.Auth.Timeout.Message">登入失敗：連線登入伺服器超時。
+請檢查你的網路狀況是否良好，或嘗試使用 VPN！</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Login.Auth.Timeout.WithDetail">登入失敗：連線登入伺服器超時。
+請檢查網路連線，或嘗試使用 VPN。
+
+詳細資訊：
+{0}</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Login.Auth.ValidationFailed.WithDetail">驗證登入失敗。
+
+詳細資訊：
+{0}</sys:String>
 
     <!-- Minecraft.Launch.Login.Microsoft -->
 
-    <sys:String x:Key="Minecraft.Launch.Login.Microsoft.AbnormalIp">目前 IP 的登入嘗試異常。&#xA;如果你使用了 VPN 或 Proxy，請把它們關掉或更換節點後再試！</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Login.Microsoft.AbnormalIp">目前 IP 的登入嘗試異常。
+如果你使用了 VPN 或 Proxy，請把它們關掉或更換節點後再試！</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.Microsoft.Banned">該帳戶似乎已被微軟封禁，無法登入。</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Login.Microsoft.ChangeBirthDate.Message">請在開啟的網頁中修改帳戶的出生日期（至少改為 18 歲以上）。&#xA;在修改成功後等待一分鐘，然後再回到 PCL-MOON，就可以正常登入了！</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Login.Microsoft.ChangeBirthDate.SupportMessage">請在開啟的網頁中修改帳戶的出生日期（至少改為 18 歲以上）。&#xA;在修改成功後等待一分鐘，然後再回到 PCL-MOON，就可以正常登入了！</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Login.Microsoft.ChangeBirthDate.Message">請在開啟的網頁中修改帳戶的出生日期（至少改為 18 歲以上）。
+在修改成功後等待一分鐘，然後再回到 PCL-MOON，就可以正常登入了！</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Login.Microsoft.ChangeBirthDate.SupportMessage">請在開啟的網頁中修改帳戶的出生日期（至少改為 18 歲以上）。
+在修改成功後等待一分鐘，然後再回到 PCL-MOON，就可以正常登入了！</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.Microsoft.CreateProfile.Button">建立檔案</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.Microsoft.CreateProfile.Message">請先建立 Minecraft 玩家檔案，然後再重新登入。</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.Microsoft.NotPurchased">暫時無法取得到此帳戶資訊，此帳戶可能沒有購買 Minecraft Java Edition 或帳戶的 Xbox Game Pass 已過期</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.Microsoft.ProfileAlreadyAdded">你已經新增了這個檔案...</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.Microsoft.PurchaseMinecraft">購買 Minecraft</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Login.Microsoft.RegionBlocked">你的網路所在的國家或地區無法登入微軟帳戶。&#xA;請使用加速器或 VPN。</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Login.Microsoft.RegionBlocked">你的網路所在的國家或地區無法登入微軟帳戶。
+請使用加速器或 VPN。</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.Microsoft.TooManyRequests">登入嘗試太過頻繁，請等待幾分鐘後再試！</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.Microsoft.Underage.AgeOver13">13 歲以上</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.Microsoft.Underage.AgeUnder13">12 歲以下</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Login.Microsoft.Underage.Message">該帳戶年齡不足，你需要先修改出生日期，然後才能登入。&#xA;該帳戶目前填寫的年齡是否在 13 歲以上？</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Login.Microsoft.Underage.Message">該帳戶年齡不足，你需要先修改出生日期，然後才能登入。
+該帳戶目前填寫的年齡是否在 13 歲以上？</sys:String>
     <sys:String x:Key="Minecraft.Launch.Login.Microsoft.XboxNotRegistered">你尚未註冊 Xbox 帳戶，請在註冊後再登入。</sys:String>
 
     <!-- Minecraft.Launch.Precheck -->
@@ -2280,7 +2544,9 @@
     <sys:String x:Key="Minecraft.Launch.Precheck.NoProfile">請先選擇一個檔案再啟動遊戲！</sys:String>
     <sys:String x:Key="Minecraft.Launch.Precheck.NonAsciiPath.Back">返回處理</sys:String>
     <sys:String x:Key="Minecraft.Launch.Precheck.NonAsciiPath.Continue">繼續</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Precheck.NonAsciiPath.Message">欲啟動實例 "{0}" 的路徑中存在可能影響遊戲正常執行的字元（非 ASCII 字元），是否仍舊啟動遊戲？&#xA;&#xA;如果不清楚具體作用，你可以先選擇 "繼續"，發現遊戲在啟動後很快出現崩潰的情況後再嘗試修改遊戲路徑等操作</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Precheck.NonAsciiPath.Message">欲啟動實例 &quot;{0}&quot; 的路徑中存在可能影響遊戲正常執行的字元（非 ASCII 字元），是否仍舊啟動遊戲？
+
+如果不清楚具體作用，你可以先選擇 &quot;繼續&quot;，發現遊戲在啟動後很快出現崩潰的情況後再嘗試修改遊戲路徑等操作</sys:String>
     <sys:String x:Key="Minecraft.Launch.Precheck.NonAsciiPath.Title">遊戲路徑檢查</sys:String>
     <sys:String x:Key="Minecraft.Launch.Precheck.RequireMicrosoft">目前實例要求使用微軟驗證，請使用微軟驗證檔案啟動遊戲！</sys:String>
     <sys:String x:Key="Minecraft.Launch.Precheck.RequireMicrosoftOrThirdParty">目前實例要求使用微軟驗證或第三方驗證，請使用符合要求的檔案啟動遊戲！</sys:String>
@@ -2306,10 +2572,14 @@
     <sys:String x:Key="Music.Hint.Playing">正在播放：{0}</sys:String>
     <sys:String x:Key="Music.Hint.Refreshed">背景音樂已重新整理：{0}</sys:String>
     <sys:String x:Key="Music.Hint.Replaying">重新播放：{0}</sys:String>
-    <sys:String x:Key="Music.ToolTip.Paused.Multiple">已暫停：{0}&#xA;左鍵復原播放，右鍵播放下一曲。</sys:String>
-    <sys:String x:Key="Music.ToolTip.Paused.Single">已暫停：{0}&#xA;左鍵復原播放，右鍵重新從頭播放。</sys:String>
-    <sys:String x:Key="Music.ToolTip.Playing.Multiple">正在播放：{0}&#xA;左鍵暫停，右鍵播放下一曲。</sys:String>
-    <sys:String x:Key="Music.ToolTip.Playing.Single">正在播放：{0}&#xA;左鍵暫停，右鍵重新從頭播放。</sys:String>
+    <sys:String x:Key="Music.ToolTip.Paused.Multiple">已暫停：{0}
+左鍵復原播放，右鍵播放下一曲。</sys:String>
+    <sys:String x:Key="Music.ToolTip.Paused.Single">已暫停：{0}
+左鍵復原播放，右鍵重新從頭播放。</sys:String>
+    <sys:String x:Key="Music.ToolTip.Playing.Multiple">正在播放：{0}
+左鍵暫停，右鍵播放下一曲。</sys:String>
+    <sys:String x:Key="Music.ToolTip.Playing.Single">正在播放：{0}
+左鍵暫停，右鍵重新從頭播放。</sys:String>
 
     <!-- Music.Error -->
 
@@ -2338,12 +2608,20 @@
     <sys:String x:Key="Select.Folder.CannotAddWhileDownloading">在下載工作進行時，無法新增遊戲資料夾！</sys:String>
     <sys:String x:Key="Select.Folder.CannotCreateWhileDownloading">在下載工作進行時，無法建立遊戲資料夾！</sys:String>
     <sys:String x:Key="Select.Folder.Cleanup.Keep">保留</sys:String>
-    <sys:String x:Key="Select.Folder.Cleanup.Message">是否需要清理 PCL-MOON 在該資料夾中的設定檔？&#xA;這包括各個實例的獨立設定（如自訂圖示、第三方登入設定）等，對遊戲本身沒有影響。</sys:String>
+    <sys:String x:Key="Select.Folder.Cleanup.Message">是否需要清理 PCL-MOON 在該資料夾中的設定檔？
+這包括各個實例的獨立設定（如自訂圖示、第三方登入設定）等，對遊戲本身沒有影響。</sys:String>
     <sys:String x:Key="Select.Folder.Cleanup.Title">設定檔清理</sys:String>
     <sys:String x:Key="Select.Folder.Clear">清空</sys:String>
     <sys:String x:Key="Select.Folder.Clear.Confirm">確認清空</sys:String>
-    <sys:String x:Key="Select.Folder.Clear.FinalWarning">如果你在該資料夾中存放了除 Minecraft 以外的其他檔案，這些檔案也會被一同清空！&#xA;繼續清空會導致該資料夾中的所有檔案永久遺失，請在仔細確認後再繼續！&#xA;目標資料夾：{0}&#xA;&#xA;這是最後一次警告！</sys:String>
-    <sys:String x:Key="Select.Folder.Clear.FirstWarning">你確認要清空這個資料夾嗎？&#xA;目標資料夾：{0}&#xA;&#xA;這會導致該資料夾中的所有存檔與其他檔案永久遺失，且不可復原！</sys:String>
+    <sys:String x:Key="Select.Folder.Clear.FinalWarning">如果你在該資料夾中存放了除 Minecraft 以外的其他檔案，這些檔案也會被一同清空！
+繼續清空會導致該資料夾中的所有檔案永久遺失，請在仔細確認後再繼續！
+目標資料夾：{0}
+
+這是最後一次警告！</sys:String>
+    <sys:String x:Key="Select.Folder.Clear.FirstWarning">你確認要清空這個資料夾嗎？
+目標資料夾：{0}
+
+這會導致該資料夾中的所有存檔與其他檔案永久遺失，且不可復原！</sys:String>
     <sys:String x:Key="Select.Folder.Clear.InProgress">正在清空資料夾 {0}！</sys:String>
     <sys:String x:Key="Select.Folder.Clear.Success">已清空資料夾 {0}！</sys:String>
     <sys:String x:Key="Select.Folder.CreateNew.Title">新增 .minecraft 資料夾</sys:String>
@@ -2351,8 +2629,15 @@
     <sys:String x:Key="Select.Folder.CreateSuccess">新增 .minecraft 資料夾成功！</sys:String>
     <sys:String x:Key="Select.Folder.CurrentFolder">目前資料夾</sys:String>
     <sys:String x:Key="Select.Folder.Delete.Confirm">確認刪除</sys:String>
-    <sys:String x:Key="Select.Folder.Delete.FinalWarning">如果你在該資料夾中存放了除 Minecraft 以外的其他檔案，這些檔案也會被一同刪除！&#xA;繼續刪除會導致該資料夾中的所有檔案永久遺失，請在仔細確認後再繼續！&#xA;目標資料夾：{0}&#xA;&#xA;這是最後一次警告！</sys:String>
-    <sys:String x:Key="Select.Folder.Delete.FirstWarning">你確認要刪除這個資料夾嗎？&#xA;目標資料夾：{0}&#xA;&#xA;這會導致該資料夾中的所有存檔與其他檔案永久遺失，且不可復原！</sys:String>
+    <sys:String x:Key="Select.Folder.Delete.FinalWarning">如果你在該資料夾中存放了除 Minecraft 以外的其他檔案，這些檔案也會被一同刪除！
+繼續刪除會導致該資料夾中的所有檔案永久遺失，請在仔細確認後再繼續！
+目標資料夾：{0}
+
+這是最後一次警告！</sys:String>
+    <sys:String x:Key="Select.Folder.Delete.FirstWarning">你確認要刪除這個資料夾嗎？
+目標資料夾：{0}
+
+這會導致該資料夾中的所有存檔與其他檔案永久遺失，且不可復原！</sys:String>
     <sys:String x:Key="Select.Folder.Delete.InProgress">正在刪除資料夾 {0}！</sys:String>
     <sys:String x:Key="Select.Folder.Delete.Success">已刪除資料夾 {0}！</sys:String>
     <sys:String x:Key="Select.Folder.Delete.WarningTitle">刪除警告</sys:String>
@@ -2361,7 +2646,10 @@
     <sys:String x:Key="Select.Folder.InputDisplayName.Message">輸入該資料夾在左邊欄清單中顯示的名稱。</sys:String>
     <sys:String x:Key="Select.Folder.InputDisplayName.Title">輸入顯示名稱</sys:String>
     <sys:String x:Key="Select.Folder.Invalid">無效的 Minecraft 資料夾：{0}</sys:String>
-    <sys:String x:Key="Select.Folder.Invalid.WithDetail">無效的 Minecraft 資料夾：{0}&#xA;&#xA;詳細資訊：&#xA;{1}</sys:String>
+    <sys:String x:Key="Select.Folder.Invalid.WithDetail">無效的 Minecraft 資料夾：{0}
+
+詳細資訊：
+{1}</sys:String>
     <sys:String x:Key="Select.Folder.InvalidMessage">Minecraft 資料夾失效</sys:String>
     <sys:String x:Key="Select.Folder.InvalidPathChars">Minecraft 資料夾路徑中不能含有驚嘆號或分號！</sys:String>
     <sys:String x:Key="Select.Folder.InvalidTitle">Minecraft 資料夾失效</sys:String>
@@ -2399,7 +2687,8 @@
     <sys:String x:Key="Select.Instance.Delete.PermanentSuccess">實例 {0} 已永久刪除！</sys:String>
     <sys:String x:Key="Select.Instance.Delete.RecycleBinSuccess">實例 {0} 已刪除到資源回收筒！</sys:String>
     <sys:String x:Key="Select.Instance.Empty.Download">下載遊戲</sys:String>
-    <sys:String x:Key="Select.Instance.Empty.Message">未找到任何遊戲實例，請先下載一個遊戲實例。&#xA;若有已存在的實例，請在左邊的清單中選擇新增資料夾，選擇 .minecraft 資料夾將其匯入。</sys:String>
+    <sys:String x:Key="Select.Instance.Empty.Message">未找到任何遊戲實例，請先下載一個遊戲實例。
+若有已存在的實例，請在左邊的清單中選擇新增資料夾，選擇 .minecraft 資料夾將其匯入。</sys:String>
     <sys:String x:Key="Select.Instance.Empty.Title">無可用實例</sys:String>
     <sys:String x:Key="Select.Instance.EmptySearch.Title">無匹配的遊戲實例</sys:String>
     <sys:String x:Key="Select.Instance.Error.Classify">分類實例清單失敗</sys:String>
@@ -2409,7 +2698,8 @@
     <sys:String x:Key="Select.Instance.Error.Load">載入實例失敗（{0}）</sys:String>
     <sys:String x:Key="Select.Instance.Error.UiUpdate">將實例清單轉換顯示時失敗</sys:String>
     <sys:String x:Key="Select.Instance.Favorite">新增至我的最愛</sys:String>
-    <sys:String x:Key="Select.Instance.Hidden.EmptyMessage">沒有實例被隱藏，你可以在實例設定的實例分類選項中隱藏實例。&#xA;再次按下 F11 即可退出隱藏實例檢視模式。</sys:String>
+    <sys:String x:Key="Select.Instance.Hidden.EmptyMessage">沒有實例被隱藏，你可以在實例設定的實例分類選項中隱藏實例。
+再次按下 F11 即可退出隱藏實例檢視模式。</sys:String>
     <sys:String x:Key="Select.Instance.Hidden.EmptySearchTitle">無匹配的隱藏實例</sys:String>
     <sys:String x:Key="Select.Instance.Hidden.EmptyTitle">無隱藏實例</sys:String>
     <sys:String x:Key="Select.Instance.Loading">正在取得實例清單</sys:String>
@@ -2479,9 +2769,13 @@
     <sys:String x:Key="Setup.About.SourceCode">檢視原始碼</sys:String>
     <sys:String x:Key="Setup.About.SponsorOriginalAuthor">贊助原作者</sys:String>
     <sys:String x:Key="Setup.About.Title">關於</sys:String>
-    <sys:String x:Key="Setup.About.UpstreamLegal.CopyrightText">Copyright © 龙腾猫跃 2016. All Rights Reserved.&#xD;電腦軟體著作權登記號：2020SR0875133&#xD;違法違規行為檢舉投訴信箱：hexdragon@vip.qq.com&#xD;非 MINECRAFT 官方產品。未經 MOJANG 或 MICROSOFT 批准，也不與 MOJANG 或 MICROSOFT 關聯。</sys:String>
+    <sys:String x:Key="Setup.About.UpstreamLegal.CopyrightText">Copyright © 龙腾猫跃 2016. All Rights Reserved.
+電腦軟體著作權登記號：2020SR0875133
+違法違規行為檢舉投訴信箱：hexdragon@vip.qq.com
+非 MINECRAFT 官方產品。未經 MOJANG 或 MICROSOFT 批准，也不與 MOJANG 或 MICROSOFT 關聯。</sys:String>
     <sys:String x:Key="Setup.About.UpstreamLegal.OpenSource">原始碼</sys:String>
-    <sys:String x:Key="Setup.About.UpstreamLegal.PrivacyText">本軟體的 User Agent 中包含啟動器的版本號，以統計各版本的使用者數量。&#xD;除此之外，本軟體不會向開發者上傳任何其他資訊。</sys:String>
+    <sys:String x:Key="Setup.About.UpstreamLegal.PrivacyText">本軟體的 User Agent 中包含啟動器的版本號，以統計各版本的使用者數量。
+除此之外，本軟體不會向開發者上傳任何其他資訊。</sys:String>
     <sys:String x:Key="Setup.About.UpstreamLegal.TermsAndDisclaimer">使用者協議與免責宣告</sys:String>
     <sys:String x:Key="Setup.About.UpstreamLegal.Title">上游版權與法律資訊</sys:String>
     <sys:String x:Key="Setup.About.Version.Info">目前版本: %VERSION% (%BRANCH%, %VERSIONCODE%, %COMMIT_HASH%)</sys:String>
@@ -2517,13 +2811,14 @@
 
     <!-- Setup.About.Legal -->
 
-    <sys:String x:Key="Setup.About.Legal.CommunityLobbyPrivacy">PCL-MOON 連線大廳隱私政策</sys:String>
     <sys:String x:Key="Setup.About.Legal.CommunitySource">PCL-MOON 開放原始碼</sys:String>
-    <sys:String x:Key="Setup.About.Legal.CopyrightText">Copyright © 2026 PCL Community &amp; 龙腾猫跃.&#xD;非 MINECRAFT 官方產品。未經 MOJANG 或 MICROSOFT 批准，也不與 MOJANG 或 MICROSOFT 關聯。</sys:String>
-    <sys:String x:Key="Setup.About.Legal.NatayarkTerms">Natayark OpenID 服務條款</sys:String>
+    <sys:String x:Key="Setup.About.Legal.CopyrightText">Copyright © 2026 PCL Community &amp; 龙腾猫跃.
+非 MINECRAFT 官方產品。未經 MOJANG 或 MICROSOFT 批准，也不與 MOJANG 或 MICROSOFT 關聯。</sys:String>
     <sys:String x:Key="Setup.About.Legal.OtherInfo">其他資訊</sys:String>
     <sys:String x:Key="Setup.About.Legal.PrivacyNotice">隱私說明</sys:String>
-    <sys:String x:Key="Setup.About.Legal.PrivacyText">本軟體的 User Agent 中包含啟動器的版本號，以統計各版本的使用者數量。&#xD;除此之外，本軟體不會向開發者上傳任何其他資訊。&#xD;* 連線與軟硬體調查相關功能遵循其自身的隱私政策，與上述說明不通用。</sys:String>
+    <sys:String x:Key="Setup.About.Legal.PrivacyText">本軟體的 User Agent 中包含啟動器的版本號，以統計各版本的使用者數量。
+除此之外，本軟體不會向開發者上傳任何其他資訊。
+* 連線與軟硬體調查相關功能遵循其自身的隱私政策，與上述說明不通用。</sys:String>
     <sys:String x:Key="Setup.About.Legal.Title">版權宣告與法律資訊</sys:String>
 
     <!-- Setup.About.SpecialThanks -->
@@ -2532,11 +2827,9 @@
     <sys:String x:Key="Setup.About.SpecialThanks.Info.Bmclapi">提供 BMCLAPI 鏡像來源和 Forge 安裝工具，詳見 https://bmclapi.bangbang93.com</sys:String>
     <sys:String x:Key="Setup.About.SpecialThanks.Info.Cloud">提供了 PCL-MOON 的相關雲服務</sys:String>
     <sys:String x:Key="Setup.About.SpecialThanks.Info.IconDesign">設計並製作了 PCL-MOON 的圖示</sys:String>
-    <sys:String x:Key="Setup.About.SpecialThanks.Info.LinkModule">提供了連線模組</sys:String>
     <sys:String x:Key="Setup.About.SpecialThanks.Info.Mcim">提供了 MCIM 社群資源鏡像來源和幫助庫圖床！</sys:String>
     <sys:String x:Key="Setup.About.SpecialThanks.Info.Mcmod">提供了模組名稱的中文翻譯和更多相關資訊！</sys:String>
     <sys:String x:Key="Setup.About.SpecialThanks.Name.Bangbang93">bangbang93</sys:String>
-    <sys:String x:Key="Setup.About.SpecialThanks.Name.EasyTier">EasyTier</sys:String>
     <sys:String x:Key="Setup.About.SpecialThanks.Name.Emperormummy">Emperormummy</sys:String>
     <sys:String x:Key="Setup.About.SpecialThanks.Name.Mcmod">MC 百科</sys:String>
     <sys:String x:Key="Setup.About.SpecialThanks.Name.Pysio">Pysio @ Akaere Network</sys:String>
@@ -2550,23 +2843,32 @@
     <!-- Setup.Feedback -->
 
     <sys:String x:Key="Setup.Feedback.ErrorPrompt.Submit.Action">回饋</sys:String>
-    <sys:String x:Key="Setup.Feedback.ErrorPrompt.Submit.Message">{0}&#xA;&#xA;是否回饋此問題？如果不回饋，這個問題可能永遠無法得到解決！</sys:String>
-    <sys:String x:Key="Setup.Feedback.ErrorPrompt.Update.Message">{0}&#xA;&#xA;將 PCL-MOON 更新至最新版或許可以解決這個問題。</sys:String>
+    <sys:String x:Key="Setup.Feedback.ErrorPrompt.Submit.Message">{0}
+
+是否回饋此問題？如果不回饋，這個問題可能永遠無法得到解決！</sys:String>
+    <sys:String x:Key="Setup.Feedback.ErrorPrompt.Update.Message">{0}
+
+將 PCL-MOON 更新至最新版或許可以解決這個問題。</sys:String>
     <sys:String x:Key="Setup.Feedback.Item.Submitter">提交者：{0}（{1}）</sys:String>
     <sys:String x:Key="Setup.Feedback.Item.Type">型別：{0}</sys:String>
     <sys:String x:Key="Setup.Feedback.Item.ViewDetail">檢視詳情</sys:String>
     <sys:String x:Key="Setup.Feedback.LoadFailed">無法取得到內容</sys:String>
     <sys:String x:Key="Setup.Feedback.Loading">正在取得回饋清單</sys:String>
-    <sys:String x:Key="Setup.Feedback.Reminder.Message">若要彙報 Bug，請點擊「開啟資料夾」並上傳 Launch-{0}-[一串數字].log 中包含錯誤資訊的檔案。&#xA;&#xA;遊戲崩潰一般與啟動器無關，請不要因為遊戲崩潰而提交啟動器回饋。</sys:String>
+    <sys:String x:Key="Setup.Feedback.Reminder.Message">若要彙報 Bug，請點擊「開啟資料夾」並上傳 Launch-{0}-[一串數字].log 中包含錯誤資訊的檔案。
+
+遊戲崩潰一般與啟動器無關，請不要因為遊戲崩潰而提交啟動器回饋。</sys:String>
     <sys:String x:Key="Setup.Feedback.Reminder.NotNeeded">不需要</sys:String>
     <sys:String x:Key="Setup.Feedback.Reminder.Title">回饋提交提醒</sys:String>
-    <sys:String x:Key="Setup.Feedback.Submit.Description">在提交回饋之前，先查詢一下是否存在重複回饋，如果有重複回饋，那麼請不要再次提交回饋，這樣會加劇維護者的負擔……&#xA;注意：此頁面未展示所有的回饋，如需檢視更多回饋，請前往 GitHub。</sys:String>
+    <sys:String x:Key="Setup.Feedback.Submit.Description">在提交回饋之前，先查詢一下是否存在重複回饋，如果有重複回饋，那麼請不要再次提交回饋，這樣會加劇維護者的負擔……
+注意：此頁面未展示所有的回饋，如需檢視更多回饋，請前往 GitHub。</sys:String>
     <sys:String x:Key="Setup.Feedback.Submit.Open">前往回饋</sys:String>
     <sys:String x:Key="Setup.Feedback.Submit.Title">提交回饋</sys:String>
     <sys:String x:Key="Setup.Feedback.Unavailable.CheckFailed.Action">重新檢查更新</sys:String>
-    <sys:String x:Key="Setup.Feedback.Unavailable.CheckFailed.Message">檢查更新失敗，因此無法提交回饋。&#xA;請連線網際網路，檢查更新後確認該問題在最新版中依然存在，再提交回饋。</sys:String>
+    <sys:String x:Key="Setup.Feedback.Unavailable.CheckFailed.Message">檢查更新失敗，因此無法提交回饋。
+請連線網際網路，檢查更新後確認該問題在最新版中依然存在，再提交回饋。</sys:String>
     <sys:String x:Key="Setup.Feedback.Unavailable.NotLatest.Action">更新</sys:String>
-    <sys:String x:Key="Setup.Feedback.Unavailable.NotLatest.Message">目前 PCL-MOON 不是最新版，因此無法提交回饋。&#xA;請更新後確認該問題在最新版中依然存在，再提交回饋。</sys:String>
+    <sys:String x:Key="Setup.Feedback.Unavailable.NotLatest.Message">目前 PCL-MOON 不是最新版，因此無法提交回饋。
+請更新後確認該問題在最新版中依然存在，再提交回饋。</sys:String>
     <sys:String x:Key="Setup.Feedback.Unavailable.Title">無法提交回饋</sys:String>
     <sys:String x:Key="Setup.Feedback.Uncategorized">未分類</sys:String>
 
@@ -2581,44 +2883,6 @@
     <sys:String x:Key="Setup.Feedback.Status.UpNext">在即</sys:String>
     <sys:String x:Key="Setup.Feedback.Status.Waiting">等待</sys:String>
     <sys:String x:Key="Setup.Feedback.Status.WaitingProcess">等待處理</sys:String>
-
-    <!-- Setup.GameLink -->
-
-    <sys:String x:Key="Setup.GameLink.CliDebugOutput">在日誌中輸出 Cli 資訊以用於除錯</sys:String>
-    <sys:String x:Key="Setup.GameLink.CliDebugOutput.ToolTip">在啟動器日誌中每 30s 輸出一次 EasyTier Cli 資訊以便於開發者和社群支援調查。&#xA;該選項僅用於除錯目的，不推薦一直開啟。</sys:String>
-    <sys:String x:Key="Setup.GameLink.EnableIPv6">允許使用 IPv6 通訊</sys:String>
-    <sys:String x:Key="Setup.GameLink.EnableIPv6.ToolTip">IPv6 相比於 IPv4 更容易進行 P2P 通訊，能極大改善連線體驗，除有特殊原因外不建議關閉。</sys:String>
-    <sys:String x:Key="Setup.GameLink.Error.ConfigChangeFailed">改變設定項失敗</sys:String>
-    <sys:String x:Key="Setup.GameLink.Error.InitFailed">初始化連線頁設定失敗</sys:String>
-    <sys:String x:Key="Setup.GameLink.Error.NetworkTestFailed">取得網路測試結果失敗。請檢視錯誤詳情。</sys:String>
-    <sys:String x:Key="Setup.GameLink.Initialized">已初始化連線頁設定！</sys:String>
-    <sys:String x:Key="Setup.GameLink.LatencyFirstMode">選擇最低延遲路徑而不是最短路徑</sys:String>
-    <sys:String x:Key="Setup.GameLink.LatencyFirstMode.ToolTip">啟用後，EasyTier 將在通訊時選擇延遲最低的路徑，而不是路由跳數最少的路徑。&#xA;啟用此選項在部分情況下能降低連線時的延遲，但可能會提高丟包率。</sys:String>
-    <sys:String x:Key="Setup.GameLink.PortGuessNat">對對稱型 NAT 進行埠猜測</sys:String>
-    <sys:String x:Key="Setup.GameLink.PortGuessNat.ToolTip">讓 EasyTier 嘗試對對稱型 NAT 進行埠猜測（生日悖論）。&#xA;這也許可以改善連線體驗，但在部分情況下也可能導致一些問題。&#xA;一般保持開啟即可。</sys:String>
-    <sys:String x:Key="Setup.GameLink.Protocol.Preference">協議偏好</sys:String>
-    <sys:String x:Key="Setup.GameLink.Protocol.Tcp">TCP</sys:String>
-    <sys:String x:Key="Setup.GameLink.Protocol.Tcp.ToolTip">讓 EasyTier 優先使用 TCP 進行通訊，TCP 通常能帶來更好的穩定性</sys:String>
-    <sys:String x:Key="Setup.GameLink.Protocol.Udp">UDP</sys:String>
-    <sys:String x:Key="Setup.GameLink.Protocol.Udp.ToolTip">讓 EasyTier 優先使用 UDP 進行通訊，UDP 通常能帶來更低的通訊時延</sys:String>
-    <sys:String x:Key="Setup.GameLink.RestartRequired">修改此處的設定後，需要重新啟動大廳以使設定生效。</sys:String>
-    <sys:String x:Key="Setup.GameLink.Username">使用者名稱</sys:String>
-    <sys:String x:Key="Setup.GameLink.Username.ToolTip">PCL-MOON 會盡可能使用此處的使用者名稱用於大廳資訊展示。&#xA;若留空，則使用 Natayark ID 的使用者名稱。&#xA;&#xA;部分情況下可能始終展示 Natayark ID 使用者名稱，而非此處設定的名稱。</sys:String>
-
-    <!-- Setup.GameLink.NetworkTest -->
-
-    <sys:String x:Key="Setup.GameLink.NetworkTest.Ipv6Status">IPv6: {0}</sys:String>
-    <sys:String x:Key="Setup.GameLink.NetworkTest.Ipv6Status.NotTested">IPv6: 尚未偵測</sys:String>
-    <sys:String x:Key="Setup.GameLink.NetworkTest.NotTested">尚未偵測</sys:String>
-    <sys:String x:Key="Setup.GameLink.NetworkTest.Start">開始測試</sys:String>
-    <sys:String x:Key="Setup.GameLink.NetworkTest.Supported">支援</sys:String>
-    <sys:String x:Key="Setup.GameLink.NetworkTest.TcpNatType">TCP NAT 型別: {0}</sys:String>
-    <sys:String x:Key="Setup.GameLink.NetworkTest.TcpNatType.NotTested">TCP NAT 型別: 尚未偵測</sys:String>
-    <sys:String x:Key="Setup.GameLink.NetworkTest.Testing">正在測試</sys:String>
-    <sys:String x:Key="Setup.GameLink.NetworkTest.Title">網路測試</sys:String>
-    <sys:String x:Key="Setup.GameLink.NetworkTest.UdpNatType">UDP NAT 型別: {0}</sys:String>
-    <sys:String x:Key="Setup.GameLink.NetworkTest.UdpNatType.NotTested">UDP NAT 型別: 尚未偵測</sys:String>
-    <sys:String x:Key="Setup.GameLink.NetworkTest.Unsupported">不支援</sys:String>
 
     <!-- Setup.GameManage -->
 
@@ -2676,16 +2940,30 @@
 
     <sys:String x:Key="Setup.GameManage.Download.AutoSelectInstance">安裝新實例後自動選定該實例</sys:String>
     <sys:String x:Key="Setup.GameManage.Download.FixAuthlib">升級部分版本的 Authlib</sys:String>
-    <sys:String x:Key="Setup.GameManage.Download.FixAuthlib.ToolTip">部分 Minecraft 版本（如 1.16.5）存在 Bug，可能導致使用離線驗證時多人遊戲被停用。&#xA;PCL-MOON 可嘗試升級這些版本的 Authlib 支援庫以解決問題。&#xA;此設定僅對新安裝的實例有效。</sys:String>
+    <sys:String x:Key="Setup.GameManage.Download.FixAuthlib.ToolTip">部分 Minecraft 版本（如 1.16.5）存在 Bug，可能導致使用離線驗證時多人遊戲被停用。
+PCL-MOON 可嘗試升級這些版本的 Authlib 支援庫以解決問題。
+此設定僅對新安裝的實例有效。</sys:String>
     <sys:String x:Key="Setup.GameManage.Download.InstallBehavior">安裝行為</sys:String>
     <sys:String x:Key="Setup.GameManage.Download.SpeedLimit">速度限制</sys:String>
     <sys:String x:Key="Setup.GameManage.Download.SpeedLimit.ToolTip">設定下載的速度上限，以避免在下載時導致其他需要連線的程式卡死</sys:String>
     <sys:String x:Key="Setup.GameManage.Download.TargetFolder">目標資料夾</sys:String>
-    <sys:String x:Key="Setup.GameManage.Download.TargetFolder.Hint">請在 啟動 → 實例選擇 → 資料夾清單 中更改下載目標資料夾。&#xA;在某個資料夾或遊戲實例上右鍵，即可選擇開啟對應資料夾。</sys:String>
+    <sys:String x:Key="Setup.GameManage.Download.TargetFolder.Hint">請在 啟動 → 實例選擇 → 資料夾清單 中更改下載目標資料夾。
+在某個資料夾或遊戲實例上右鍵，即可選擇開啟對應資料夾。</sys:String>
     <sys:String x:Key="Setup.GameManage.Download.Threads">最大執行緒數</sys:String>
     <sys:String x:Key="Setup.GameManage.Download.Threads.TooManyWarning.Confirm">我知道了</sys:String>
-    <sys:String x:Key="Setup.GameManage.Download.Threads.TooManyWarning.Message">如果設定過多的下載執行緒，可能會導致下載時出現非常嚴重的卡頓。&#xA;一般設定 64 執行緒即可滿足大多數下載需求，除非你知道你在幹什麼，否則不建議設定更多的執行緒數！</sys:String>
-    <sys:String x:Key="Setup.GameManage.Download.Threads.ToolTip">執行緒數越多，限速的檔案下載越快，但過高的執行緒數可能會造成下載時非常嚴重的卡頓。&#xA;一般而言，64 執行緒已可以保證足夠的下載速度。</sys:String>
+    <sys:String x:Key="Setup.GameManage.Download.Threads.TooManyWarning.Message">如果設定過多的下載執行緒，可能會導致下載時出現非常嚴重的卡頓。
+一般設定 64 執行緒即可滿足大多數下載需求，除非你知道你在幹什麼，否則不建議設定更多的執行緒數！</sys:String>
+    <sys:String x:Key="Setup.GameManage.Download.Threads.ToolTip">執行緒數越多，限速的檔案下載越快，但過高的執行緒數可能會造成下載時非常嚴重的卡頓。
+一般而言，64 執行緒已可以保證足夠的下載速度。</sys:String>
+    <sys:String x:Key="Setup.GameManage.Download.FileConnections">单文件最大连接数</sys:String>
+    <sys:String x:Key="Setup.GameManage.Download.FileConnections.ToolTip">大文件最多同时使用的连接数。提高该值可能加快被单连接限速的下载，但也有可能更容易被下载源限速。</sys:String>
+    <sys:String x:Key="Setup.GameManage.Download.HttpProtocol">文件下载协议</sys:String>
+    <sys:String x:Key="Setup.GameManage.Download.HttpProtocol.Auto">自动选择（推荐）</sys:String>
+    <sys:String x:Key="Setup.GameManage.Download.HttpProtocol.Auto.ToolTip">小文件和批量下载优先使用 HTTP/2；大文件分段下载使用 HTTP/1.1，以兼顾并发和兼容性。</sys:String>
+    <sys:String x:Key="Setup.GameManage.Download.HttpProtocol.Http11">HTTP/1.1</sys:String>
+    <sys:String x:Key="Setup.GameManage.Download.HttpProtocol.Http11.ToolTip">所有文件下载强制使用 HTTP/1.1。适合需要多条独立连接提升大文件速度的网络环境。</sys:String>
+    <sys:String x:Key="Setup.GameManage.Download.HttpProtocol.Http2">优先使用 HTTP/2</sys:String>
+    <sys:String x:Key="Setup.GameManage.Download.HttpProtocol.Http2.ToolTip">所有文件下载优先使用 HTTP/2；如果下载源或代理不支持，会自动回退到 HTTP/1.1。</sys:String>
     <sys:String x:Key="Setup.GameManage.Download.Unlimited">無限制</sys:String>
 
     <!-- Setup.Java -->
@@ -2702,7 +2980,15 @@
     <sys:String x:Key="Setup.Java.Enable">啟用此 Java</sys:String>
     <sys:String x:Key="Setup.Java.EnableBeforeSelect">請先啟用此 Java 後再選擇其作為預設 Java</sys:String>
     <sys:String x:Key="Setup.Java.EnableFailed">調整 Java 啟用狀態失敗</sys:String>
-    <sys:String x:Key="Setup.Java.Info.Format">型別: {0}&#xD;&#xA;版本: {1}&#xD;&#xA;架構: {2} ({3})&#xD;&#xA;發行商: {4}&#xD;&#xA;位置: {5}</sys:String>
+    <sys:String x:Key="Setup.Java.Info.Format">型別: {0}
+
+版本: {1}
+
+架構: {2} ({3})
+
+發行商: {4}
+
+位置: {5}</sys:String>
     <sys:String x:Key="Setup.Java.Info.Title">Java 資訊</sys:String>
     <sys:String x:Key="Setup.Java.Loading">正在載入 Java 清單</sys:String>
     <sys:String x:Key="Setup.Java.SelectFile.Filter">Java 程式(java.exe)|java.exe</sys:String>
@@ -2746,18 +3032,6 @@
     <sys:String x:Key="Setup.Launch.DownloadCache.ChangeTitle">選擇本機下載快取目錄</sys:String>
     <sys:String x:Key="Setup.Launch.DownloadCache.Changed">下載快取目錄已切換。舊目錄裡的檔案沒有移動，也沒有刪除。</sys:String>
 
-    <!-- Setup.Launch.Advanced -->
-
-    <sys:String x:Key="Setup.Launch.Advanced.DisableCrashAnalysis">停用自動崩潰分析</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.DisableCrashAnalysis.ToolTip">啟用後，遊戲崩潰時將不再自動彈出崩潰分析頁面。</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.DisableJlw">停用 Java Launch Wrapper</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.DisableJlw.Arm64Notice">在啟動遊戲時不使用 Java Wrapper 進行包裝。&#xA;由於系統為 ARM64 架構，Java Wrapper 已被強制停用。</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.DisableJlw.Arm64ToolTip">在啟動遊戲時不使用 Java Wrapper 進行包裝。&#xA;由於系統為 ARM64 架構，Java Wrapper 已被強制停用。</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.DisableJlw.ToolTip">PCL-MOON 會使用 Java Launch Wrapper 來修復舊版本 Java 在中文路徑下無法啟動的問題。&#xA;如果這被反作弊攔截，或遇到其他問題，也可以將其關閉。</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.DisableLF">停用 LegacyFix</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.DisableLF.ToolTip">PCL-MOON 會在啟動 1.5.x 及以下版本時使用 LegacyFix 來改善舊版本遊戲體驗和修復相容性問題。</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.LockMemory">鎖定記憶體分配（-Xms = -Xmx）</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.LockMemory.ToolTip">啟用後，啟動器會額外追加 -Xms 參數並令其等於最大堆 -Xmx，從而固定堆大小。這會隱式停用堆記憶體歸還（Uncommit），減少作業系統取消對映/重新分配記憶體頁帶來的延遲抖動，也有利於 ZGC 的回收預測。代價是遊戲全程會佔用接近最大分配的記憶體。</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.FrameGeneration">實驗性遊戲畫面插幀（2×，目標 60 FPS）</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.FrameGeneration.ToolTip">下次啟動生效。以通用 OpenGL 3.2 雙向區塊比對產生中間影格，無 NVIDIA 專屬相依。目標呈現 60 FPS、實際算繪約 30 FPS，會增加延遲及顯卡負擔，HUD 也參與插值。建議遊戲影格上限不低於 60；過慢、失焦或超出預算時跳過。無法消除 GC/主執行緒停頓。不支援 Vulkan；1.16.5–26.3 尚未逐版本及顯卡實測。</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.FrameDiagnostics">記錄遊戲長影格診斷（定位瞬間 0 FPS）</sys:String>
@@ -2768,20 +3042,66 @@
     <sys:String x:Key="Setup.Launch.Advanced.FramePacing.ToolTip">下次啟動載入影格節奏元件，即使未開啟插幀。預設不限幀；在遊戲齒輪或實例設定中指定 1–999 FPS，0 為關閉。精確模式會額外佔用 CPU。此選項控制獨立載入；元件因插幀或齒輪已載入時，仍可使用限幀。不會修改遊戲設定或啟用 Linux 執行緒配額。</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.SuperResolution">實驗性內部超分（降低世界算繪解析度）</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.SuperResolution.ToolTip">預設關閉，下次啟動生效。降低世界算繪解析度後由 GPU 重建到視窗大小，HUD 與滑鼠座標保持原生。目前僅 1.21.11 原生配接器、OpenGL 3.3 有首個實作；顯示卡是否真正支援要在執行時檢查，未知版本或後端保持原生。勾選不代表目前已生效。遊戲內齒輪與實例設定可即時切換比例與銳化。</sys:String>
+    <!-- Setup.Launch.Advanced -->
+
+    <sys:String x:Key="Setup.Launch.Advanced.DisableCrashAnalysis">停用自動崩潰分析</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.DisableCrashAnalysis.ToolTip">啟用後，遊戲崩潰時將不再自動彈出崩潰分析頁面。</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.DisableJlw">停用 Java Launch Wrapper</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.DisableJlw.Arm64Notice">在啟動遊戲時不使用 Java Wrapper 進行包裝。
+由於系統為 ARM64 架構，Java Wrapper 已被強制停用。</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.DisableJlw.Arm64ToolTip">在啟動遊戲時不使用 Java Wrapper 進行包裝。
+由於系統為 ARM64 架構，Java Wrapper 已被強制停用。</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.DisableJlw.ToolTip">PCL-MOON 會使用 Java Launch Wrapper 來修復舊版本 Java 在中文路徑下無法啟動的問題。
+如果這被反作弊攔截，或遇到其他問題，也可以將其關閉。</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.DisableLF">停用 LegacyFix</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.DisableLF.ToolTip">PCL-MOON 會在啟動 1.5.x 及以下版本時使用 LegacyFix 來改善舊版本遊戲體驗和修復相容性問題。</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.LockMemory">鎖定記憶體分配（-Xms = -Xmx）</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.LockMemory.ToolTip">啟用後，啟動器會額外追加 -Xms 參數並令其等於最大堆 -Xmx，從而固定堆大小。這會隱式停用堆記憶體歸還（Uncommit），減少作業系統取消對映/重新分配記憶體頁帶來的延遲抖動，也有利於 ZGC 的回收預測。代價是遊戲全程會佔用接近最大分配的記憶體。</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.DisableLwjglUnsafeAgent">停用 LWJGL Unsafe Agent</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.DisableLwjglUnsafeAgent.ToolTip">Minecraft 26.1 使用了 LWJGL 3.4.1，LWJGL 3.4.1 使用了 FFM API 以在 JDK 25+ 上存取原生記憶體。由於 JDK 最佳化能力限制，某些情況下這會產生嚴重的效能問題。&#xA;PCL-MOON 會使用 LWJGL Unsafe Agent 修復這個問題，以解決可能存在的效能問題。&#xA;一般情況下沒有停用該選項的必要，但如果你遇到了額外問題，也可以嘗試暫時停用該選項以排查錯誤。&#xA;&#xA;該功能僅會在 LWJGL 版本為 3.4.1 時生效。</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.DisableLwjglUnsafeAgent.ToolTip">Minecraft 26.1 使用了 LWJGL 3.4.1，LWJGL 3.4.1 使用了 FFM API 以在 JDK 25+ 上存取原生記憶體。由於 JDK 最佳化能力限制，某些情況下這會產生嚴重的效能問題。
+PCL-MOON 會使用 LWJGL Unsafe Agent 修復這個問題，以解決可能存在的效能問題。
+一般情況下沒有停用該選項的必要，但如果你遇到了額外問題，也可以嘗試暫時停用該選項以排查錯誤。
+
+該功能僅會在 LWJGL 版本為 3.4.1 時生效。</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.PrefetchFiles">啟動前預讀遊戲檔案</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.PrefetchFiles.ToolTip">啟動時在背景以低 I/O 優先權預先讀取 Mod 等檔案到系統快取，減少冷啟動（如開機後首次啟動）時的磁碟等待。可用記憶體不足時自動跳過。若使用機械硬碟時感覺更慢，可關閉。</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.GameTail">遊戲參數尾部</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.GameTail.ToolTip">文字方塊中的內容將會被直接拼合在啟動參數的末尾。&#xA;例如，輸入 --demo 則會以試玩模式啟動遊戲。&#xA;支援 Minecraft 實例 JSON 中的字串取代標記，例如 ${library_directory}。</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.GameTail.ToolTip">文字方塊中的內容將會被直接拼合在啟動參數的末尾。
+例如，輸入 --demo 則會以試玩模式啟動遊戲。
+支援 Minecraft 實例 JSON 中的字串取代標記，例如 ${library_directory}。</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.GpuPreference">要求 Java 使用高效能顯示卡</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.GpuPreference.ToolTip">自動在 Windows 設定 → 系統 → 螢幕 → 顯示卡 中將 Java 改為使用高效能顯示卡。&#xA;如果電腦同時有集顯和獨顯，這能確保 Minecraft 使用獨顯進行繪製，以大幅提高效能。</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.GpuPreference.ToolTip">自動在 Windows 設定 → 系統 → 螢幕 → 顯示卡 中將 Java 改為使用高效能顯示卡。
+如果電腦同時有集顯和獨顯，這能確保 Minecraft 使用獨顯進行繪製，以大幅提高效能。</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.JvmHead">JVM 參數頭部</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.JvmHead.Restore">還原</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.JvmHead.ToolTip">啟動 Minecraft 時使用的額外 JVM 參數，除非有確定把握，否則請不要修改。&#xA;支援 Minecraft 實例 JSON 中的字串取代標記，例如 ${library_directory}。</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.JvmHead.ToolTip">啟動 Minecraft 時使用的額外 JVM 參數，除非有確定把握，否則請不要修改。
+支援 Minecraft 實例 JSON 中的字串取代標記，例如 ${library_directory}。</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.MoreInInstanceSetup">你還可以在實例獨立設定中找到更多高階啟動選項。</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.PreLaunchCommand">啟動前執行指令</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.PreLaunchCommand.ToolTip">在 Minecraft 啟動前執行特定指令或程式，語法與 Windows 的指令提示字元一致。&#xA;&#xA;可以使用以下取代標記實現相對路徑（路徑均以 \ 結尾）：&#xA; · {path}：PCL-MOON 的 exe 檔案所在的資料夾&#xA; · {minecraft}：.minecraft 資料夾&#xA; · {verpath}：實例資料夾（.minecraft\versions\實例名\）&#xA; · {verindie}：開啟實例隔離時等同實例資料夾，未開啟時等同 .minecraft 資料夾&#xA; · {java}：遊戲執行時的 Java 資料夾&#xA;&#xA;除此之外，也支援以下取代標記：&#xA; · {user}：玩家名字&#xA; · {login}：玩家的登入方式&#xA; · {uuid}：玩家的 UUID&#xA; · {name}：遊戲實例名&#xA; · {date}、{time}：目前的系統時間&#xA; · {version}：遊戲對應的原版版本號&#xA;&#xA;例如：&#xA; · "{verpath}test.exe" ：執行實例資料夾下的 test.exe 程式&#xA; · "{java}java.exe" -jar "{verpath}test.jar" ：用 Java 執行實例資料夾下的 test.jar&#xA; · notepad "{verindie}options.txt" ：使用記事本開啟該實例的設定檔&#xA;&#xA;涉及路徑的操作最好都打上雙引號，以避免路徑中的空格導致執行失敗。&#xA;執行指令時，指令列所在的目錄是目前的 .minecraft 資料夾。</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.PreLaunchCommand.ToolTip">在 Minecraft 啟動前執行特定指令或程式，語法與 Windows 的指令提示字元一致。
+
+可以使用以下取代標記實現相對路徑（路徑均以 \ 結尾）：
+ · {path}：PCL-MOON 的 exe 檔案所在的資料夾
+ · {minecraft}：.minecraft 資料夾
+ · {verpath}：實例資料夾（.minecraft\versions\實例名\）
+ · {verindie}：開啟實例隔離時等同實例資料夾，未開啟時等同 .minecraft 資料夾
+ · {java}：遊戲執行時的 Java 資料夾
+
+除此之外，也支援以下取代標記：
+ · {user}：玩家名字
+ · {login}：玩家的登入方式
+ · {uuid}：玩家的 UUID
+ · {name}：遊戲實例名
+ · {date}、{time}：目前的系統時間
+ · {version}：遊戲對應的原版版本號
+
+例如：
+ · &quot;{verpath}test.exe&quot; ：執行實例資料夾下的 test.exe 程式
+ · &quot;{java}java.exe&quot; -jar &quot;{verpath}test.jar&quot; ：用 Java 執行實例資料夾下的 test.jar
+ · notepad &quot;{verindie}options.txt&quot; ：使用記事本開啟該實例的設定檔
+
+涉及路徑的操作最好都打上雙引號，以避免路徑中的空格導致執行失敗。
+執行指令時，指令列所在的目錄是目前的 .minecraft 資料夾。</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.PreLaunchCommand.Wait">等待指令執行完成後再繼續啟動</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.Renderer.DirectX12">DirectX12（d3d12）</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.Renderer.GameDefault">遊戲預設</sys:String>
@@ -2789,10 +3109,13 @@
     <sys:String x:Key="Setup.Launch.Advanced.Renderer.Software">軟繪製（llvmpipe）</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.Renderer.Vulkan">Vulkan（zink）</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.Renderer.Warning.Confirm">我知道我在做什麼</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.Renderer.Warning.Message">修改此項會嚴重影響遊戲的穩定性與效能。如果你不知道你在做什麼，不要修改此選項！&#xA;你確認要繼續修改嗎？</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.Renderer.Warning.Message">修改此項會嚴重影響遊戲的穩定性與效能。如果你不知道你在做什麼，不要修改此選項！
+你確認要繼續修改嗎？</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.Title">高階啟動選項</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.UseJavaExe">使用 java.exe 而不是 javaw.exe</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.UseJavaExe.ToolTip">如果遇到遊戲視窗長時間不出現等故障可嘗試啟用此項，PCL-MOON 將使用 java.exe 來執行遊戲，這樣會讓遊戲程式擁有標準輸入/輸出流，以盡可能避免列印日誌時出現問題。&#xA;&#xA;取決於不同 Java 發行版的行為，java.exe 可能無法使用 HDR 顏色等依賴作業系統支援的特性。因此，如果正常使用沒有問題，請勿啟用該選項。</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.UseJavaExe.ToolTip">如果遇到遊戲視窗長時間不出現等故障可嘗試啟用此項，PCL-MOON 將使用 java.exe 來執行遊戲，這樣會讓遊戲程式擁有標準輸入/輸出流，以盡可能避免列印日誌時出現問題。
+
+取決於不同 Java 發行版的行為，java.exe 可能無法使用 HDR 顏色等依賴作業系統支援的特性。因此，如果正常使用沒有問題，請勿啟用該選項。</sys:String>
 
     <!-- Setup.Launch.Memory -->
 
@@ -2820,10 +3143,19 @@
     <sys:String x:Key="Setup.Launch.Options.IpStack.Ipv6">IPv6 優先</sys:String>
     <sys:String x:Key="Setup.Launch.Options.IpStack.JavaDefault">Java 預設</sys:String>
     <sys:String x:Key="Setup.Launch.Options.IpStack.Label">IP 協議偏好</sys:String>
-    <sys:String x:Key="Setup.Launch.Options.IpStack.ToolTip">透過設定 Java 虛擬機器參數來設定 Minecraft 的 IP 協議版本偏好。&#xA;一般建議設定為 "IPv4 優先"，這能確保 PCL-MOON 大廳正常運作。&#xA;如果有手動 IPv6 連線等需要，可以選擇其他選項。&#xA;&#xA;IPv4 優先：-Djava.net.preferIPv4Stack=true&#xA;預設：不新增額外參數&#xA;IPv6 優先：-Djava.net.preferIPv6Stack=true</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.IpStack.ToolTip">透過設定 Java 虛擬機器參數來設定 Minecraft 的 IP 協議版本偏好。
+如果有手動 IPv6 連線等需要，可以選擇其他選項。
+
+IPv4 優先：-Djava.net.preferIPv4Stack=true
+預設：不新增額外參數
+IPv6 優先：-Djava.net.preferIPv6Stack=true</sys:String>
     <sys:String x:Key="Setup.Launch.Options.MsAuth.DeviceCode">裝置程式碼流</sys:String>
     <sys:String x:Key="Setup.Launch.Options.MsAuth.Label">微軟驗證方式</sys:String>
-    <sys:String x:Key="Setup.Launch.Options.MsAuth.ToolTip">Web 帳戶管理器的微軟驗證流程更為簡單，而裝置程式碼流允許你在任意裝置上開啟網頁進行驗證。&#xA;如果使用 Web 帳戶管理器登入遇到問題，可以嘗試使用裝置程式碼流。&#xA;如果正在公用電腦上臨時登入帳戶，推薦使用裝置程式碼流。&#xA;&#xA;由於部分依賴元件存在較多問題，該選項暫時強制指定為裝置程式碼流。</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsAuth.ToolTip">Web 帳戶管理器的微軟驗證流程更為簡單，而裝置程式碼流允許你在任意裝置上開啟網頁進行驗證。
+如果使用 Web 帳戶管理器登入遇到問題，可以嘗試使用裝置程式碼流。
+如果正在公用電腦上臨時登入帳戶，推薦使用裝置程式碼流。
+
+由於部分依賴元件存在較多問題，該選項暫時強制指定為裝置程式碼流。</sys:String>
     <sys:String x:Key="Setup.Launch.Options.MsAuth.WebManager">Web 帳戶管理器（暫時強制裝置程式碼流）</sys:String>
     <sys:String x:Key="Setup.Launch.Options.Priority.AboveNormal">高（優先保證遊戲執行，遊戲效能更佳，但可能造成其他程式卡頓）</sys:String>
     <sys:String x:Key="Setup.Launch.Options.Priority.BelowNormal">低（優先保證其他程式執行，但可能讓遊戲卡頓，適合掛機時使用）</sys:String>
@@ -2841,27 +3173,39 @@
     <sys:String x:Key="Setup.Launch.Options.WindowSize.SameAsLauncher">與啟動器尺寸一致</sys:String>
     <sys:String x:Key="Setup.Launch.Options.WindowTitle.Label">遊戲視窗標題</sys:String>
     <sys:String x:Key="Setup.Launch.Options.WindowTitle.SampleFormat">{name} | 玩家 : {user} | 使用 {login} 登入</sys:String>
-    <sys:String x:Key="Setup.Launch.Options.WindowTitle.ToolTip">自訂遊戲視窗的標題，若留空則不進行更改。&#xA;支援以下取代標記：&#xA; · {user}：玩家名字&#xA; · {login}：玩家的登入方式&#xA; · {name}：遊戲實例名&#xA; · {date}、{time}：目前的系統時間&#xA; · {version}：遊戲對應的原版版本號&#xA;注意：如果你的實例安裝了 Modern UI 模組，那麼這裡的設定將會失效</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.WindowTitle.ToolTip">自訂遊戲視窗的標題，若留空則不進行更改。
+支援以下取代標記：
+ · {user}：玩家名字
+ · {login}：玩家的登入方式
+ · {name}：遊戲實例名
+ · {date}、{time}：目前的系統時間
+ · {version}：遊戲對應的原版版本號
+注意：如果你的實例安裝了 Modern UI 模組，那麼這裡的設定將會失效</sys:String>
 
     <!-- Setup.Launch.Options.InstanceIsolation -->
 
     <sys:String x:Key="Setup.Launch.Options.InstanceIsolation.All">隔離所有實例</sys:String>
-    <sys:String x:Key="Setup.Launch.Options.InstanceIsolation.All.ToolTip">不同實例之間的存檔、模組、資源包等均不互通。&#xA;這會導致不同原版實例間的存檔不能共用，所以一般不推薦。</sys:String>
-    <sys:String x:Key="Setup.Launch.Options.InstanceIsolation.DefaultPolicyHint">預設策略只會對今後新安裝的實例生效。&#xA;已有實例的隔離策略需要在它的設定中調整。</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.InstanceIsolation.All.ToolTip">不同實例之間的存檔、模組、資源包等均不互通。
+這會導致不同原版實例間的存檔不能共用，所以一般不推薦。</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.InstanceIsolation.DefaultPolicyHint">預設策略只會對今後新安裝的實例生效。
+已有實例的隔離策略需要在它的設定中調整。</sys:String>
     <sys:String x:Key="Setup.Launch.Options.InstanceIsolation.Label">預設實例隔離</sys:String>
     <sys:String x:Key="Setup.Launch.Options.InstanceIsolation.ModdedAndNonRelease">隔離可安裝模組的實例與非正式版</sys:String>
     <sys:String x:Key="Setup.Launch.Options.InstanceIsolation.ModdedOnly">隔離可安裝模組的實例</sys:String>
     <sys:String x:Key="Setup.Launch.Options.InstanceIsolation.ModdedOnly.ToolTip">可安裝模組的實例（例如 Forge、Fabric）均互相獨立以避免模組衝突，其他實例（例如原版）則不會被隔離。</sys:String>
     <sys:String x:Key="Setup.Launch.Options.InstanceIsolation.NonRelease">隔離非正式版</sys:String>
     <sys:String x:Key="Setup.Launch.Options.InstanceIsolation.NonRelease.ToolTip">將 Minecraft 快照、預釋出版、遠古版本、愚人節版本與其他實例進行隔離</sys:String>
-    <sys:String x:Key="Setup.Launch.Options.InstanceIsolation.None.ToolTip">所有實例均使用同一檔案，存檔、模組、資源包等均為公用。&#xA;若存在多個安裝了模組的實例，可能會導致模組衝突。</sys:String>
-    <sys:String x:Key="Setup.Launch.Options.InstanceIsolation.ToolTip">當安裝新實例時，據此自動設定新實例的隔離選項。&#xA;若想調整已有實例的隔離策略，請前往它的實例設定。</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.InstanceIsolation.None.ToolTip">所有實例均使用同一檔案，存檔、模組、資源包等均為公用。
+若存在多個安裝了模組的實例，可能會導致模組衝突。</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.InstanceIsolation.ToolTip">當安裝新實例時，據此自動設定新實例的隔離選項。
+若想調整已有實例的隔離策略，請前往它的實例設定。</sys:String>
 
     <!-- Setup.Launch.Options.Visibility -->
 
     <sys:String x:Key="Setup.Launch.Options.Visibility.CloseImmediately">遊戲啟動後立即關閉</sys:String>
     <sys:String x:Key="Setup.Launch.Options.Visibility.CloseImmediately.Warning.Continue">繼續</sys:String>
-    <sys:String x:Key="Setup.Launch.Options.Visibility.CloseImmediately.Warning.Message">若在遊戲啟動後立即關閉啟動器，崩潰偵測、更改遊戲標題等功能將失效。&#xA;如果想保留這些功能，可以選擇讓啟動器在遊戲啟動後隱藏，遊戲結束後自動關閉。</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.Visibility.CloseImmediately.Warning.Message">若在遊戲啟動後立即關閉啟動器，崩潰偵測、更改遊戲標題等功能將失效。
+如果想保留這些功能，可以選擇讓啟動器在遊戲啟動後隱藏，遊戲結束後自動關閉。</sys:String>
     <sys:String x:Key="Setup.Launch.Options.Visibility.CloseImmediately.Warning.Title">提醒</sys:String>
     <sys:String x:Key="Setup.Launch.Options.Visibility.HideAndCloseOnExit">遊戲啟動後隱藏，遊戲結束後自動關閉</sys:String>
     <sys:String x:Key="Setup.Launch.Options.Visibility.HideAndReopenOnExit">遊戲啟動後隱藏，遊戲結束後重新開啟</sys:String>
@@ -2874,25 +3218,24 @@
     <sys:String x:Key="Setup.Left.Category.About">關於</sys:String>
     <sys:String x:Key="Setup.Left.Category.Game">遊戲</sys:String>
     <sys:String x:Key="Setup.Left.Category.Launcher">啟動器</sys:String>
-    <sys:String x:Key="Setup.Left.Category.Tools">工具</sys:String>
-    <sys:String x:Key="Setup.Left.Feedback.Message">在提交新回饋前，建議先搜尋回饋清單，以避免重複提交。&#xA;如果無法開啟該網頁，請嘗試使用加速器或 VPN。</sys:String>
+    <sys:String x:Key="Setup.Left.Feedback.Message">在提交新回饋前，建議先搜尋回饋清單，以避免重複提交。
+如果無法開啟該網頁，請嘗試使用加速器或 VPN。</sys:String>
     <sys:String x:Key="Setup.Left.Feedback.SubmitNew">提交新回饋</sys:String>
     <sys:String x:Key="Setup.Left.Feedback.Title">回饋</sys:String>
     <sys:String x:Key="Setup.Left.Feedback.ViewList">檢視回饋清單</sys:String>
     <sys:String x:Key="Setup.Left.Refreshing">正在重新整理……</sys:String>
-    <sys:String x:Key="Setup.Left.Reset.GameLink.Message">是否要初始化 工具-連線 頁面的所有設定？該操作不可復原。</sys:String>
     <sys:String x:Key="Setup.Left.Reset.GameManage.Message">是否要初始化 遊戲-管理 頁面的所有設定？該操作不可復原。</sys:String>
     <sys:String x:Key="Setup.Left.Reset.Language.Message">是否要初始化 啟動器-語言 頁面的所有設定？該操作不可復原。</sys:String>
     <sys:String x:Key="Setup.Left.Reset.Launch.Message">是否要初始化 遊戲-啟動 頁面的所有設定？該操作不可復原。</sys:String>
     <sys:String x:Key="Setup.Left.Reset.Misc.Message">是否要初始化 啟動器-雜項 頁面的所有設定？該操作不可復原。</sys:String>
     <sys:String x:Key="Setup.Left.Reset.Title">初始化確認</sys:String>
-    <sys:String x:Key="Setup.Left.Reset.Ui.Message">是否要初始化 啟動器-個性化 頁面的所有設定？該操作不可復原。&#xA;（背景圖片與音樂、首頁等外部檔案不會被刪除）</sys:String>
+    <sys:String x:Key="Setup.Left.Reset.Ui.Message">是否要初始化 啟動器-個性化 頁面的所有設定？該操作不可復原。
+（背景圖片與音樂、首頁等外部檔案不會被刪除）</sys:String>
 
     <!-- Setup.Left.Item -->
 
     <sys:String x:Key="Setup.Left.Item.About">軟體資訊</sys:String>
     <sys:String x:Key="Setup.Left.Item.Feedback">回饋</sys:String>
-    <sys:String x:Key="Setup.Left.Item.GameLink">連線</sys:String>
     <sys:String x:Key="Setup.Left.Item.GameManage">管理</sys:String>
     <sys:String x:Key="Setup.Left.Item.Java">Java</sys:String>
     <sys:String x:Key="Setup.Left.Item.Launch">啟動</sys:String>
@@ -2930,12 +3273,15 @@
 
     <sys:String x:Key="Setup.Misc.Debug.AnimationSpeed">動畫速度</sys:String>
     <sys:String x:Key="Setup.Misc.Debug.Delay">新增延遲</sys:String>
-    <sys:String x:Key="Setup.Misc.Debug.Delay.ToolTip">在各個環節新增隨機的延遲，拖慢載入速度，以測試部分功能是否正常執行。&#xA;這會嚴重影響啟動器執行，若無特殊需要不建議開啟。</sys:String>
+    <sys:String x:Key="Setup.Misc.Debug.Delay.ToolTip">在各個環節新增隨機的延遲，拖慢載入速度，以測試部分功能是否正常執行。
+這會嚴重影響啟動器執行，若無特殊需要不建議開啟。</sys:String>
     <sys:String x:Key="Setup.Misc.Debug.Mode">除錯模式</sys:String>
     <sys:String x:Key="Setup.Misc.Debug.Mode.Hint">部分除錯資訊將在重新整理或啟動器重啟後切換顯示！</sys:String>
-    <sys:String x:Key="Setup.Misc.Debug.Mode.ToolTip">顯示除錯資訊與更多錯誤資訊。&#xA;這會導致啟動器效能略有下降，若無特殊需要不建議開啟。</sys:String>
+    <sys:String x:Key="Setup.Misc.Debug.Mode.ToolTip">顯示除錯資訊與更多錯誤資訊。
+這會導致啟動器效能略有下降，若無特殊需要不建議開啟。</sys:String>
     <sys:String x:Key="Setup.Misc.Debug.SkipCopy">禁止在下載時從其他資料夾複製檔案</sys:String>
-    <sys:String x:Key="Setup.Misc.Debug.SkipCopy.ToolTip">在下載時不直接複製其他 Minecraft 資料夾中已經存在的相同檔案，而是重新下載檔案。&#xA;只建議在測試下載速度時開啟。</sys:String>
+    <sys:String x:Key="Setup.Misc.Debug.SkipCopy.ToolTip">在下載時不直接複製其他 Minecraft 資料夾中已經存在的相同檔案，而是重新下載檔案。
+只建議在測試下載速度時開啟。</sys:String>
     <sys:String x:Key="Setup.Misc.Debug.Title">除錯選項</sys:String>
 
     <!-- Setup.Misc.Network -->
@@ -2949,7 +3295,8 @@
 
     <sys:String x:Key="Setup.Misc.Network.Proxy.Apply">應用 Proxy 資訊</sys:String>
     <sys:String x:Key="Setup.Misc.Network.Proxy.Custom">自訂 Proxy</sys:String>
-    <sys:String x:Key="Setup.Misc.Network.Proxy.InvalidWarning">不正確的 Proxy 伺服器位址會導致無法連線網路，因使用 Proxy 導致的網路問題不予處理。&#xA;請勿填寫不信任的 Proxy 伺服器位址，這可能會導致你的帳戶資訊洩露，甚至帳戶被盜。</sys:String>
+    <sys:String x:Key="Setup.Misc.Network.Proxy.InvalidWarning">不正確的 Proxy 伺服器位址會導致無法連線網路，因使用 Proxy 導致的網路問題不予處理。
+請勿填寫不信任的 Proxy 伺服器位址，這可能會導致你的帳戶資訊洩露，甚至帳戶被盜。</sys:String>
     <sys:String x:Key="Setup.Misc.Network.Proxy.None">不使用 Proxy</sys:String>
     <sys:String x:Key="Setup.Misc.Network.Proxy.Optional">如有</sys:String>
     <sys:String x:Key="Setup.Misc.Network.Proxy.Password">密碼</sys:String>
@@ -2964,7 +3311,11 @@
     <sys:String x:Key="Setup.Misc.System.Announcement.All.ToolTip">顯示包括啟動器功能調查、活動等在內的全部公告</sys:String>
     <sys:String x:Key="Setup.Misc.System.Announcement.Disabled">關閉所有公告</sys:String>
     <sys:String x:Key="Setup.Misc.System.Announcement.Disabled.Warning.Confirm">我知道我在做什麼</sys:String>
-    <sys:String x:Key="Setup.Misc.System.Announcement.Disabled.Warning.Message">若選擇此選項，即使日後出現重大問題，您也將無法收到相關通知。&#xA;例如，若某個遊戲版本被發現存在嚴重錯誤，您可能因未接收到通知而導致無法預期的後果。&#xA;&#xA;一般建議選擇「僅在有重要通知時顯示公告」，這樣可在不造成干擾的情況下獲得關鍵資訊。&#xA;除非您正在製作伺服器模組包，或經常手動更新啟動器，否則強烈不建議選擇此選項！</sys:String>
+    <sys:String x:Key="Setup.Misc.System.Announcement.Disabled.Warning.Message">若選擇此選項，即使日後出現重大問題，您也將無法收到相關通知。
+例如，若某個遊戲版本被發現存在嚴重錯誤，您可能因未接收到通知而導致無法預期的後果。
+
+一般建議選擇「僅在有重要通知時顯示公告」，這樣可在不造成干擾的情況下獲得關鍵資訊。
+除非您正在製作伺服器模組包，或經常手動更新啟動器，否則強烈不建議選擇此選項！</sys:String>
     <sys:String x:Key="Setup.Misc.System.Announcement.ImportantOnly">僅在有重要通知時顯示公告</sys:String>
     <sys:String x:Key="Setup.Misc.System.DisableHardwareAcceleration">停用硬體加速</sys:String>
     <sys:String x:Key="Setup.Misc.System.ExportSettings">匯出設定</sys:String>
@@ -2982,11 +3333,24 @@
     <sys:String x:Key="Setup.Misc.System.MaxLogLines.Unlimited">無限制</sys:String>
     <sys:String x:Key="Setup.Misc.System.StopUsingPclCe">停止使用 PCL-MOON</sys:String>
     <sys:String x:Key="Setup.Misc.System.StopUsingPclCe.ContinueAndRemove">繼續並清理實例資料夾</sys:String>
-    <sys:String x:Key="Setup.Misc.System.StopUsingPclCe.Message.Final">你確認要繼續操作嗎？這是最後警告！&#xA;與 PCL-MOON 有關的一切資料將被永久消除！（真的很久！）</sys:String>
-    <sys:String x:Key="Setup.Misc.System.StopUsingPclCe.Message">即將刪除此電腦上與 PCL-MOON 有關的全部設定、快取、已儲存的帳戶資訊及其他相關資料，並復原已接受的許可協議。完成後，軟體將自動關閉。&#xA;&#xA;但請注意，以下內容無法自動刪除或登出：&#xA;- 此電腦上其他 PCL-MOON 實例的本機資料&#xA;- Natayark 帳戶&#xA;&#xA;如需同時刪除 Minecraft 實例中的 PCL-MOON 設定檔，請選擇「繼續並清理實例資料夾」，這不會影響你的遊戲設定、模組、存檔，以及其他資料。&#xA;&#xA;此操作無法復原。您確認要繼續嗎？</sys:String>
+    <sys:String x:Key="Setup.Misc.System.StopUsingPclCe.Message.Final">你確認要繼續操作嗎？這是最後警告！
+與 PCL-MOON 有關的一切資料將被永久消除！（真的很久！）</sys:String>
+    <sys:String x:Key="Setup.Misc.System.StopUsingPclCe.Message">即將刪除此電腦上與 PCL-MOON 有關的全部設定、快取、已儲存的帳戶資訊及其他相關資料，並復原已接受的許可協議。完成後，軟體將自動關閉。
+
+但請注意，以下內容無法自動刪除或登出：
+- 此電腦上其他 PCL-MOON 實例的本機資料
+
+如需同時刪除 Minecraft 實例中的 PCL-MOON 設定檔，請選擇「繼續並清理實例資料夾」，這不會影響你的遊戲設定、模組、存檔，以及其他資料。
+
+此操作無法復原。您確認要繼續嗎？</sys:String>
     <sys:String x:Key="Setup.Misc.System.StopUsingPclCe.Title">停止使用 PCL-MOON？</sys:String>
     <sys:String x:Key="Setup.Misc.System.Telemetry">啟用遙測資料收集</sys:String>
-    <sys:String x:Key="Setup.Misc.System.Telemetry.ToolTip">啟用此功能後，啟動器將會收集並上報錯誤與裝置環境資訊，這可以幫助開發者修復潛在的問題、更好的進行規劃和開發。&#xA;若啟用此功能，我們將會收集以下資訊：啟動器內出現的錯誤，啟動器版本資訊與識別碼，使用的 Windows 系統版本與架構，已安裝的實體記憶體大小，NAT 與 IPv6 支援情況，是否使用過原版 PCL、HMCL 或 BakaXL。&#xA;&#xA;這些資料均不與你關聯，我們也絕不會向第三方出售資料。不啟用此功能不會影響你使用其他功能，但可能會影響開發者修復潛在 Bug。&#xA;&#xA;此項更改將在重新啟動啟動器後生效。</sys:String>
+    <sys:String x:Key="Setup.Misc.System.Telemetry.ToolTip">啟用此功能後，啟動器將會收集並上報錯誤與裝置環境資訊，這可以幫助開發者修復潛在的問題、更好的進行規劃和開發。
+若啟用此功能，我們將會收集以下資訊：啟動器內出現的錯誤，啟動器版本資訊與識別碼，使用的 Windows 系統版本與架構，已安裝的實體記憶體大小，NAT 與 IPv6 支援情況，是否使用過原版 PCL、HMCL 或 BakaXL。
+
+這些資料均不與你關聯，我們也絕不會向第三方出售資料。不啟用此功能不會影響你使用其他功能，但可能會影響開發者修復潛在 Bug。
+
+此項更改將在重新啟動啟動器後生效。</sys:String>
     <sys:String x:Key="Setup.Misc.System.Title">系統</sys:String>
 
     <!-- Setup.Ui -->
@@ -3011,21 +3375,25 @@
     <!-- Setup.Ui.Background -->
 
     <sys:String x:Key="Setup.Ui.Background.Blur">背景模糊</sys:String>
-    <sys:String x:Key="Setup.Ui.Background.Blur.ToolTip">較強的模糊會導致啟動器嚴重掉幀，請謹慎使用。&#xD;不建議在製作模組包時開啟模糊，以確保 PCL-MOON 在低效能電腦上可以流暢執行。</sys:String>
+    <sys:String x:Key="Setup.Ui.Background.Blur.ToolTip">較強的模糊會導致啟動器嚴重掉幀，請謹慎使用。
+不建議在製作模組包時開啟模糊，以確保 PCL-MOON 在低效能電腦上可以流暢執行。</sys:String>
     <sys:String x:Key="Setup.Ui.Background.Clear">清空背景內容</sys:String>
-    <sys:String x:Key="Setup.Ui.Background.Clear.Confirm.Message">即將刪除背景內容資料夾中的所有檔案。&#xA;此操作不可復原，是否確認？</sys:String>
+    <sys:String x:Key="Setup.Ui.Background.Clear.Confirm.Message">即將刪除背景內容資料夾中的所有檔案。
+此操作不可復原，是否確認？</sys:String>
     <sys:String x:Key="Setup.Ui.Background.Clear.Success">背景內容已清空！</sys:String>
     <sys:String x:Key="Setup.Ui.Background.Cleared">背景內容已清除！</sys:String>
     <sys:String x:Key="Setup.Ui.Background.ColorOverlay">疊加彩色背景</sys:String>
     <sys:String x:Key="Setup.Ui.Background.ContentAdapt">內容自適應方式</sys:String>
     <sys:String x:Key="Setup.Ui.Background.ImageLoadFailed">圖片載入失敗，嘗試將檔案作為影片播放：{0}</sys:String>
     <sys:String x:Key="Setup.Ui.Background.NoAvailableContent">未偵測到可用背景內容！</sys:String>
-    <sys:String x:Key="Setup.Ui.Background.OpenFolder.ToolTip">將背景圖片和影片放到該資料夾，PCL-MOON 將會在每次開啟時隨機載入其中的一張圖片或影片&#xA;為提高播放時的流暢度，影片推薦使用H264格式編碼</sys:String>
+    <sys:String x:Key="Setup.Ui.Background.OpenFolder.ToolTip">將背景圖片和影片放到該資料夾，PCL-MOON 將會在每次開啟時隨機載入其中的一張圖片或影片
+為提高播放時的流暢度，影片推薦使用H264格式編碼</sys:String>
     <sys:String x:Key="Setup.Ui.Background.PauseVideo">遊戲啟動後暫停影片背景，遊戲退出後重新播放</sys:String>
     <sys:String x:Key="Setup.Ui.Background.PauseVideo.ToolTip">若啟用此項設定，遊戲時將無法重新整理背景</sys:String>
     <sys:String x:Key="Setup.Ui.Background.Refresh">重新整理背景內容</sys:String>
     <sys:String x:Key="Setup.Ui.Background.Refresh.Success">背景內容已重新整理：{0}</sys:String>
-    <sys:String x:Key="Setup.Ui.Background.Refresh.ToolTip">隨機載入資料夾內的一張背景圖片或影片&#xA;為提高播放時的流暢度，影片推薦使用H264格式編碼</sys:String>
+    <sys:String x:Key="Setup.Ui.Background.Refresh.ToolTip">隨機載入資料夾內的一張背景圖片或影片
+為提高播放時的流暢度，影片推薦使用H264格式編碼</sys:String>
     <sys:String x:Key="Setup.Ui.Background.Title">背景內容</sys:String>
     <sys:String x:Key="Setup.Ui.Background.TitleDefault">背景圖片/影片</sys:String>
     <sys:String x:Key="Setup.Ui.Background.TitleWithCount">背景圖片/影片（{0} 張）</sys:String>
@@ -3048,24 +3416,28 @@
     <!-- Setup.Ui.Basic -->
 
     <sys:String x:Key="Setup.Ui.Basic.AdvancedMaterial">高階材質</sys:String>
-    <sys:String x:Key="Setup.Ui.Basic.AdvancedMaterial.ToolTip">啟用此功能後會在部分透明區域（例如卡片）實現模糊效果。&#xA;請注意，該功能會消耗大量 GPU 算力，並導致卡頓！</sys:String>
+    <sys:String x:Key="Setup.Ui.Basic.AdvancedMaterial.ToolTip">啟用此功能後會在部分透明區域（例如卡片）實現模糊效果。
+請注意，該功能會消耗大量 GPU 算力，並導致卡頓！</sys:String>
     <sys:String x:Key="Setup.Ui.Basic.BlueHint">藍色，藍色，還是藍色！想要逃離藍色困境？請使用官方快照版！</sys:String>
     <sys:String x:Key="Setup.Ui.Basic.BlurMethod">模糊方法</sys:String>
     <sys:String x:Key="Setup.Ui.Basic.BlurMethod.Box">方框模糊</sys:String>
-    <sys:String x:Key="Setup.Ui.Basic.BlurMethod.Box.ToolTip">對每個畫素周圍較小範圍的畫素使用線性均值取樣，速度較快，但容易產生色塊。&#xA;該模糊容易造成細節資訊遺失，但效能較好，若裝置效能不佳可選擇使用。</sys:String>
+    <sys:String x:Key="Setup.Ui.Basic.BlurMethod.Box.ToolTip">對每個畫素周圍較小範圍的畫素使用線性均值取樣，速度較快，但容易產生色塊。
+該模糊容易造成細節資訊遺失，但效能較好，若裝置效能不佳可選擇使用。</sys:String>
     <sys:String x:Key="Setup.Ui.Basic.BlurMethod.Gaussian">高斯模糊</sys:String>
-    <sys:String x:Key="Setup.Ui.Basic.BlurMethod.Gaussian.ToolTip">對每個畫素周圍較大範圍的畫素使用高斯卷積演算法的帶權重均值取樣，速度較慢。&#xA;該模糊品質較高，對細節的處理較為細緻，推薦效能較好的裝置使用。</sys:String>
+    <sys:String x:Key="Setup.Ui.Basic.BlurMethod.Gaussian.ToolTip">對每個畫素周圍較大範圍的畫素使用高斯卷積演算法的帶權重均值取樣，速度較慢。
+該模糊品質較高，對細節的處理較為細緻，推薦效能較好的裝置使用。</sys:String>
     <sys:String x:Key="Setup.Ui.Basic.BlurMethod.ToolTip">設定模糊方法。</sys:String>
     <sys:String x:Key="Setup.Ui.Basic.BlurRadius">模糊半徑</sys:String>
     <sys:String x:Key="Setup.Ui.Basic.BlurRadius.ToolTip">設定模糊效果的取樣半徑，值越大模糊效果越強。</sys:String>
     <sys:String x:Key="Setup.Ui.Basic.BlurSamplingRate">取樣率</sys:String>
-    <sys:String x:Key="Setup.Ui.Basic.BlurSamplingRate.ToolTip">設定模糊效果的取樣率，值越大模糊效果越細緻。&#xA;若裝置效能不佳，可嘗試降低該值以獲得更好的效能。</sys:String>
+    <sys:String x:Key="Setup.Ui.Basic.BlurSamplingRate.ToolTip">設定模糊效果的取樣率，值越大模糊效果越細緻。
+若裝置效能不佳，可嘗試降低該值以獲得更好的效能。</sys:String>
     <sys:String x:Key="Setup.Ui.Basic.GetSnapshot">取得官方快照版</sys:String>
     <sys:String x:Key="Setup.Ui.Basic.LockWindow">鎖定啟動器大小</sys:String>
     <sys:String x:Key="Setup.Ui.Basic.Opacity">不透明度</sys:String>
     <sys:String x:Key="Setup.Ui.Basic.Opacity2">不透明度</sys:String>
     <sys:String x:Key="Setup.Ui.Basic.ShowLogo">開啟啟動器時顯示 PCL-MOON 圖示</sys:String>
-    <sys:String x:Key="Setup.Ui.Basic.ShowTriviaHint">在啟動遊戲時顯示"你知道嗎"</sys:String>
+    <sys:String x:Key="Setup.Ui.Basic.ShowTriviaHint">在啟動遊戲時顯示&quot;你知道嗎&quot;</sys:String>
     <sys:String x:Key="Setup.Ui.Basic.Title">基礎</sys:String>
 
     <!-- Setup.Ui.FeatureHide -->
@@ -3087,16 +3459,15 @@
     <sys:String x:Key="Setup.Ui.FeatureHide.Item.Edit">修改</sys:String>
     <sys:String x:Key="Setup.Ui.FeatureHide.Item.Export">匯出</sys:String>
     <sys:String x:Key="Setup.Ui.FeatureHide.Item.FeatureHide">功能隱藏</sys:String>
-    <sys:String x:Key="Setup.Ui.FeatureHide.Item.FeatureHide.ToolTip">僅隱藏本頁籤，設定的停用內容依然有效。&#xA;可以在保留個人化設定畫面的情況下避免隱藏設定被修改。</sys:String>
+    <sys:String x:Key="Setup.Ui.FeatureHide.Item.FeatureHide.ToolTip">僅隱藏本頁籤，設定的停用內容依然有效。
+可以在保留個人化設定畫面的情況下避免隱藏設定被修改。</sys:String>
     <sys:String x:Key="Setup.Ui.FeatureHide.Item.Feedback">回饋</sys:String>
-    <sys:String x:Key="Setup.Ui.FeatureHide.Item.GameLink">連線</sys:String>
     <sys:String x:Key="Setup.Ui.FeatureHide.Item.GameManage">管理</sys:String>
     <sys:String x:Key="Setup.Ui.FeatureHide.Item.InstanceSelect">實例管理</sys:String>
     <sys:String x:Key="Setup.Ui.FeatureHide.Item.InstanceSelect.ToolTip">隱藏啟動按鈕下方的實例選擇與實例設定入口。</sys:String>
     <sys:String x:Key="Setup.Ui.FeatureHide.Item.Java">Java</sys:String>
     <sys:String x:Key="Setup.Ui.FeatureHide.Item.Language">語言</sys:String>
     <sys:String x:Key="Setup.Ui.FeatureHide.Item.Launch">啟動</sys:String>
-    <sys:String x:Key="Setup.Ui.FeatureHide.Item.Lobby">連線</sys:String>
     <sys:String x:Key="Setup.Ui.FeatureHide.Item.Log">檢視日誌</sys:String>
     <sys:String x:Key="Setup.Ui.FeatureHide.Item.Misc">雜項</sys:String>
     <sys:String x:Key="Setup.Ui.FeatureHide.Item.Mod">模組</sys:String>
@@ -3122,9 +3493,11 @@
     <sys:String x:Key="Setup.Ui.Homepage.GoToMarket">前往首頁市場</sys:String>
     <sys:String x:Key="Setup.Ui.Homepage.HintReferToModSetup">內容見 ModSetup</sys:String>
     <sys:String x:Key="Setup.Ui.Homepage.LocalFile">存取本機檔案</sys:String>
-    <sys:String x:Key="Setup.Ui.Homepage.LocalFile.Hint">從 PCL 資料夾下的 Custom.xaml 存取首頁內容。&#xA;你可以手動編輯該檔案，向首頁新增文字、圖片、常用網站、快速啟動等功能。</sys:String>
+    <sys:String x:Key="Setup.Ui.Homepage.LocalFile.Hint">從 PCL 資料夾下的 Custom.xaml 存取首頁內容。
+你可以手動編輯該檔案，向首頁新增文字、圖片、常用網站、快速啟動等功能。</sys:String>
     <sys:String x:Key="Setup.Ui.Homepage.NetUpdate">連線更新</sys:String>
-    <sys:String x:Key="Setup.Ui.Homepage.NetUpdate.Hint">從指定網址連網取得首頁內容。伺服器管理員也可以用於動態更新伺服器公告。&#xA;如果你製作了穩定執行的連網首頁，可以點擊這條提示投稿，若合格即可加入預設！</sys:String>
+    <sys:String x:Key="Setup.Ui.Homepage.NetUpdate.Hint">從指定網址連網取得首頁內容。伺服器管理員也可以用於動態更新伺服器公告。
+如果你製作了穩定執行的連網首頁，可以點擊這條提示投稿，若合格即可加入預設！</sys:String>
     <sys:String x:Key="Setup.Ui.Homepage.NetWarning">請謹慎使用陌生人提供的首頁，惡意程式碼可能會造成損害！</sys:String>
     <sys:String x:Key="Setup.Ui.Homepage.PresetLabel">首頁預設</sys:String>
     <sys:String x:Key="Setup.Ui.Homepage.Refresh">重新整理首頁</sys:String>
@@ -3172,7 +3545,8 @@
 
     <sys:String x:Key="Setup.Ui.Music.AutoStart">開啟啟動器自動開始播放</sys:String>
     <sys:String x:Key="Setup.Ui.Music.Clear">清除背景音樂</sys:String>
-    <sys:String x:Key="Setup.Ui.Music.Clear.Confirm.Message">即將刪除背景音樂資料夾中的所有檔案。&#xA;此操作不可復原，是否確認？</sys:String>
+    <sys:String x:Key="Setup.Ui.Music.Clear.Confirm.Message">即將刪除背景音樂資料夾中的所有檔案。
+此操作不可復原，是否確認？</sys:String>
     <sys:String x:Key="Setup.Ui.Music.Delete.Success">背景音樂已刪除！</sys:String>
     <sys:String x:Key="Setup.Ui.Music.Deleting">正在刪除背景音樂……</sys:String>
     <sys:String x:Key="Setup.Ui.Music.OpenFolder.ToolTip">將背景音樂放到該資料夾，PCL-MOON 將會播放其中的所有音樂</sys:String>
@@ -3180,7 +3554,8 @@
     <sys:String x:Key="Setup.Ui.Music.Refresh.ToolTip">重新整理播放清單，並播放清單中的音樂</sys:String>
     <sys:String x:Key="Setup.Ui.Music.Shuffle">隨機播放</sys:String>
     <sys:String x:Key="Setup.Ui.Music.Smtc">接入系統媒體傳輸控制 (SMTC) 控制項</sys:String>
-    <sys:String x:Key="Setup.Ui.Music.Smtc.ToolTip">啟用此選項後，可以使用系統控制中心和快速鍵等控制 PCL-MOON 的媒體播放。&#xA;可以與 Lyricify Lite 或 FluentFlyout 等軟體搭配使用。</sys:String>
+    <sys:String x:Key="Setup.Ui.Music.Smtc.ToolTip">啟用此選項後，可以使用系統控制中心和快速鍵等控制 PCL-MOON 的媒體播放。
+可以與 Lyricify Lite 或 FluentFlyout 等軟體搭配使用。</sys:String>
     <sys:String x:Key="Setup.Ui.Music.StartInGame">遊戲啟動後自動開始播放，遊戲結束後自動暫停播放</sys:String>
     <sys:String x:Key="Setup.Ui.Music.StopInGame">遊戲啟動後自動暫停播放，遊戲結束後自動開始播放</sys:String>
     <sys:String x:Key="Setup.Ui.Music.Title">背景音樂</sys:String>
@@ -3213,14 +3588,19 @@
     <sys:String x:Key="Setup.Update.CheckFailed">檢查更新時出錯</sys:String>
     <sys:String x:Key="Setup.Update.Checking">正在檢查更新...</sys:String>
     <sys:String x:Key="Setup.Update.DotNetMissing.DownloadRuntime">下載 .NET 10 執行時</sys:String>
-    <sys:String x:Key="Setup.Update.DotNetMissing.Message">發現了啟動器更新（版本 {0}），但是新版本要求你的電腦安裝 .NET 10 才可以執行。&#xA;你需要先安裝 .NET 10 才可以繼續更新。&#xA;&#xA;點擊下方按鈕開啟網頁，然後選擇「.NET 桌面執行時」中的 {1} 選項下載。</sys:String>
+    <sys:String x:Key="Setup.Update.DotNetMissing.Message">發現了啟動器更新（版本 {0}），但是新版本要求你的電腦安裝 .NET 10 才可以執行。
+你需要先安裝 .NET 10 才可以繼續更新。
+
+點擊下方按鈕開啟網頁，然後選擇「.NET 桌面執行時」中的 {1} 選項下載。</sys:String>
     <sys:String x:Key="Setup.Update.DotNetMissing.Title">啟動器更新 - 缺少執行環境</sys:String>
     <sys:String x:Key="Setup.Update.Error.NetworkFailed">無法取得最新版本資訊，請檢查網路連線</sys:String>
     <sys:String x:Key="Setup.Update.Install">下載並安裝</sys:String>
     <sys:String x:Key="Setup.Update.Latest">已是最新版本</sys:String>
     <sys:String x:Key="Setup.Update.MirrorChyanCdk.Get">取得 CDK</sys:String>
     <sys:String x:Key="Setup.Update.MirrorChyanCdk.Label">Mirror 醬 CDK</sys:String>
-    <sys:String x:Key="Setup.Update.MirrorChyanCdk.ToolTip">Mirror 醬 (mirrorchyan.com) 是一個付費的第三方應用分發平台，用於提供有償高速下載源。&#xA;這是一項可選服務，不填入 CDK 不影響正常使用與更新。&#xA;如果你有 Mirror 醬的 CDK，可以提供給 PCL-MOON，啟動器會優先使用他們的高速下載源下載軟體更新，也能紓解社群公益更新伺服器的一些壓力……</sys:String>
+    <sys:String x:Key="Setup.Update.MirrorChyanCdk.ToolTip">Mirror 醬 (mirrorchyan.com) 是一個付費的第三方應用分發平台，用於提供有償高速下載源。
+這是一項可選服務，不填入 CDK 不影響正常使用與更新。
+如果你有 Mirror 醬的 CDK，可以提供給 PCL-MOON，啟動器會優先使用他們的高速下載源下載軟體更新，也能紓解社群公益更新伺服器的一些壓力……</sys:String>
     <sys:String x:Key="Setup.Update.OtherOptions.Placeholder">AquaCL 3 是 PCL-MOON 的第一個主要更新，帶來了讓人眼睛一亮的新設計，使用了最新開發技術，完全重構了基礎體驗，並更支援 macOS、Linux 等其他平台。</sys:String>
     <sys:String x:Key="Setup.Update.OtherOptions.Title">其他更新選項 - 升級到 AquaCL</sys:String>
     <sys:String x:Key="Setup.Update.RestartInstall">重啟安裝</sys:String>
@@ -3241,7 +3621,11 @@
 
     <sys:String x:Key="Setup.Update.Channel.Beta">測試版 / Beta</sys:String>
     <sys:String x:Key="Setup.Update.Channel.Beta.ToolTip">可能不穩定的測試版本，將會進行功能的早期測試，適合希望幫助測試且有一定技術能力的使用者使用。</sys:String>
-    <sys:String x:Key="Setup.Update.Channel.Beta.Warning.Message">你正在切換啟動器更新通道到測試版。&#xA;測試版可以提供下個版本更新內容的預覽，但可能會包含未經充分測試的功能，穩定性欠佳。&#xA;&#xA;在升級到測試版後，你需要等待下一個正式版釋出，或是手動重新下載啟動器來切換到正式版。&#xA;該選項僅推薦具有一定基礎知識和能力的使用者選擇。如果你正在製作模組包，請使用正式版！</sys:String>
+    <sys:String x:Key="Setup.Update.Channel.Beta.Warning.Message">你正在切換啟動器更新通道到測試版。
+測試版可以提供下個版本更新內容的預覽，但可能會包含未經充分測試的功能，穩定性欠佳。
+
+在升級到測試版後，你需要等待下一個正式版釋出，或是手動重新下載啟動器來切換到正式版。
+該選項僅推薦具有一定基礎知識和能力的使用者選擇。如果你正在製作模組包，請使用正式版！</sys:String>
     <sys:String x:Key="Setup.Update.Channel.Common.Warning.Confirm">我已知曉</sys:String>
     <sys:String x:Key="Setup.Update.Channel.Common.Warning.Title">繼續之前...</sys:String>
     <sys:String x:Key="Setup.Update.Channel.Release">正式版 / Release</sys:String>
@@ -3252,12 +3636,23 @@
 
     <sys:String x:Key="Setup.Update.Channel.Dev">開發版 / Dev</sys:String>
     <sys:String x:Key="Setup.Update.Channel.Dev.FinalConfirm.ExpectedInput">我確認切換到此分支並已知曉風險</sys:String>
-    <sys:String x:Key="Setup.Update.Channel.Dev.FinalConfirm.Message">你確認要切換到開發版通道嗎？&#xA;開發版可能存在嚴重問題，甚至無法啟動！&#xA;&#xA;在升級到開發版後，將無法切換回其他任何更新通道，只能手動重新下載啟動器來切換回正式版或測試版。&#xA;&#xA;該選項僅推薦高階使用者選擇。如果你正在製作模組包，請使用正式版！&#xA;請輸入 '{0}' 以確認。</sys:String>
+    <sys:String x:Key="Setup.Update.Channel.Dev.FinalConfirm.Message">你確認要切換到開發版通道嗎？
+開發版可能存在嚴重問題，甚至無法啟動！
+
+在升級到開發版後，將無法切換回其他任何更新通道，只能手動重新下載啟動器來切換回正式版或測試版。
+
+該選項僅推薦高階使用者選擇。如果你正在製作模組包，請使用正式版！
+請輸入 '{0}' 以確認。</sys:String>
     <sys:String x:Key="Setup.Update.Channel.Dev.FinalConfirm.Submit">提交</sys:String>
     <sys:String x:Key="Setup.Update.Channel.Dev.FinalConfirm.Title">最終確認</sys:String>
     <sys:String x:Key="Setup.Update.Channel.Dev.FinalConfirm.WrongInput">你輸入了錯誤的內容...</sys:String>
-    <sys:String x:Key="Setup.Update.Channel.Dev.ToolTip">可能極不穩定的開發版本，直接從最新原始碼建置，適合高度技術性使用者。&#xA;可能需要具備較好的網際網路連線品質才能順利取得此通道更新。</sys:String>
-    <sys:String x:Key="Setup.Update.Channel.Dev.Warning.Message">你正在切換啟動器更新通道到開發版。&#xA;該通道可第一時間取得基於最新程式碼建置的開發版本，但可能極不穩定，甚至直接無法啟動。&#xA;&#xA;在升級到開發版後，只能手動重新下載啟動器來切換回正式版或測試版。&#xA;該選項僅推薦高階使用者選擇。如果你正在製作模組包，請使用正式版！</sys:String>
+    <sys:String x:Key="Setup.Update.Channel.Dev.ToolTip">可能極不穩定的開發版本，直接從最新原始碼建置，適合高度技術性使用者。
+可能需要具備較好的網際網路連線品質才能順利取得此通道更新。</sys:String>
+    <sys:String x:Key="Setup.Update.Channel.Dev.Warning.Message">你正在切換啟動器更新通道到開發版。
+該通道可第一時間取得基於最新程式碼建置的開發版本，但可能極不穩定，甚至直接無法啟動。
+
+在升級到開發版後，只能手動重新下載啟動器來切換回正式版或測試版。
+該選項僅推薦高階使用者選擇。如果你正在製作模組包，請使用正式版！</sys:String>
 
     <!-- Speed -->
 
@@ -3271,150 +3666,65 @@
 
     <!-- SystemDialog -->
 
-    <sys:String x:Key="SystemDialog.Browser.OpenFailed.Message">PCL-MOON 無法開啟此網頁。網址已複製到剪貼簿，可手動貼上存取。&#xA;&#xA;網址：{0}</sys:String>
+    <sys:String x:Key="SystemDialog.Browser.OpenFailed.Message">PCL-MOON 無法開啟此網頁。網址已複製到剪貼簿，可手動貼上存取。
+
+網址：{0}</sys:String>
     <sys:String x:Key="SystemDialog.Browser.OpenFailed.Title">無法開啟網頁</sys:String>
-    <sys:String x:Key="SystemDialog.Fatal.Message.WithFeedbackGuidance">{0}&#xA;&#xA;如果你認為這是啟動器的問題，請提交回饋，以便開發者調查。&#xA;匯出日誌：設定 → 檢視日誌 → 匯出全部日誌</sys:String>
+    <sys:String x:Key="SystemDialog.Fatal.Message.WithFeedbackGuidance">{0}
+
+如果你認為這是啟動器的問題，請提交回饋，以便開發者調查。
+匯出日誌：設定 → 檢視日誌 → 匯出全部日誌</sys:String>
     <sys:String x:Key="SystemDialog.Fatal.Title">致命錯誤</sys:String>
     <sys:String x:Key="SystemDialog.File.AllFilesFilter">所有檔案|*.*</sys:String>
-    <sys:String x:Key="SystemDialog.File.OpenFailed.Message">無法開啟檔案或程式。&#xA;&#xA;路徑：{0}</sys:String>
+    <sys:String x:Key="SystemDialog.File.OpenFailed.Message">無法開啟檔案或程式。
+
+路徑：{0}</sys:String>
     <sys:String x:Key="SystemDialog.File.SelectTitle">選擇檔案</sys:String>
-    <sys:String x:Key="SystemDialog.Folder.OpenFailed.Message">無法開啟檔案總管。請嘗試關閉安全軟體（例如 360 安全衛士）。&#xA;&#xA;路徑：{0}</sys:String>
+    <sys:String x:Key="SystemDialog.Folder.OpenFailed.Message">無法開啟檔案總管。請嘗試關閉安全軟體（例如 360 安全衛士）。
+
+路徑：{0}</sys:String>
     <sys:String x:Key="SystemDialog.Folder.SelectTitle">選擇資料夾</sys:String>
     <sys:String x:Key="SystemDialog.Startup.DotNetRuntimeOutdated.Message">你的 .NET 桌面執行時已過期或損壞。請重新安裝 .NET 10。</sys:String>
     <sys:String x:Key="SystemDialog.Startup.InitializationTitle">PCL-MOON 初始化失敗</sys:String>
 
     <!-- SystemDialog.Error -->
 
-    <sys:String x:Key="SystemDialog.Error.Detail.WithException">{0}&#xA;&#xA;詳細資訊：&#xA;{1}</sys:String>
-    <sys:String x:Key="SystemDialog.Error.Message.WithLogExportGuidance">{0}&#xA;&#xA;若要尋求幫助，請不要關閉啟動器。請立即匯出日誌（設定 → 檢視日誌 → 匯出日誌），並傳送匯出的日誌壓縮檔；僅傳送此視窗的截圖通常無法幫助定位問題。</sys:String>
-    <sys:String x:Key="SystemDialog.Error.OperationFailed.Message">執行操作時發生錯誤。&#xA;&#xA;操作資訊：&#xA;{0}&#xA;&#xA;詳細資訊：&#xA;{1}</sys:String>
-    <sys:String x:Key="SystemDialog.Error.OperationFailed.RuntimeMessage">執行操作時發生錯誤。&#xA;&#xA;操作資訊：&#xA;{0}&#xA;&#xA;詳細資訊：&#xA;{1}&#xA;&#xA;與系統底層互動失敗。請嘗試重新安裝 .NET 10。</sys:String>
+    <sys:String x:Key="SystemDialog.Error.Detail.WithException">{0}
+
+詳細資訊：
+{1}</sys:String>
+    <sys:String x:Key="SystemDialog.Error.Message.WithLogExportGuidance">{0}
+
+若要尋求幫助，請不要關閉啟動器。請立即匯出日誌（設定 → 檢視日誌 → 匯出日誌），並傳送匯出的日誌壓縮檔；僅傳送此視窗的截圖通常無法幫助定位問題。</sys:String>
+    <sys:String x:Key="SystemDialog.Error.OperationFailed.Message">執行操作時發生錯誤。
+
+操作資訊：
+{0}
+
+詳細資訊：
+{1}</sys:String>
+    <sys:String x:Key="SystemDialog.Error.OperationFailed.RuntimeMessage">執行操作時發生錯誤。
+
+操作資訊：
+{0}
+
+詳細資訊：
+{1}
+
+與系統底層互動失敗。請嘗試重新安裝 .NET 10。</sys:String>
     <sys:String x:Key="SystemDialog.Error.Title">錯誤</sys:String>
     <sys:String x:Key="SystemDialog.Error.Unexpected.Message">發生意外錯誤。</sys:String>
     <sys:String x:Key="SystemDialog.Error.Unexpected.Title">發生意外錯誤</sys:String>
-    <sys:String x:Key="SystemDialog.Error.UserVisible.Message">發生錯誤。&#xA;&#xA;詳細資訊：&#xA;{0}</sys:String>
+    <sys:String x:Key="SystemDialog.Error.UserVisible.Message">發生錯誤。
+
+詳細資訊：
+{0}</sys:String>
 
     <!-- Tools -->
 
     <sys:String x:Key="Tools.Error.OperationFailed">工具頁操作失敗。請檢視錯誤詳情。</sys:String>
-    <sys:String x:Key="Tools.Left.Lobby">大廳</sys:String>
-    <sys:String x:Key="Tools.Left.Multiplayer">連線</sys:String>
     <sys:String x:Key="Tools.Left.Utilities">奇妙小工具</sys:String>
     <sys:String x:Key="Tools.Left.Utilities.Title">百寶箱</sys:String>
-
-    <!-- Tools.GameLink -->
-
-    <sys:String x:Key="Tools.GameLink.Announcement.Format">[{0}] {1}</sys:String>
-    <sys:String x:Key="Tools.GameLink.Announcement.Important">重要</sys:String>
-    <sys:String x:Key="Tools.GameLink.Announcement.Notice">提示</sys:String>
-    <sys:String x:Key="Tools.GameLink.Announcement.Warning">注意</sys:String>
-    <sys:String x:Key="Tools.GameLink.CopyIp.Back">返回</sys:String>
-    <sys:String x:Key="Tools.GameLink.CopyIp.Message">大廳建立者的遊戲位址：{0}&#xA;注意：僅建議在 Minecraft 多人遊戲清單未顯示大廳廣播時使用 IP 連線！透過 IP 連線可能需要使用微軟帳戶。</sys:String>
-    <sys:String x:Key="Tools.GameLink.CopyIp.Title">複製 IP</sys:String>
-    <sys:String x:Key="Tools.GameLink.Create.Action">建立</sys:String>
-    <sys:String x:Key="Tools.GameLink.Create.Description">1、進入世界後，在遊戲選單中選擇【對區域網開放】&#xA;2、在下方選擇此遊戲實例，點擊【建立】&#xA;3、成功建立大廳後，複製大廳編號並傳送給你的朋友</sys:String>
-    <sys:String x:Key="Tools.GameLink.Create.EnterPort">請輸入埠</sys:String>
-    <sys:String x:Key="Tools.GameLink.Create.ManualInput">手動輸入</sys:String>
-    <sys:String x:Key="Tools.GameLink.Create.NoWorld">請先選擇一個要連線的世界！</sys:String>
-    <sys:String x:Key="Tools.GameLink.Create.NotMcPort">這似乎不是個 Minecraft 服務埠...</sys:String>
-    <sys:String x:Key="Tools.GameLink.Create.Title">建立大廳</sys:String>
-    <sys:String x:Key="Tools.GameLink.EasyTierVersion">連線雙方目前使用的啟動器版本不同，這可能會導致一些連線問題&#xA;強烈建議雙方升級到最新版本後再繼續連線</sys:String>
-    <sys:String x:Key="Tools.GameLink.Error.ConnectFailed">無法連線到大廳伺服器</sys:String>
-    <sys:String x:Key="Tools.GameLink.Error.NetworkTestFailed">取得網路測試結果失敗。請檢視錯誤詳情。</sys:String>
-    <sys:String x:Key="Tools.GameLink.Error.ServerExit">在伺服器退出時發生了錯誤！</sys:String>
-    <sys:String x:Key="Tools.GameLink.Error.ServerMessage">與大廳伺服器的連線出現錯誤。&#xA;&#xA;原始錯誤資訊：&#xA;{0}</sys:String>
-    <sys:String x:Key="Tools.GameLink.Error.UpdateRequired">請更新到最新版 PCL-MOON 以使用大廳</sys:String>
-    <sys:String x:Key="Tools.GameLink.Eula.Disabled">連線功能已停用！</sys:String>
-    <sys:String x:Key="Tools.GameLink.Eula.RevokeConfirm">你確認要復原連線協議授權嗎？</sys:String>
-    <sys:String x:Key="Tools.GameLink.Eula.RevokeTitle">復原授權確認</sys:String>
-    <sys:String x:Key="Tools.GameLink.Exit.ConfirmMessage">你確認要退出大廳嗎？</sys:String>
-    <sys:String x:Key="Tools.GameLink.Exit.ConfirmMessageWithHost">你確認要退出大廳嗎？&#xA;由於你是大廳建立者，退出後此大廳將會自動解散。</sys:String>
-    <sys:String x:Key="Tools.GameLink.Exit.ConfirmTitle">確認退出</sys:String>
-    <sys:String x:Key="Tools.GameLink.Exit.Disbanded">由於你關閉了連線中的 Minecraft 實例，大廳已自動解散。</sys:String>
-    <sys:String x:Key="Tools.GameLink.Exit.DisbandedTitle">大廳已解散</sys:String>
-    <sys:String x:Key="Tools.GameLink.Exit.HostWarning">由於你是大廳建立者，退出後此大廳將會自動解散。</sys:String>
-    <sys:String x:Key="Tools.GameLink.Join.Action">加入</sys:String>
-    <sys:String x:Key="Tools.GameLink.Join.Clear">清除</sys:String>
-    <sys:String x:Key="Tools.GameLink.Join.Description">1、在下方輸入朋友傳送給你的大廳編號，點擊【加入】&#xA;2、啟動遊戲，選擇【多人遊戲】，在區域網遊戲中加入大廳</sys:String>
-    <sys:String x:Key="Tools.GameLink.Join.IdHint">編號應該長得像這樣：U/NNNN-AAAA-SSSS-EEEE</sys:String>
-    <sys:String x:Key="Tools.GameLink.Join.InvalidText">大廳編號不正確，請檢查後重新輸入</sys:String>
-    <sys:String x:Key="Tools.GameLink.Join.Paste">貼上</sys:String>
-    <sys:String x:Key="Tools.GameLink.Join.Title">加入大廳</sys:String>
-    <sys:String x:Key="Tools.GameLink.Link.Disable">停用連線功能</sys:String>
-    <sys:String x:Key="Tools.GameLink.Link.EasyTier">EasyTier 工具官網</sys:String>
-    <sys:String x:Key="Tools.GameLink.Link.Friends">友情連結：</sys:String>
-    <sys:String x:Key="Tools.GameLink.Link.Privacy">大廳隱私協議</sys:String>
-    <sys:String x:Key="Tools.GameLink.Link.Report">違法違規檢舉</sys:String>
-    <sys:String x:Key="Tools.GameLink.Link.Terms">Natayark Network 使用者協議與隱私政策</sys:String>
-    <sys:String x:Key="Tools.GameLink.Loading.ConnectingServer">正在連線到大廳伺服器...</sys:String>
-    <sys:String x:Key="Tools.GameLink.Loading.Creating">正在建立大廳</sys:String>
-    <sys:String x:Key="Tools.GameLink.Loading.DownloadingModule">下載連線模組中……</sys:String>
-    <sys:String x:Key="Tools.GameLink.Member.ListCount">大廳成員清單（共 {0} 人）</sys:String>
-    <sys:String x:Key="Tools.GameLink.Member.ListLoading">大廳成員清單（正在取得資訊）</sys:String>
-    <sys:String x:Key="Tools.GameLink.Nat.Failed">測試失敗</sys:String>
-    <sys:String x:Key="Tools.GameLink.Nat.Result">UDP: {0}, TCP: {1}</sys:String>
-    <sys:String x:Key="Tools.GameLink.Nat.Test">點擊測試</sys:String>
-    <sys:String x:Key="Tools.GameLink.Nat.Testing">正在測試</sys:String>
-    <sys:String x:Key="Tools.GameLink.Nat.Title">NAT 型別</sys:String>
-    <sys:String x:Key="Tools.GameLink.Player.Details">{0} {1}</sys:String>
-    <sys:String x:Key="Tools.GameLink.Player.Host">[主機]</sys:String>
-    <sys:String x:Key="Tools.GameLink.Player.InfoMessage">使用者名稱：{0}&#xA;連線協議用戶端識別碼：{1}&#xA;&#xA;此處資料僅供參考，請以實際遊玩體驗為準。&#xA;&#xA;若想了解 NAT 類型及其對連線體驗的影響，請前往介面左側的常見問題。</sys:String>
-    <sys:String x:Key="Tools.GameLink.Player.InfoTitle">玩家 {0} 的詳細資訊</sys:String>
-
-    <!-- Tools.GameLink.Agreement -->
-
-    <sys:String x:Key="Tools.GameLink.Agreement.Accept">我已閱讀並同意</sys:String>
-    <sys:String x:Key="Tools.GameLink.Agreement.Body">使用大廳功能即代表你同意下列條款：&#xA;&#xA;我承諾嚴格遵守中國大陸相關法律法規，不會將大廳功能用於違法違規用途。&#xA;我承諾使用大廳功能帶來的一切風險自行承擔。&#xA;我已知曉並同意 PCL-MOON 收集經處理的本機識別碼、Natayark ID 與其他資訊並在必要時提供給執法部門。&#xA;為保護未成年人個人資訊，使用連線大廳前，我確認我已滿十四歲。&#xA;&#xA;另外，你還需要同意 PCL-MOON 大廳相關隱私政策及《Natayark OpenID 服務條款》。</sys:String>
-    <sys:String x:Key="Tools.GameLink.Agreement.Description">此處列出了 PCL-MOON 大廳使用的相關服務檔案及介紹</sys:String>
-    <sys:String x:Key="Tools.GameLink.Agreement.NatayarkTerms">Natayark OpenID 服務條款</sys:String>
-    <sys:String x:Key="Tools.GameLink.Agreement.NatayarkTermsInfo">檢視 Natayark OpenID 服務條款</sys:String>
-    <sys:String x:Key="Tools.GameLink.Agreement.PrivacyPolicy">PCL-MOON 大廳相關隱私政策</sys:String>
-    <sys:String x:Key="Tools.GameLink.Agreement.PrivacyPolicyInfo">了解 PCL-MOON 如何處理您的個人資訊</sys:String>
-    <sys:String x:Key="Tools.GameLink.Agreement.Title">PCL-MOON 連線大廳說明與條款</sys:String>
-
-    <!-- Tools.GameLink.Finish -->
-
-    <sys:String x:Key="Tools.GameLink.Finish.Actions">大廳操作</sys:String>
-    <sys:String x:Key="Tools.GameLink.Finish.Checking">偵測中</sys:String>
-    <sys:String x:Key="Tools.GameLink.Finish.CloseLobby">關閉大廳</sys:String>
-    <sys:String x:Key="Tools.GameLink.Finish.Connected">已連線</sys:String>
-    <sys:String x:Key="Tools.GameLink.Finish.Connecting">連線中</sys:String>
-    <sys:String x:Key="Tools.GameLink.Finish.ConnectionStatus">連線狀況</sys:String>
-    <sys:String x:Key="Tools.GameLink.Finish.ConnectionType">連線方式</sys:String>
-    <sys:String x:Key="Tools.GameLink.Finish.CopyLobbyId">複製大廳編號</sys:String>
-    <sys:String x:Key="Tools.GameLink.Finish.CopyVirtualIp">複製虛擬 IP</sys:String>
-    <sys:String x:Key="Tools.GameLink.Finish.Exit">退出大廳</sys:String>
-    <sys:String x:Key="Tools.GameLink.Finish.Guest">加入者</sys:String>
-    <sys:String x:Key="Tools.GameLink.Finish.Host">建立者</sys:String>
-    <sys:String x:Key="Tools.GameLink.Finish.InfoTitle">大廳資訊</sys:String>
-    <sys:String x:Key="Tools.GameLink.Finish.LobbyId">大廳編號</sys:String>
-    <sys:String x:Key="Tools.GameLink.Finish.PingMs">{0}ms</sys:String>
-    <sys:String x:Key="Tools.GameLink.Finish.PingToHost">與大廳建立者的延遲</sys:String>
-    <sys:String x:Key="Tools.GameLink.Finish.Unavailable">暫不可用</sys:String>
-    <sys:String x:Key="Tools.GameLink.Finish.UserName">使用者名稱</sys:String>
-    <sys:String x:Key="Tools.GameLink.Finish.UserType">使用者型別</sys:String>
-
-    <!-- Tools.GameLink.Natayark -->
-
-    <sys:String x:Key="Tools.GameLink.Natayark.Abnormal">（異常）</sys:String>
-    <sys:String x:Key="Tools.GameLink.Natayark.Account">Natayark 帳戶</sys:String>
-    <sys:String x:Key="Tools.GameLink.Natayark.AccountExpired">Natayark 帳戶資訊已過期，請前往設定重新登入！</sys:String>
-    <sys:String x:Key="Tools.GameLink.Natayark.BrowserContinue">請在瀏覽器中繼續...</sys:String>
-    <sys:String x:Key="Tools.GameLink.Natayark.Continue">繼續</sys:String>
-    <sys:String x:Key="Tools.GameLink.Natayark.FetchFailed">取得資訊失敗</sys:String>
-    <sys:String x:Key="Tools.GameLink.Natayark.InvalidAuthCode">Naid 驗證程式碼無效</sys:String>
-    <sys:String x:Key="Tools.GameLink.Natayark.Loading">正在載入……</sys:String>
-    <sys:String x:Key="Tools.GameLink.Natayark.Login">點擊登入 Natayark 帳戶</sys:String>
-    <sys:String x:Key="Tools.GameLink.Natayark.LoginComplete">已完成登入操作</sys:String>
-    <sys:String x:Key="Tools.GameLink.Natayark.LoginFailed">Naid 登入失敗，請嘗試前往設定重新登入</sys:String>
-    <sys:String x:Key="Tools.GameLink.Natayark.LoginPrompt">PCL-MOON 將會開啟一個登入頁面，請在瀏覽器中完成登入操作，然後回到啟動器繼續操作。</sys:String>
-    <sys:String x:Key="Tools.GameLink.Natayark.LoginTitle">登入至 Natayark Network</sys:String>
-    <sys:String x:Key="Tools.GameLink.Natayark.LogoutComplete">已退出登入！</sys:String>
-    <sys:String x:Key="Tools.GameLink.Natayark.LogoutConfirm">你確認要退出登入嗎？</sys:String>
-    <sys:String x:Key="Tools.GameLink.Natayark.LogoutTitle">退出登入</sys:String>
-    <sys:String x:Key="Tools.GameLink.Natayark.ProfileLoadFailed">取得 Natayark 使用者資料失敗，請嘗試前往設定重新登入</sys:String>
-    <sys:String x:Key="Tools.GameLink.Natayark.TokenExpired">Natayark ID 令牌已過期，請重新登入</sys:String>
-    <sys:String x:Key="Tools.GameLink.Natayark.TokenInvalid">Naid Access Token 無效，嘗試重新整理登入</sys:String>
 
     <!-- Tools.ServerQuery -->
 
@@ -3443,7 +3753,9 @@
     <sys:String x:Key="Tools.Test.Crash.Title">崩潰測試</sys:String>
     <sys:String x:Key="Tools.Test.Dependency.Checking">開始環境檢查……</sys:String>
     <sys:String x:Key="Tools.Test.Dependency.Later">稍後</sys:String>
-    <sys:String x:Key="Tools.Test.Dependency.MissingMessage">目前系統環境缺失軟體執行所需依賴"{0}"&#xA;&#xA;點擊確定開啟微軟應用商店安裝</sys:String>
+    <sys:String x:Key="Tools.Test.Dependency.MissingMessage">目前系統環境缺失軟體執行所需依賴&quot;{0}&quot;
+
+點擊確定開啟微軟官網下載安裝</sys:String>
     <sys:String x:Key="Tools.Test.Dependency.Title">依賴檢查</sys:String>
     <sys:String x:Key="Tools.Test.Error.OperationFailed">測試工具操作失敗。請檢視錯誤詳情。</sys:String>
     <sys:String x:Key="Tools.Test.LaunchCount.Message">PCL-MOON 已經為你啟動了 {0} 次遊戲了。</sys:String>
@@ -3486,9 +3798,13 @@
     <!-- Tools.Test.Clean -->
 
     <sys:String x:Key="Tools.Test.Clean.Cleared">快取已清理</sys:String>
-    <sys:String x:Key="Tools.Test.Clean.ClearedMessage">清理了 {0} 個檔案！&#xA;PCL-MOON 即將自動重啟……</sys:String>
+    <sys:String x:Key="Tools.Test.Clean.ClearedMessage">清理了 {0} 個檔案！
+PCL-MOON 即將自動重啟……</sys:String>
     <sys:String x:Key="Tools.Test.Clean.CloseGameFirst">請先關閉所有執行中的遊戲……</sys:String>
-    <sys:String x:Key="Tools.Test.Clean.ConfirmMessage">即將清理遊戲日誌、錯誤報告、快取等檔案。&#xA;雖然應該沒人往這些地方放重要檔案，但還是問一下，是否確認繼續？&#xA;&#xA;在完成清理後，PCL-MOON 將自動重啟。</sys:String>
+    <sys:String x:Key="Tools.Test.Clean.ConfirmMessage">即將清理遊戲日誌、錯誤報告、快取等檔案。
+雖然應該沒人往這些地方放重要檔案，但還是問一下，是否確認繼續？
+
+在完成清理後，PCL-MOON 將自動重啟。</sys:String>
     <sys:String x:Key="Tools.Test.Clean.ConfirmTitle">清理確認</sys:String>
     <sys:String x:Key="Tools.Test.Clean.NoFiles">沒有找到任何可以清理的檔案！</sys:String>
     <sys:String x:Key="Tools.Test.Clean.Title">清理遊戲垃圾</sys:String>
@@ -3518,7 +3834,8 @@
     <sys:String x:Key="Tools.Test.Luck.MsgboxTitle">今日人品 - {0}</sys:String>
     <sys:String x:Key="Tools.Test.Luck.Rating0">（是百分制哦）</sys:String>
     <sys:String x:Key="Tools.Test.Luck.Rating10">不會吧！</sys:String>
-    <sys:String x:Key="Tools.Test.Luck.Rating100">100！100！&#xA;隱藏主題 歐皇…… 不對，社群版應該沒有這東西……</sys:String>
+    <sys:String x:Key="Tools.Test.Luck.Rating100">100！100！
+隱藏主題 歐皇…… 不對，社群版應該沒有這東西……</sys:String>
     <sys:String x:Key="Tools.Test.Luck.Rating30">嗚...</sys:String>
     <sys:String x:Key="Tools.Test.Luck.Rating40">勉強還行吧...</sys:String>
     <sys:String x:Key="Tools.Test.Luck.Rating60">還行啦，還行啦</sys:String>
@@ -3528,7 +3845,10 @@
 
     <!-- Tools.Test.Shortcut -->
 
-    <sys:String x:Key="Tools.Test.Shortcut.ConfirmMessage">這個捷徑不會自動移除，在刪除/移動啟動器前請手動移除捷徑。&#xA;&#xA;{0}位置: {1}&#xA;{2}位置: {3}</sys:String>
+    <sys:String x:Key="Tools.Test.Shortcut.ConfirmMessage">這個捷徑不會自動移除，在刪除/移動啟動器前請手動移除捷徑。
+
+{0}位置: {1}
+{2}位置: {3}</sys:String>
     <sys:String x:Key="Tools.Test.Shortcut.Created">已在{0}建立捷徑</sys:String>
     <sys:String x:Key="Tools.Test.Shortcut.Desktop">桌面</sys:String>
     <sys:String x:Key="Tools.Test.Shortcut.FileName">PCL-MOON{0}</sys:String>
@@ -3551,9 +3871,12 @@
     <!-- Update -->
 
     <sys:String x:Key="Update.Action">更新</sys:String>
-    <sys:String x:Key="Update.Available">啟動器有新版本可用（{0} -&gt; {1}）&#xA;是否立即更新？</sys:String>
+    <sys:String x:Key="Update.Available">啟動器有新版本可用（{0} -&gt; {1}）
+是否立即更新？</sys:String>
     <sys:String x:Key="Update.Check.Failed">無法取得最新版本資訊，請檢查網路連線</sys:String>
-    <sys:String x:Key="Update.CommunityNotice.Body">你正在使用 PCL-MOON。它基於上游 PCL CE 繼續開發，遇到問題請提交到 PCL-MOON 儲存庫，不要向原版 PCL 或 PCL CE 儲存庫回饋！&#xA;&#xA;此提示會在啟動器更新後展示一次。</sys:String>
+    <sys:String x:Key="Update.CommunityNotice.Body">你正在使用 PCL-MOON。它基於上游 PCL CE 繼續開發，遇到問題請提交到 PCL-MOON 儲存庫，不要向原版 PCL 或 PCL CE 儲存庫回饋！
+
+此提示會在啟動器更新後展示一次。</sys:String>
     <sys:String x:Key="Update.CommunityNotice.Confirm">我知道了</sys:String>
     <sys:String x:Key="Update.CommunityNotice.Title">PCL-MOON 版本說明</sys:String>
     <sys:String x:Key="Update.Error.FetchFailed">取得啟動器更新失敗，請檢查網路連線</sys:String>
@@ -3562,7 +3885,8 @@
     <sys:String x:Key="Update.Error.Sha256Mismatch">更新檔案 SHA256 不正確，應該為 {0}，實際為 {1}</sys:String>
     <sys:String x:Key="Update.Error.UnableToGetUpdate">無法取得更新</sys:String>
     <sys:String x:Key="Update.Error.UpdateBlocked">更新失敗</sys:String>
-    <sys:String x:Key="Update.Error.UpdateBlockedMessage">由於被 Windows 安全中心攔截，或存在權限問題，導致 PCL-MOON 無法更新。&#xA;請將 PCL-MOON 所在資料夾加入白名單，或手動用 {0}PCL\PCL-MOON.exe 取代目前檔案！</sys:String>
+    <sys:String x:Key="Update.Error.UpdateBlockedMessage">由於被 Windows 安全中心攔截，或存在權限問題，導致 PCL-MOON 無法更新。
+請將 PCL-MOON 所在資料夾加入白名單，或手動用 {0}PCL\PCL-MOON.exe 取代目前檔案！</sys:String>
     <sys:String x:Key="Update.Service.PclCe">PCL-MOON 服務</sys:String>
     <sys:String x:Key="Update.Title">啟動器更新</sys:String>
 

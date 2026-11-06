@@ -49,7 +49,7 @@ internal static class WebUiAssets
         // Honor WebView2's standard process-level profile override (also used by isolated UI tests).
         var requested = Environment.GetEnvironmentVariable("WEBVIEW2_USER_DATA_FOLDER");
         var dir = string.IsNullOrWhiteSpace(requested)
-            ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "PCL-CE", "WebUi", "ebwebview")
+            ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "PCL-MOON", "WebUi", "ebwebview")
             : Path.GetFullPath(requested);
         Directory.CreateDirectory(dir);
         return dir;

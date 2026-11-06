@@ -135,4 +135,4 @@ intermediary 名带 `net.minecraft.` 前缀。注意 `class_639` 是地址解析
 
 另只读检查当前 Mojang 正式版 26.3 客户端 JAR（SHA1 `e877b6a07acd633fb3bb475002175cec036e7b87`）：要求 Java 25，确认六参 startConnecting、enum ServerData、Minecraft.disconnect(Screen,boolean) 与已移除的 ClientLevel 无参 disconnect。新增合成回归覆盖新版完整断开以及无副作用单例存储读取。这不是 Java 25 / 26.3 实际游戏运行验证。
 
-启动器集成、WPF 模拟 Agent 面板测试及剩余全量测试限制见 [`docs/multiplayer-agent.md`](../../docs/multiplayer-agent.md)。**没有启动真实 Minecraft、没有验证真实 Forge/Fabric、多版本服务器或存档保存；合成测试和静态签名核对不能冒充游戏实测。**
+启动器集成及剩余全量测试限制见 [`docs/multiplayer-agent.md`](../../docs/multiplayer-agent.md)。**没有启动真实 Minecraft、没有验证真实 Forge/Fabric、多版本服务器或存档保存；合成测试和静态签名核对不能冒充游戏实测。**

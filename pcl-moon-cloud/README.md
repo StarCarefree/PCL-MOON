@@ -2,8 +2,6 @@
 
 Java 17+ / Spring Boot 3.5 + Gradle 8.14.4 的整合包目录服务，附中文网页管理台。独立于启动器，可部署到 Linux/Windows 云服务器。
 
-临时联机房间协调 API（公共端口、内存状态、无游戏流量中转）：[接口与部署说明](docs/rooms.md)。目录路由仍只允许 GET/HEAD。
-
 ## 启动
 
 构建需要 JDK 17 或更高版本，运行需要 Java 17 或更高版本。固定使用 `--release 17`（class 61），在 JDK 21 上构建也不会生成仅支持 Java 21 的产物。复用已存在的 Gradle 8.14.4 可执行 `gradle test bootJar`；也提供标准 Wrapper。

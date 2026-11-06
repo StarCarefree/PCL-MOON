@@ -22,8 +22,13 @@ import java.util.jar.JarFile;
 /** Bootstrap-only, conservative JAR membership index. False positives use the original lookup. */
 public final class NegativeCache {
     private static final int MAX_JARS = 256;
+    private static final int INDEX_AFTER_MISSES = 4;
+    private static final int MAX_HASH_SLOTS = 524288;
     private static final Object LOCK = new Object();
-    private static volatile Map<JarFile, Index> indexes = Collections.emptyMap();
+    private static volatile Map<JarFile, IndexState> indexes = Collections.emptyMap();
+    private static int reservedHashSlots;
+    private static final LongAdder indexBuilds = new LongAdder();
+    private static final LongAdder indexedEntries = new LongAdder();
     private static final Map<Object, Boolean> closing = new WeakHashMap<>();
     private static final LongAdder hits = new LongAdder();
     private static volatile boolean enabled;
@@ -53,31 +58,78 @@ public final class NegativeCache {
 
     public static JarEntry getJarEntry(JarFile jar, String name) {
         if (!enabled || name == null || jar.getClass() != JarFile.class) return jar.getJarEntry(name);
-        Index index = indexes.get(jar);
-        if (index == null && enabled && indexes.size() < MAX_JARS) {
-            synchronized (LOCK) {
-                index = indexes.get(jar);
-                if (closing.containsKey(jar)) return jar.getJarEntry(name);
-                if (index == null && enabled && indexes.size() < MAX_JARS) {
-                    try { index = new Index(jar); }
-                    catch (RuntimeException unavailable) {
-                        // Enumeration can reject malformed entries that a single lookup never reads.
-                        // Disable the optional index and let the original API decide the outcome.
-                        enabled = false;
-                        indexes = Collections.emptyMap();
-                        return jar.getJarEntry(name);
-                    }
-                    Map<JarFile, Index> next = new IdentityHashMap<>(indexes);
-                    next.put(jar, index);
-                    indexes = next;
-                }
-            }
-        }
+        IndexState state = indexes.get(jar);
+        Index index = state == null ? null : state.index;
         if (index != null && !index.mightContain(name)) {
             if (METRICS) hits.increment();
             return null;
         }
-        return jar.getJarEntry(name);
+        JarEntry result = jar.getJarEntry(name);
+        // 成功查找不触发枚举；少量缺失先交给 JDK，避免一次性查询承担建表成本。
+        if (result == null) {
+            if (state == null) state = registerIndex(jar);
+            if (state != null && !state.building.get() && state.misses.incrementAndGet() >= INDEX_AFTER_MISSES)
+                buildIndex(jar, state);
+        }
+        return result;
+    }
+
+    private static IndexState registerIndex(JarFile jar) {
+        synchronized (LOCK) {
+            if (!enabled || closing.containsKey(jar)) return null;
+            IndexState state = indexes.get(jar);
+            if (state != null) return state;
+            if (indexes.size() >= MAX_JARS) return null;
+            state = new IndexState();
+            Map<JarFile, IndexState> next = new IdentityHashMap<>(indexes);
+            next.put(jar, state);
+            indexes = next;
+            return state;
+        }
+    }
+
+    private static Index buildIndex(JarFile jar, IndexState state) {
+        if (state.index != null) return state.index;
+        // 其他线程正在构建时直接走原查找，不等待，也不重复枚举。
+        if (!state.building.compareAndSet(false, true)) return null;
+        try {
+            int entries = jar.size();
+            if (entries < 0 || entries > MAX_HASH_SLOTS / 2) return null;
+            int slots = entries * 2;
+            synchronized (LOCK) {
+                if (!enabled || indexes.get(jar) != state || slots > MAX_HASH_SLOTS - reservedHashSlots) return null;
+                reservedHashSlots += slots;
+                state.hashSlots = slots;
+            }
+            // 全局锁只保护登记和预算，不包围 JAR 枚举。
+            Index built = new Index(jar, entries, slots);
+            synchronized (LOCK) {
+                if (!enabled || indexes.get(jar) != state) return null;
+                state.index = built;
+                if (METRICS) {
+                    indexBuilds.increment();
+                    indexedEntries.add(entries);
+                }
+                return built;
+            }
+        } catch (RuntimeException unavailable) {
+            // 可选枚举失败时保留原始查找结果，不发布不完整索引。
+            return null;
+        } finally {
+            synchronized (LOCK) {
+                if (state.index == null && indexes.get(jar) == state) {
+                    reservedHashSlots -= state.hashSlots;
+                    state.hashSlots = 0;
+                }
+            }
+        }
+    }
+
+    private static final class IndexState {
+        final AtomicInteger misses = new AtomicInteger();
+        final AtomicBoolean building = new AtomicBoolean();
+        volatile Index index;
+        int hashSlots;
     }
 
     public static void forget(Object jar) {
@@ -85,8 +137,9 @@ public final class NegativeCache {
         synchronized (LOCK) {
             if (!enabled) return; // stop() may have cleared the maps while close waited for LOCK.
             closing.put(jar, Boolean.TRUE);
-            Map<JarFile, Index> next = new IdentityHashMap<>(indexes);
-            next.remove(jar);
+            Map<JarFile, IndexState> next = new IdentityHashMap<>(indexes);
+            IndexState removed = next.remove(jar);
+            if (removed != null) reservedHashSlots -= removed.hashSlots;
             indexes = next;
         }
     }
@@ -95,9 +148,10 @@ public final class NegativeCache {
         enabled = false;
         classpathEnabled = false;
         invalidateClasspaths();
-        synchronized (LOCK) { indexes = Collections.emptyMap(); closing.clear(); }
+        synchronized (LOCK) { indexes = Collections.emptyMap(); closing.clear(); reservedHashSlots = 0; }
         System.err.println("[PCL-MOON Startup] cache released" + (METRICS
             ? "; JAR misses avoided=" + hits.sum() + "; classpath scans avoided=" + classHits.sum()
+                + "; JAR indexes built=" + indexBuilds.sum() + "; entries enumerated=" + indexedEntries.sum()
                 + "; " + ForgeDirectRead.summary() : ""));
     }
 
@@ -172,7 +226,8 @@ public final class NegativeCache {
     public static void observeClassLookup(Object result, ClassLookup lookup, String name) {
         if (result != null || lookup == null || !lookup.eligible || !enabled || !classpathEnabled
                 || lookup.version != generation.get()) return;
-        if (lookup.building.compareAndSet(false, true)) buildClassIndex(lookup);
+        if (lookup.observations.incrementAndGet() >= INDEX_AFTER_MISSES
+                && lookup.building.compareAndSet(false, true)) buildClassIndex(lookup);
         if (lookup.size.incrementAndGet() > 4096) { lookup.size.decrementAndGet(); return; }
         if (!lookup.misses.add(name)) lookup.size.decrementAndGet();
     }
@@ -202,7 +257,16 @@ public final class NegativeCache {
                     if (count > 262144) return;
                     jars.add(jar);
                 }
-                Index aggregate = new Index(jars, count);
+                Index aggregate = new Index(count);
+                for (JarFile jar : jars) {
+                    if (!enabled || !classpathEnabled || lookup.version != generation.get()) return;
+                    IndexState state = indexes.get(jar);
+                    if (state == null) state = registerIndex(jar);
+                    Index index = state == null ? null : buildIndex(jar, state);
+                    // 并发构建或预算不足时保留逐名称缺失缓存，不为聚合重复枚举。
+                    if (index == null) return;
+                    for (int i = 0; i < index.hashCount; i++) aggregate.add(index.hashes[i]);
+                }
                 if (enabled && classpathEnabled && lookup.version == generation.get()) lookup.aggregate = aggregate;
             }
         } catch (ReflectiveOperationException | java.io.IOException | RuntimeException unavailable) {
@@ -231,6 +295,7 @@ public final class NegativeCache {
     public static final class ClassLookup {
         final Object owner;
         final AtomicBoolean building = new AtomicBoolean();
+        final AtomicInteger observations = new AtomicInteger();
         volatile Index aggregate;
         final long version;
         final boolean eligible;
@@ -242,32 +307,35 @@ public final class NegativeCache {
     }
 
     private static final class Index {
-        // At most 256 KiB per JAR / 64 MiB total. Released on close or at startup timeout.
+        // 位图每份最多 256 KiB；单 JAR 哈希数组共享 2 MiB 总预算，供聚合索引复用。
         final long[] bits;
         final int mask;
-        Index(JarFile jar) {
-            this(Collections.singletonList(jar), jar.size());
-        }
-        Index(List<JarFile> jars, long count) {
+        int[] hashes;
+        int hashCount;
+        Index(long count) {
             int bitCount = 1024;
             while (bitCount < Math.min(2097152L, Math.max(1024L, count * 16L))) bitCount <<= 1;
             bits = new long[bitCount >>> 6];
             mask = bitCount - 1;
-            for (JarFile jar : jars) addEntries(jar);
         }
-        private void addEntries(JarFile jar) {
+        Index(JarFile jar, int count, int slots) {
+            this(count);
+            hashes = new int[slots];
             Enumeration<JarEntry> entries = jar.entries();
             while (entries.hasMoreElements()) {
                 String name = entries.nextElement().getName();
-                add(name.hashCode());
-                // Multi-release aliases are indexed conservatively for ALL versions. Resolution
-                // (including the JVM's chosen version and signature checks) remains in JarFile.
+                remember(name.hashCode());
+                // 保守纳入所有 MR 别名，实际版本选择和签名检查仍交给 JarFile。
                 String prefix = "META-INF/versions/";
                 if (name.startsWith(prefix)) {
                     int slash = name.indexOf('/', prefix.length());
-                    if (slash > 0 && slash + 1 < name.length()) add(name.substring(slash + 1).hashCode());
+                    if (slash > 0 && slash + 1 < name.length()) remember(name.substring(slash + 1).hashCode());
                 }
             }
+        }
+        private void remember(int hash) {
+            hashes[hashCount++] = hash;
+            add(hash);
         }
         void add(int hash) {
             int bit = (hash ^ (hash >>> 16)) & mask;

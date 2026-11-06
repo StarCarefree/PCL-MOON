@@ -14,27 +14,17 @@ internal static class MultiplayerChecks
 
     internal static void Run(Assembly assembly, string[] args)
     {
-        var room = new TextBox { Text = "房间状态保留", AcceptsReturn = true };
         var serverType = assembly.GetType("PCL.VisitedServerListView", true)!;
         var server = (FrameworkElement)Activator.CreateInstance(serverType, nonPublic: true)!;
         var serversCreated = 0;
         var type = assembly.GetType("PCL.HybridMultiplayer", true)!;
         Func<FrameworkElement> factory = () => { serversCreated++; return server; };
-        var page = (FrameworkElement)Activator.CreateInstance(type, Hidden, null, new object[] { room, factory }, null)!;
-        var roomsTab = (RadioButton)page.FindName("RoomsTab");
-        var serversTab = (RadioButton)page.FindName("ServersTab");
-        var rooms = (ContentControl)page.FindName("RoomHost");
+        var page = (FrameworkElement)Activator.CreateInstance(type, Hidden, null, new object[] { factory }, null)!;
         var servers = (ContentControl)page.FindName("ServerHost");
-        Check(rooms.Visibility == Visibility.Visible && servers.Visibility == Visibility.Collapsed && serversCreated == 0, "default rooms / lazy servers");
-        serversTab.IsChecked = true;
-        Check(rooms.Visibility == Visibility.Collapsed && servers.Visibility == Visibility.Visible && serversCreated == 1, "server tab via selected state");
-        roomsTab.IsChecked = true;
-        Check(rooms.Visibility == Visibility.Visible && room.Text == "房间状态保留", "room instance and state retained");
-        serversTab.IsChecked = true;
-        Check(serversCreated == 1 && ReferenceEquals(servers.Content, server), "server tab instance reused");
-        type.GetMethod("SelectRooms", Hidden)!.Invoke(page, null);
-        Check(roomsTab.IsChecked == true && rooms.Visibility == Visibility.Visible, "invite can select rooms");
-        serversTab.IsChecked = true;
+        Check(servers.Content is null && serversCreated == 0, "lazy servers");
+        type.GetMethod("EnsureServers", Hidden)!.Invoke(page, null);
+        type.GetMethod("EnsureServers", Hidden)!.Invoke(page, null);
+        Check(serversCreated == 1 && ReferenceEquals(servers.Content, server), "server list instance reused");
 
         // No game, user data or real network is needed for these UI checks.
         var list = (IList)serverType.GetField("_servers", Hidden)!.GetValue(server)!;
@@ -93,14 +83,7 @@ internal static class MultiplayerChecks
         foreach (var size in new[] { new Size(520, 420), new Size(900, 650) })
         {
             page.Measure(size); page.Arrange(new Rect(size)); page.UpdateLayout();
-            foreach (var tab in new[] { roomsTab, serversTab })
-            {
-                var label = Descendants(tab).OfType<TextBlock>().First(block => block.Text == tab.Content.ToString());
-                Check(Equals(label.Foreground, tab.Foreground), "tab label uses selected-state foreground");
-            }
             Check(servers.ActualWidth > 0 && servers.ActualHeight > 0, "content stretches");
-            var tabBottom = serversTab.TransformToAncestor(page).Transform(new Point(0, serversTab.ActualHeight)).Y;
-            Check(servers.TransformToAncestor(page).Transform(new Point()).Y >= tabBottom, "tabs do not overlap content");
             foreach (Border card in cards.Children)
             {
                 var body = (Grid)card.Child;
@@ -137,7 +120,7 @@ internal static class MultiplayerChecks
         Check(Descendants(first).OfType<TextBlock>().Single(block => Equals(block.Tag, "motd")).Visibility == Visibility.Collapsed, "failure hides stale MOTD");
         list.Clear(); Render();
         Check(cards.Children.Count == 1 && !previous.IsEnabled && !next.IsEnabled && Field<int>("_page") == 0, "empty data clamps pagination");
-        Console.WriteLine("PASS multiplayer tabs / pagination / search / single Ping busy-success-failure / cached status");
+        Console.WriteLine("PASS multiplayer lazy host / pagination / search / single Ping busy-success-failure / cached status");
     }
 
     private static TextBlock Status(Border card) => Descendants(card).OfType<TextBlock>().Single(block => Equals(block.Tag, "status"));

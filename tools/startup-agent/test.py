@@ -56,4 +56,8 @@ with tempfile.TemporaryDirectory(prefix='pcl-moon-loader-tests-', dir=scratch) a
     run('ForgeDirectReadTest', 'gating-again', ['-Dpclmoon.startup.metrics=true', '-Xverify:all'],
         extra_args=[str(agent)])
     run('ForgeFastReadTest', 'direct-read', ['-Dpclmoon.startup.metrics=true', '-Xverify:all'])
-print('PASS: all 11 startup-agent regression modes')
+    run('ForgeFastReadTest', 'metrics-off', ['-Xverify:all'])
+    run('ForgeFastReadTest', 'forge-cache-off', ['-Dpclmoon.startup.forgeCache.disabled=true', '-Xverify:all'])
+    run('ForgeFastReadTest', 'forge-fast-read-off', ['-Dpclmoon.startup.forgeFastRead.disabled=true', '-Xverify:all'])
+    run('IndexBuildTest', 'index-build', ['-Dpclmoon.startup.metrics=true', '-Xverify:all'])
+print('PASS: all 15 startup-agent regression modes')

@@ -72,7 +72,7 @@ public class Identify
     {
         try
         {
-            var prefix = "PCL-CE|"u8.ToArray();
+            var prefix = "PCL-MOON|"u8.ToArray();
             // 取副本后再清零，避免把 RawId 缓存本身抹掉
             var ctx = (byte[])RawId.Clone();
             var suffix = "|LauncherId"u8.ToArray();
@@ -97,7 +97,7 @@ public class Identify
         catch (Exception ex)
         {
             LogWrapper.Error(ex, "Identify", "无法获取识别码");
-            return "PCL2-CECE-GOOD-2025";
+            return "PCL2-MOON-GOOD-2025";
         }
     }
 }

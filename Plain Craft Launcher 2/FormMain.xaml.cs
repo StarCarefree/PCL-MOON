@@ -8,6 +8,7 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using PCL.Core.App;
+using PCL.Core.App.Essentials;
 using PCL.Core.Minecraft.Profile;
 using PCL.Core.App.IoC;
 using PCL.Core.App.Localization;
@@ -164,6 +165,12 @@ public partial class FormMain
         ModBase.Log("[Start] 第二阶段加载用时：" + (TimeUtils.GetTimeTick() - ModBase.applicationStartTick) + " ms");
         // 注册生命周期状态事件
         Lifecycle.When(LifecycleState.WindowCreated, FormMain_Loaded);
+        // 从其他目录打开启动器时，由新实例请求关闭当前实例
+        RpcService.AddFunction("exit", (_, _, _) =>
+        {
+            ModBase.RunInUi(() => EndProgram(false));
+            return RpcResponse.EmptySuccess;
+        });
     }
 
     private void FormMain_Loaded() // (sender As Object, e As RoutedEventArgs) Handles Me.Loaded
@@ -217,7 +224,6 @@ public partial class FormMain
 
         var hwndSource = (HwndSource)PresentationSource.FromVisual(this);
         hwndSource.AddHook(WndProc);
-        AddClipboardFormatListener(hwndSource.Handle);
 
         ModAnimation.AniStart(new[]
         {
@@ -542,8 +548,6 @@ public partial class FormMain
                 return;
         }
 
-        // 关闭联机大厅
-        // Await LobbyController.CloseAsync().ConfigureAwait(False)
         // 关闭
         ModBase.RunInUiWait(() =>
         {
@@ -600,8 +604,6 @@ public partial class FormMain
         bool force = true, bool isUpdating = false)
     {
         // On Error Resume Next
-        // 关闭联机大厅
-        // Await LobbyController.CloseAsync().ConfigureAwait(False)
         ModBase.isProgramEnded = true;
         ModAnimation.AniControlEnabled += 1;
         if (UpdateManager.isUpdateWaitingRestart && !isUpdating)
@@ -1294,42 +1296,9 @@ public partial class FormMain
                     (ThemeManager.IsDarkMode != SystemTheme.IsSystemInDarkMode())) ThemeService.RefreshColorMode();
             }
         }
-        else if (msg == 0x031D && isWindowLoadFinished) // WM_CLIPBOARDUPDATE
-        {
-            TryPromptCopiedRoomInvite();
-        }
 
         return nint.Zero;
     }
-
-    private string? _promptedClipboard;
-    private bool _promptingClipboard;
-
-    private void TryPromptCopiedRoomInvite()
-    {
-        if (_promptingClipboard || !Clipboard.ContainsText()) return;
-        string text;
-        try { text = Clipboard.GetText(); }
-        catch (ExternalException) { return; }
-        var code = RoomFlowPresentation.RoomInviteCode(text);
-        if (code is null || text == _promptedClipboard || HybridRoomsView.OwnsClipboard(text)) return;
-        _promptedClipboard = text;
-        _promptingClipboard = true;
-        try
-        {
-            ShowWindowToTop();
-            _ = NavigateHybridAsync("rooms");
-            UpdateHybridShell();
-            HybridMultiplayerView.SelectRooms();
-            HybridRoomsView.OfferJoin(code);
-        }
-        finally { _promptingClipboard = false; }
-
-    }
-
-    [DllImport("user32.dll", SetLastError = true)]
-    private static extern bool AddClipboardFormatListener(nint hwnd);
-
 
     // 窗口隐藏与置顶
     public bool Hidden
@@ -1513,13 +1482,11 @@ public partial class FormMain
         SetupAbout = 4,
         SetupLog = 5,
         SetupFeedback = 6,
-        SetupGameLink = 7,
         SetupUpdate = 8,
         SetupJava = 9,
         SetupLauncherMisc = 10,
         SetupLauncherLanguage = 11,
 
-        ToolsGameLink = 1,
         ToolsTest = 3,
 
         VersionOverall = 0,
@@ -1741,7 +1708,7 @@ public partial class FormMain
     public void PageChange(PageStackData stack, PageSubType subType = PageSubType.Default)
     {
         _webUi.Hide();
-        SetRoomsVisible(false);
+        SetMultiplayerVisible(false);
         if (string.IsNullOrEmpty(PageNameGet(stack)))
         {
             // 切换到主页面
@@ -2280,7 +2247,9 @@ public partial class FormMain
     }
 
     // 关闭 Minecraft
-    private void BtnExtraShutdown_Click(object sender, MouseButtonEventArgs e)
+    private void BtnExtraShutdown_Click(object sender, MouseButtonEventArgs e) => ShutdownMinecraft();
+
+    internal void ShutdownMinecraft()
     {
         try
         {
@@ -2303,7 +2272,10 @@ public partial class FormMain
 
     public bool BtnExtraShutdown_ShowCheck()
     {
-        return ModWatcher.hasRunningMinecraft;
+        var launchLeft = ModMain.frmLaunchLeft;
+        // 启动面板上已有关闭按钮或取消按钮时不重复显示，多人游戏页也不显示
+        return ModWatcher.hasRunningMinecraft && launchLeft?.BtnShutdown.IsVisible != true && launchLeft?.PanLaunching.IsVisible != true
+               && HybridMultiplayerView.Visibility != Visibility.Visible;
     }
 
     // 游戏日志

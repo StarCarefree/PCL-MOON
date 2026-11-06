@@ -31,7 +31,6 @@ PCL-MOON 是 Windows 上的 Minecraft 启动器。它基于 [PCL](https://github
 - **原生主界面**：账号、启动、版本列表和版本设置由 .NET 10 / WPF 执行。WebView2 只补充“浏览”，不覆盖标题栏和侧栏。
 - **资源浏览**：数据包、地图、整合包、光影包、材质包。来源可多选 MCL、CurseForge、Modrinth 和 MC 百科。下载进入原有文件列表，由玩家选择版本。
 - **整合包目录**：可配置 `index.json` 主源和最多 8 个备用源，成功一个即停止，不合并多个目录。夸克分享只有在同意授权后，才会把选中的单个 `.mrpack` / `.zip` 转存到网盘目录 `PCL-MOON`。
-- **联机房间**：中控只交换房间、成员和线路配置，不转发游戏流量，也不是 FRP、ZeroTier 或 EasyTier 的服务器。房主可发布 IPv6、FRP、XTCP、ZeroTier、EasyTier 线路。一键进入服务器尚未开放。
 - **服务端管理**：服务端放在启动器目录 `servers/<id>/`，与客户端版本、模组和账号隔离。可安装 Vanilla、Paper、Purpur 或整合包作者提供的服务端包，并管理控制台与 `server.properties`。不会自动开放防火墙或端口映射。
 - **启动动画**：默认开启。设置 → 个性化 → 基础选项可关闭；关闭后仍使用原来的启动进度面板，不影响启动游戏。
 
@@ -79,14 +78,13 @@ x64 与 ARM64 不能混用。不要把便携包里的 exe 单独拷走：浏览�
 .\scripts\Publish-Portable.ps1 -Architecture x64 -Configuration Release -FixedRuntimeDirectory <FixedVersion根目录>
 ```
 
-`x64` 与 `arm64` 必须分别构建。目录服务和联机中控在 `pcl-moon-cloud/`，需要 Java 17 或更高版本，见 [pcl-moon-cloud/README.md](pcl-moon-cloud/README.md)。
+`x64` 与 `arm64` 必须分别构建。目录服务在 `pcl-moon-cloud/`，需要 Java 17 或更高版本，见 [pcl-moon-cloud/README.md](pcl-moon-cloud/README.md)。
 
 ## 文档
 
 - [原生界面与浏览页](docs/hybrid-ui.md)
 - [五类资源浏览](docs/resource-browse.md)
 - [整合包目录源](docs/catalog-sources.md)
-- [联机房间](docs/multiplayer-rooms.md)
 - [服务端管理](docs/server-management.md)
 - [服务端核心来源](docs/server-core-sources.md)
 - [启动动画](docs/game-launch-animation.md)

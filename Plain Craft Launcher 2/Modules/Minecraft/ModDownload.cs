@@ -5,9 +5,7 @@ using System.Text;
 using System.Text.Json.Nodes;
 using PCL.Core.App;
 using PCL.Core.App.Localization;
-using PCL.Core.IO.Net;
 using PCL.Core.IO.Net.Http;
-using PCL.Core.Minecraft;
 using PCL.Core.Utils;
 using PCL.Network;
 using PCL.Network.Loaders;
@@ -44,8 +42,6 @@ public static class ModDownload
             (string)version.JsonObject["downloads"]["client"]["sha1"]);
         if (returnNothingOnFileUseable && checker.Check(version.PathInstance + version.Name + ".jar") is null)
             return null; // 通过校验
-        // 按出口地区限制原版核心 Jar 下载
-        DownloadRegionPolicy.EnsureAllowed(NetworkService.GetClient());
         // 返回下载信息
         var jarUrl = (string)version.JsonObject["downloads"]["client"]["url"];
         return new DownloadFile(DlSourceLauncherOrMetaGet(jarUrl), version.PathInstance + version.Name + ".jar",

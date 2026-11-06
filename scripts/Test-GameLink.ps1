@@ -24,10 +24,5 @@ try {
     Get-Content (Join-Path $scratch 'core-tests.log') -Tail 8
     Check-Exit 'Game link core tests'
 } finally { $env:PCL_MOON_TEST_LINK_MAPPINGS = $previous }
-& $dotnet build (Join-Path $repo 'scripts\room-ui-smoke\Room.UiSmoke.csproj') -p:NuGetAudit=false -v minimal *> (Join-Path $scratch 'ui-build.log')
-Check-Exit 'UI smoke build'
-& $dotnet (Join-Path $repo 'scripts\room-ui-smoke\bin\Debug\net10.0-windows\Room.UiSmoke.dll') 'http://127.0.0.1:1' $scratch (Join-Path $scratch 'screenshots') '--game-link-only' *> (Join-Path $scratch 'ui.log')
-Get-Content (Join-Path $scratch 'ui.log') -Tail 15
-Check-Exit 'Game link UI smoke'
 Write-Output "GAME_LINK_CHECK_PASS · reports: $scratch"
 $global:LASTEXITCODE = 0

@@ -35,16 +35,17 @@ public sealed partial class DependencyCheckService
             var selection = MsgBoxWrapper.Show(
                 Lang.Text("Tools.Test.Dependency.MissingMessage", packageName),
                 buttons: [Lang.Text("Common.Action.Confirm"), Lang.Text("Tools.Test.Dependency.Later")]);
-            if (selection == 1) _LaunchMsStore(storeId);
+            if (selection == 1) _OpenStoreWebPage(storeId);
         }
     }
 
-    private static void _LaunchMsStore(string id)
+    // 精简系统常缺少微软商店，改为在浏览器中打开微软官网应用页面
+    private static void _OpenStoreWebPage(string id)
     {
-        Context.Info($"正在打开微软应用商店 (id = {id})");
+        Context.Info($"正在打开微软官网下载页面 (id = {id})");
         var psi = new ProcessStartInfo()
         {
-            FileName = $"ms-windows-store://pdp?launch=true&productid={id}&mode=full",
+            FileName = $"https://apps.microsoft.com/detail/{id}",
             UseShellExecute = true
         };
         using var ps = new Process() { StartInfo = psi };

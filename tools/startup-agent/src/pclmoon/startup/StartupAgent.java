@@ -18,26 +18,34 @@ import java.util.jar.JarFile;
 public final class StartupAgent {
     public static void premain(String options, Instrumentation instrumentation) {
         if (Boolean.getBoolean("pclmoon.startup.disabled")) return;
+        Class<?> cache = null;
         try {
             if ((Runtime.version().feature() != 17 && Runtime.version().feature() != 21)
                     || !instrumentation.isRetransformClassesSupported()) {
                 System.err.println("[PCL-MOON Startup] unsupported JVM; using original lookup");
                 return;
             }
+            boolean forgeOnly = Runtime.version().feature() == 17;
+            if (forgeOnly && (Boolean.getBoolean("pclmoon.startup.forgeCache.disabled")
+                    || Boolean.getBoolean("pclmoon.startup.forgeFastRead.disabled"))) return;
             Path helper = extractHelper();
             instrumentation.appendToBootstrapClassLoaderSearch(new JarFile(helper.toFile()));
-            Class<?> cache = Class.forName("pclmoon.startup.NegativeCache", true, null);
+            // Java 17 仅使用 Forge 直接读取，不初始化缓存或开放 JDK 加载器内部包。
+            if (!forgeOnly) cache = Class.forName("pclmoon.startup.NegativeCache", true, null);
+            Module helperModule = forgeOnly
+                ? Class.forName("pclmoon.startup.ForgeDirectRead", false, null).getModule() : cache.getModule();
             Module javaBase = Object.class.getModule();
-            instrumentation.redefineModule(javaBase, Set.of(cache.getModule()),
-                Map.of("jdk.internal.org.objectweb.asm", Set.of(StartupAgent.class.getModule()),
-                       "jdk.internal.org.objectweb.asm.tree", Set.of(StartupAgent.class.getModule()),
-                       "jdk.internal.loader", Set.of(cache.getModule())),
-                Map.of("jdk.internal.loader", Set.of(cache.getModule())), Collections.emptySet(), Collections.emptyMap());
+            Map<String, Set<Module>> exports = new java.util.HashMap<>(Map.of(
+                "jdk.internal.org.objectweb.asm", Set.of(StartupAgent.class.getModule()),
+                "jdk.internal.org.objectweb.asm.tree", Set.of(StartupAgent.class.getModule())));
+            if (!forgeOnly) exports.put("jdk.internal.loader", Set.of(helperModule));
+            instrumentation.redefineModule(javaBase, Set.of(helperModule), exports,
+                forgeOnly ? Collections.emptyMap() : Map.of("jdk.internal.loader", Set.of(helperModule)),
+                Collections.emptySet(), Collections.emptyMap());
             long duration = Math.max(1000, Math.min(120000, Long.getLong("pclmoon.startup.durationMs", 60000L)));
-            installForgeDirectRead(instrumentation, cache.getModule(), duration);
-            if (Runtime.version().feature() == 17) {
-                // Forge primarily reads named modules, not URLClassPath. Avoid eagerly
-                // indexing unrelated app JARs or patching JDK classes for almost no hits.
+            installForgeDirectRead(instrumentation, helperModule, duration);
+            if (forgeOnly) {
+                // Forge 主要读取命名模块，跳过无关的应用 JAR 索引和 JDK 类修改。
                 System.err.println("[PCL-MOON Startup] Java 17 Forge-only path; JDK lookup caches not installed");
                 return;
             }
@@ -74,7 +82,7 @@ public final class StartupAgent {
             }
             System.err.println("[PCL-MOON Startup] bounded JAR miss cache enabled for " + duration + " ms");
         } catch (Throwable error) {
-            try { Class.forName("pclmoon.startup.NegativeCache", false, null).getMethod("stop").invoke(null); }
+            try { if (cache != null) cache.getMethod("stop").invoke(null); }
             catch (Throwable ignored) { }
             // An optional optimization must never abort premain or expose command-line credentials.
             System.err.println("[PCL-MOON Startup] unavailable (" + error.getClass().getSimpleName() + "); using original lookup");

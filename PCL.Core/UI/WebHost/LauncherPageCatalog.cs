@@ -49,12 +49,10 @@ public static class LauncherPageCatalog
         new("setup.about", "setup", "Setup.Left.Item.About", Setup, 4, true),
         new("setup.log", "setup", "Setup.Left.Item.Log", Setup, 5, false),
         new("setup.feedback", "setup", "Setup.Left.Item.Feedback", Setup, 6, false),
-        new("setup.gamelink", "setup", "Setup.Left.Item.GameLink", Setup, 7, false),
         new("setup.update", "setup", "Setup.Left.Item.Update", Setup, 8, false),
         new("setup.java", "setup", "Setup.Left.Item.Java", Setup, 9, false),
         new("setup.misc", "setup", "Setup.Left.Item.Misc", Setup, 10, false),
         new("setup.language", "setup", "Setup.Language.Title", Setup, 11, false),
-        new("tools.lobby", "tools", "Tools.Left.Lobby", Tools, 1, false),
         new("tools.test", "tools", "Tools.Left.Utilities.Title", Tools, 3, false)
     ];
 

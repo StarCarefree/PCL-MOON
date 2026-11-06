@@ -45,14 +45,22 @@ public static class ModWatcher
     {
         ModLaunch.McLaunchLog("[全局] 出现运行中的 Minecraft");
         hasRunningMinecraft = true;
-        ModMain.frmMain.BtnExtraShutdown.ShowRefresh();
+        ModBase.RunInUi(() =>
+        {
+            ModMain.frmLaunchLeft?.RefreshShutdown();
+            ModMain.frmMain.BtnExtraShutdown.ShowRefresh();
+        });
     }
 
     private static void MinecraftStop(bool triggerLauncherShutdown)
     {
         ModLaunch.McLaunchLog("[全局] 已无运行中的 Minecraft");
         hasRunningMinecraft = false;
-        ModMain.frmMain.BtnExtraShutdown.ShowRefresh();
+        ModBase.RunInUi(() =>
+        {
+            ModMain.frmLaunchLeft?.RefreshShutdown();
+            ModMain.frmMain.BtnExtraShutdown.ShowRefresh();
+        });
         // 音乐播放
         if (Config.Preference.Music.StopInGame)
             ModBase.RunInUi(() =>
@@ -190,6 +198,16 @@ public static class ModWatcher
         ///     游戏的所有日志输出，只有处理实时日志的情况下才会记录。
         /// </summary>
         public List<string> fullLog = new();
+
+        private readonly object fullLogLock = new();
+
+        /// <summary>
+        ///     获取 fullLog 的快照，避免读取时与日志线程的写入冲突。
+        /// </summary>
+        public string[] GetFullLog()
+        {
+            lock (fullLogLock) return fullLog.ToArray();
+        }
 
         // 初始化
         public Process gameProcess;
@@ -329,7 +347,8 @@ public static class ModWatcher
                 waitingLog.Add(e.Data);
             }
 
-            if (e.Data is not null) fullLog.Add(e.Data);
+            if (e.Data is not null)
+                lock (fullLogLock) fullLog.Add(e.Data);
             if (realTime)
             {
                 LogRealTime(e.Data, ref lastLevel);

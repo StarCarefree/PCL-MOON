@@ -7,58 +7,9 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="HybridTheme.xaml" />
             </ResourceDictionary.MergedDictionaries>
-            <Style x:Key="Multiplayer.Tab" TargetType="RadioButton">
-                <Setter Property="Foreground" Value="{DynamicResource Hybrid.Muted}" />
-                <Setter Property="Background" Value="Transparent" />
-                <Setter Property="Padding" Value="18,10" />
-                <Setter Property="FontSize" Value="14" />
-                <Setter Property="Cursor" Value="Hand" />
-                <Setter Property="ContentTemplate">
-                    <Setter.Value>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding}" TextWrapping="NoWrap"
-                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
-                                       FontWeight="{Binding FontWeight, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
-                        </DataTemplate>
-                    </Setter.Value>
-                </Setter>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="RadioButton">
-                            <Border x:Name="Frame" Background="{TemplateBinding Background}" CornerRadius="6,6,0,0">
-                                <Grid>
-                                    <ContentPresenter Margin="{TemplateBinding Padding}" VerticalAlignment="Center" RecognizesAccessKey="True" />
-                                    <Border x:Name="Indicator" Height="2" VerticalAlignment="Bottom" Background="Transparent" Margin="12,0" />
-                                </Grid>
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Frame" Property="Background" Value="{DynamicResource Hybrid.Surface}" /></Trigger>
-                                <Trigger Property="IsChecked" Value="True">
-                                    <Setter Property="Foreground" Value="{DynamicResource Hybrid.Accent}" />
-                                    <Setter Property="FontWeight" Value="SemiBold" />
-                                    <Setter TargetName="Indicator" Property="Background" Value="{DynamicResource Hybrid.Accent}" />
-                                </Trigger>
-                                <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Frame" Property="Background" Value="{DynamicResource Hybrid.Surface}" /></Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
         </ResourceDictionary>
     </UserControl.Resources>
-    <Grid Background="{DynamicResource Hybrid.Background}">
-        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
-        <Border BorderBrush="{DynamicResource Hybrid.Line}" BorderThickness="0,0,0,1" Padding="12,8,12,0">
-            <StackPanel Orientation="Horizontal">
-                <RadioButton x:Name="RoomsTab" Content="联机房间" GroupName="Multiplayer" IsChecked="True" Checked="RoomsTab_Click"
-                             Style="{StaticResource Multiplayer.Tab}" AutomationProperties.AutomationId="Multiplayer.RoomsTab" />
-                <RadioButton x:Name="ServersTab" Content="服务器" GroupName="Multiplayer" Checked="ServersTab_Click"
-                             Style="{StaticResource Multiplayer.Tab}" AutomationProperties.AutomationId="Multiplayer.ServersTab" />
-            </StackPanel>
-        </Border>
-        <Grid Grid.Row="1" ClipToBounds="True">
-            <ContentControl x:Name="RoomHost" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
-            <ContentControl x:Name="ServerHost" Visibility="Collapsed" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
-        </Grid>
+    <Grid Background="{DynamicResource Hybrid.Background}" ClipToBounds="True">
+        <ContentControl x:Name="ServerHost" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
     </Grid>
 </UserControl>

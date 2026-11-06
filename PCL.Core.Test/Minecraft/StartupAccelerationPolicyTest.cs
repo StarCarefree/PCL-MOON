@@ -43,6 +43,17 @@ public sealed class StartupAccelerationPolicyTest
     [DataRow(21, true, "-Dpclmoon.startup.enabled=true -javaagent:\"C:/a b/mooncl-startup-agent-hash.jar\"", false)]
     public void RequiresExplicitCompatibleOptIn(int java, bool is64Bit, string arguments, bool expected)
     {
-        Assert.AreEqual(expected, StartupAccelerationPolicy.ShouldInject(java, is64Bit, arguments));
+        Assert.AreEqual(expected, StartupAccelerationPolicy.ShouldInject(java, is64Bit, arguments, hasForge: true));
+    }
+
+    [TestMethod]
+    [DataRow(17, false, false)]
+    [DataRow(17, true, true)]
+    [DataRow(21, false, true)]
+    [DataRow(21, true, true)]
+    public void Java17RequiresForge(int java, bool hasForge, bool expected)
+    {
+        Assert.AreEqual(expected, StartupAccelerationPolicy.ShouldInject(java, true,
+            "-Dpclmoon.startup.enabled=true", hasForge));
     }
 }

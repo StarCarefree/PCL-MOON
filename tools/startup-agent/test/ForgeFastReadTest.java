@@ -56,6 +56,16 @@ public final class ForgeFastReadTest {
         @Override public void close() { }
     }
     public static void main(String[] args) throws Exception {
+        if (Runtime.version().feature() == 17
+                && (Boolean.getBoolean("pclmoon.startup.forgeCache.disabled")
+                    || Boolean.getBoolean("pclmoon.startup.forgeFastRead.disabled"))) {
+            try {
+                Class.forName("pclmoon.startup.ForgeDirectRead", false, null);
+                throw new AssertionError("Disabled Java 17 Forge path must not install the bootstrap helper");
+            } catch (ClassNotFoundException expected) { }
+            System.out.println("PASS: disabled Java 17 Forge path installs no helper");
+            return;
+        }
         Class<?> direct = Class.forName("pclmoon.startup.ForgeDirectRead", true, null);
         read = direct.getMethod("read", ModuleReader.class, ModuleReference.class, String.class);
         Reader reader = new Reader();
@@ -95,7 +105,10 @@ public final class ForgeFastReadTest {
         catch (NullPointerException expected) { checks++; }
         try { invoke(null, null, "name"); throw new AssertionError("Null reader accepted"); }
         catch (NullPointerException expected) { checks++; }
-        check((Long) direct.getMethod("directReadCount").invoke(null) == invokes, "Direct read counter drifted");
+        long expectedCount = Boolean.getBoolean("pclmoon.startup.metrics") ? invokes : 0;
+        check((Long) direct.getMethod("directReadCount").invoke(null) == expectedCount, "Direct read counter drifted");
+        check(direct.getMethod("summary").invoke(null).equals("Forge direct reads=" + expectedCount),
+              "Direct read summary drifted");
         System.out.println("PASS: " + checks + " Forge direct-read byte/open/close/exception checks");
     }
 }

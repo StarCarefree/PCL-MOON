@@ -514,7 +514,8 @@ function syncButtons(parent, items, className, activate) {
       const summary = document.createElement("span");
       summary.className = "card-summary";
       if (className === "card") copy.append(title, detail, stat, summary, pill);
-      else copy.append(title, detail, pill);
+      // 继续发现列表不显示来源标签
+      else copy.append(title, detail);
       open.append(art, copy);
       node.append(open);
       node._parts = { open, image, title, detail, stat, summary, pill };
@@ -688,7 +689,7 @@ function render() {
   ui["discovery-index"].hidden = pool.length < 2;
   scheduleDiscovery();
   setText("recommend-title", "继续发现");
-  setText("recommend-note", "来自当前所选来源 · 非广告排名 · 可滑动");
+  setText("recommend-note", "来自当前所选来源");
   const task = { ...taskOf(), error: taskForScope("library").error, phase: taskForScope("library").phase };
   const isBusy = busy();
   const running = gameRunning();

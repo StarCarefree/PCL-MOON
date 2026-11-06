@@ -415,7 +415,7 @@ public static class ModLibrary
             if (mainJar is not null)
                 result.Add(mainJar);
         }
-        catch (Exception ex) when (ex is not DownloadRegionBlockedException)
+        catch (Exception ex)
         {
             ModBase.Log(ex, "实例缺失主 Jar 文件所必须的信息", ModBase.LogLevel.Developer);
         }

@@ -158,13 +158,17 @@ def main():
     start = time.perf_counter()
     logfile = output / 'console.log'
     result = None
-    with logfile.open('w', encoding='utf-8') as console:
+    with logfile.open('w', encoding='utf-8') as console, logfile.open('r', encoding='utf-8', errors='replace') as reader:
         process = subprocess.Popen(command, cwd=instance, stdout=console, stderr=subprocess.STDOUT,
                                    env={k: v for k, v in os.environ.items() if not k.startswith('PCL_MOON_')})
         try:
+            pending = ''
             while time.perf_counter() - start < a.timeout:
                 elapsed = time.perf_counter() - start
-                text = logfile.read_text(encoding='utf-8', errors='replace')
+                # 只扫描新增完整行，保留跨轮写入的半行，避免重复读取增长中的日志。
+                chunk = pending + reader.read()
+                end = chunk.rfind('\n') + 1
+                text, pending = chunk[:end], chunk[end:]
                 for name, pattern in patterns.items():
                     if name not in marks and re.search(pattern, text):
                         marks[name] = round(elapsed, 3)

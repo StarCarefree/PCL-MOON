@@ -3636,7 +3636,7 @@ public static class ModDownloadLib
                 HintService.Hint($"{loader.name}{Lang.Text("Common.Status.Success")}", HintType.Success);
                 break;
             case ModBase.LoadState.Failed:
-                HintService.Hint($"{loader.name}{Lang.Text("Common.Status.Failure")}{DownloadRegionPolicy.RegionBlockMessage(loader.Error) ?? loader.Error.Message}", HintType.Error);
+                HintService.Hint($"{loader.name}{Lang.Text("Common.Status.Failure")}{loader.Error.Message}", HintType.Error);
                 break;
             case ModBase.LoadState.Aborted:
                 HintService.Hint($"{loader.name}{Lang.Text("Common.Status.Cancelled")}");
@@ -3672,7 +3672,7 @@ public static class ModDownloadLib
             case ModBase.LoadState.Failed:
             {
                 HintService.Hint(
-                    $"{loader.name}{Lang.Text("Common.Status.Failure")}{DownloadRegionPolicy.RegionBlockMessage(loader.Error) ?? loader.Error.Message}",
+                    $"{loader.name}{Lang.Text("Common.Status.Failure")}{loader.Error.Message}",
                     HintType.Error);
                 break;
             }

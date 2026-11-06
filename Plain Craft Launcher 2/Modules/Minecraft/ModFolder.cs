@@ -132,6 +132,24 @@ public static class ModFolder
                 ModBase.Log(ex, "扫描 PCL 所在文件夹中是否有 MC 文件夹失败");
             }
 
+            // 当前文件夹及其子文件夹都没有 MC 文件夹时，直接创建 .minecraft，避免回退到其他位置的文件夹
+            if (!Directory.Exists(ModBase.exePath + @"versions\") && !currentMcFolderList.Any())
+            {
+                try
+                {
+                    Directory.CreateDirectory(ModBase.exePath + @".minecraft\versions\");
+                    var createdFolder = new McFolder
+                        { Name = ".minecraft", Location = ModBase.exePath + @".minecraft\", type = McFolder.Types.Original };
+                    originalMcFolderList.Add(createdFolder);
+                    currentMcFolderList.Add(createdFolder);
+                    ModBase.Log("[Minecraft] 当前文件夹中没有 MC 文件夹，已创建 .minecraft");
+                }
+                catch (Exception ex)
+                {
+                    ModBase.Log(ex, "在 PCL 所在文件夹中创建 .minecraft 失败");
+                }
+            }
+
             // 扫描官启文件夹
             var mojangPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), ".minecraft") + @"\";
             if ((!currentMcFolderList.Any() || (mojangPath ?? "") != (currentMcFolderList[0].Location ?? "")) &&

@@ -66,7 +66,7 @@ public static class RunningInstanceCards
             }
             catch (Exception) { continue; }
             var current = watcher;
-            result.Add((id, () => current.WindowHandle, () => current.fullLog, current.version?.Name ?? ""));
+            result.Add((id, () => current.WindowHandle, () => current.GetFullLog(), current.version?.Name ?? ""));
         }
         return result;
     }
