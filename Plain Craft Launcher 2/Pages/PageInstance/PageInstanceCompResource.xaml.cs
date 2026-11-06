@@ -329,7 +329,8 @@ public partial class PageInstanceCompResource : IRefreshable
     private void LoaderInit()
     {
         PageLoaderInit(Load, PanLoad, PanAllBack, null, ModLocalComp.compResourceListLoader,
-            _ => LoadUIFromLoaderOutput(), () => currentCompType, false);
+            inputInvoke: () => currentCompType, autoRun: false,
+            finishedInvokeAsync: _ => LoadUIFromLoaderOutputAsync());
     }
 
     private void Load_Click(object sender, MouseButtonEventArgs e)
@@ -483,12 +484,22 @@ public partial class PageInstanceCompResource : IRefreshable
     /// <summary>
     ///     将加载器结果的 Mod 列表加载为 UI。
     /// </summary>
-    private void LoadUIFromLoaderOutput()
+    private int _listUiGeneration;
+
+    private async Task LoadUIFromLoaderOutputAsync()
     {
+        var generation = ++_listUiGeneration;
+        var loader = ModLocalComp.compResourceListLoader;
+        var loaderRun = loader.lastRunningTask;
+        var output = loader.output;
+        bool IsCurrent() => generation == _listUiGeneration && ReferenceEquals(loaderRun, loader.lastRunningTask);
         try
         {
+            SetListPreparing(true);
+            await Dispatcher.Yield(DispatcherPriority.Background);
+            if (!IsCurrent()) return;
             // 判断应该显示哪一个页面
-            if (ModLocalComp.compResourceListLoader.output.Any())
+            if (output.Any())
             {
                 PanBack.Visibility = Visibility.Visible;
                 PanEmpty.Visibility = Visibility.Collapsed;
@@ -552,7 +563,7 @@ public partial class PageInstanceCompResource : IRefreshable
                                : "") + ModLocalComp.GetPathNameByCompType(currentCompType) + @"\";
             rootPath = Path.GetFullPath(rootPath.TrimEnd('\\'));
 
-            var itemsToShow = ModLocalComp.compResourceListLoader.output.Where(item =>
+            var itemsToShow = output.Where(item =>
             {
                 var itemPath = item.IsFolder ? item.ActualPath : item.path;
                 var parentDir = Directory.GetParent(itemPath)?.FullName;
@@ -562,16 +573,24 @@ public partial class PageInstanceCompResource : IRefreshable
                 return parentDir.Equals(CurrentFolderPath, StringComparison.OrdinalIgnoreCase);
             }).ToList();
 
+            var slice = System.Diagnostics.Stopwatch.StartNew();
+            var batchCount = 0;
             foreach (var ModEntity in itemsToShow)
-                modItems[ModEntity.RawPath] = BuildLocalCompItem(ModEntity);
-            // 显示结果
-            ModBase.RunInUi(() =>
             {
-                Filter = FilterType.All;
-                SearchBox.Text = ""; // 这会触发结果刷新，所以需要在 ModItems 更新之后，详见 #3124 的视频
-                RefreshUI();
-                SetSortMethod(SortMethod.CompName);
-            });
+                modItems[ModEntity.RawPath] = BuildLocalCompItem(ModEntity);
+                if (++batchCount < 8 && slice.ElapsedMilliseconds < 8) continue;
+                // 让出输入与渲染时间，避免大量控件初始化把加载动画一并卡住。
+                await Dispatcher.Yield(DispatcherPriority.Background);
+                if (!IsCurrent()) return;
+                batchCount = 0;
+                slice.Restart();
+            }
+            // 显示结果
+            Filter = FilterType.All;
+            SearchBox.Text = ""; // 这会触发结果刷新，所以需要在 ModItems 更新之后，详见 #3124 的视频
+            RefreshUI();
+            SetSortMethod(SortMethod.CompName);
+            await Dispatcher.Yield(DispatcherPriority.Background);
         }
         catch (Exception ex)
         {
@@ -580,6 +599,10 @@ public partial class PageInstanceCompResource : IRefreshable
                 $"加载 {currentCompType} 列表 UI 失败",
                 ModBase.LogLevel.Feedback,
                 userSummary: Lang.Text("Instance.Resource.Error.OperationFailed"));
+        }
+        finally
+        {
+            if (generation == _listUiGeneration) SetListPreparing(false);
         }
     }
 

@@ -649,6 +649,8 @@ public static class ModLoader
                     if (ModBase.modeDebug)
                         ModBase.Log($"[Loader] 加载线程 {name} ({Task.CurrentId}) 已完成");
                     RaisePreviewFinish();
+                    // UI 初始化可能分批让出线程，此期间重启后不能由旧任务回写完成状态。
+                    if (IsAborted) return;
                     State = ModBase.LoadState.Finished;
                     lastFinishedTime = TimeUtils.GetTimeTick();
                 }
