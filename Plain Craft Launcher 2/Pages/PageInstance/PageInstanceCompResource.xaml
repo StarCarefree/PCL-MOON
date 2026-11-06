@@ -101,8 +101,16 @@
         </Grid>
         <local:MyCard HorizontalAlignment="Center" VerticalAlignment="Center" Margin="40,0" SnapsToDevicePixels="True"
                       x:Name="PanLoad" UseAnimation="False">
-            <local:MyLoading Text="{DynamicResource Instance.Resource.Loading}" Margin="20,20,20,17" x:Name="Load" HorizontalAlignment="Center"
-                             VerticalAlignment="Center" />
+            <StackPanel Margin="20,20,20,17">
+                <local:MyLoading Text="{DynamicResource Instance.Resource.Loading}" x:Name="Load"
+                                 HorizontalAlignment="Center" VerticalAlignment="Center" />
+                <StackPanel x:Name="PanPreparingDots" Orientation="Horizontal" HorizontalAlignment="Center"
+                            Margin="0,12,0,0" Visibility="Hidden" IsHitTestVisible="False">
+                    <Ellipse Width="5" Height="5" Margin="4,0" Fill="{DynamicResource ColorBrush3}" Opacity="0.3" />
+                    <Ellipse Width="5" Height="5" Margin="4,0" Fill="{DynamicResource ColorBrush3}" Opacity="0.3" />
+                    <Ellipse Width="5" Height="5" Margin="4,0" Fill="{DynamicResource ColorBrush3}" Opacity="0.3" />
+                </StackPanel>
+            </StackPanel>
         </local:MyCard>
         <local:MyCard x:Name="CardSelect" Visibility="Collapsed" Opacity="0"
                       HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="25,25,25,0" UseAnimation="False">

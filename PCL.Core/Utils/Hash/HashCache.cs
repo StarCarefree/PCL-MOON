@@ -2,6 +2,7 @@ using Microsoft.Data.Sqlite;
 using PCL.Core.Utils.Exts;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -56,6 +57,20 @@ public class HashCache
     public Task<string> GetSHA1Async(string filePath) =>
         _GetHashWithPending(filePath, SHA1Provider.Instance, "SHA1");
 
+    /// <summary>只查询仍有效的 SHA1 缓存，未命中返回 null，不读取文件内容或计算哈希。</summary>
+    public async Task<string?> GetCachedSHA1Async(string filePath)
+    {
+        var fullPath = Path.GetFullPath(filePath);
+        var fileInfo = new FileInfo(fullPath);
+        if (!fileInfo.Exists) return null;
+        var fileSize = fileInfo.Length;
+        var lastWrite = fileInfo.LastWriteTimeUtc.ToString("O");
+        var cached = await _FindCacheEntryAsync(fullPath).ConfigureAwait(false);
+        return cached is not null && cached.FileSize == fileSize && cached.LastWriteTime == lastWrite
+            ? cached.SHA1
+            : null;
+    }
+
     public Task<string> GetSHA256Async(string filePath) =>
         _GetHashWithPending(filePath, SHA256Provider.Instance, "SHA256");
 
@@ -65,7 +80,7 @@ public class HashCache
     public Task<string> GetMurmurHash2Async(string filePath) =>
         _GetHashWithPending(filePath, MurmurHash2Provider.Instance, "MurmurHash2");
 
-    private static readonly ConcurrentDictionary<string, Task<string>> _FileHashComputePending = new();
+    private static readonly ConcurrentDictionary<string, Lazy<Task<string>>> _FileHashComputePending = new();
 
     public async Task<string> GetHashAsync(string filePath, IHashProvider provider)
     {
@@ -82,18 +97,21 @@ public class HashCache
         return await _GetHashWithPending(filePath, provider, algoName).ConfigureAwait(false);
     }
 
-    private Task<string> _GetHashWithPending(string filePath, IHashProvider provider, string algoName)
+    private async Task<string> _GetHashWithPending(string filePath, IHashProvider provider, string algoName)
     {
         var computeKey = $"{filePath}:{algoName}";
-        return _FileHashComputePending.GetOrAdd(computeKey, key =>
+        // GetOrAdd 的工厂可能并发执行多次，用 Lazy 避免同一文件被重复计算。
+        var pending = _FileHashComputePending.GetOrAdd(computeKey,
+            _ => new Lazy<Task<string>>(() => _GetHashAsync(filePath, provider, algoName)));
+        try
         {
-            var computeTask = _GetHashAsync(filePath, provider, algoName);
-            _ = computeTask.ContinueWith(t =>
-            {
-                _FileHashComputePending.TryRemove(computeKey, out _);
-            }, TaskContinuationOptions.ExecuteSynchronously);
-            return computeTask;
-        });
+            return await pending.Value.ConfigureAwait(false);
+        }
+        finally
+        {
+            // 同步命中也在入表后清理；只移除本次任务，避免误删后续计算。
+            _FileHashComputePending.TryRemove(new KeyValuePair<string, Lazy<Task<string>>>(computeKey, pending));
+        }
     }
 
     private async Task<string> _GetHashAsync(string filePath, IHashProvider provider, string algoName)
