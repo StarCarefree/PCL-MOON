@@ -1191,6 +1191,7 @@ CSV 格式：导出详细的资源信息，包括其文件名、工程的 ID、�
     <sys:String x:Key="Instance.Resource.Favorite">收藏</sys:String>
     <sys:String x:Key="Instance.Resource.InstallFromFiles">从文件安装</sys:String>
     <sys:String x:Key="Instance.Resource.List.Loading">正在加载资源列表</sys:String>
+    <sys:String x:Key="Instance.Resource.List.Preparing">正在整理资源列表</sys:String>
     <sys:String x:Key="Instance.Resource.Loading">正在加载资源列表</sys:String>
     <sys:String x:Key="Instance.Resource.Mod.Disabled.GoDownload">转到下载页面</sys:String>
     <sys:String x:Key="Instance.Resource.Mod.Disabled.Message">你需要先安装 Forge、Fabric 等模组加载器才能使用模组，请在下载页面安装这些实例。
