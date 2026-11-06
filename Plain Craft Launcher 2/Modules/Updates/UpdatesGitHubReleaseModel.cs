@@ -1,4 +1,5 @@
 using System.Text.Json;
+using PCL.Core.App.Essentials;
 using PCL.Core.App.Localization;
 using PCL.Core.IO.Net.Http;
 using PCL.Core.Utils;
@@ -86,7 +87,7 @@ public class UpdatesGitHubReleaseModel : IUpdateSource
             VersionName = VersionFromTag(release.Tag),
             VersionCode = 0,
             Sha256 = ReadSha256(release, asset),
-            Changelog = release.Body ?? ""
+            Changelog = UpdateHelper.CleanChangelog(release.Body)
         };
     }
 

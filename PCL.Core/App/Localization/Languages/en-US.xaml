@@ -2758,7 +2758,8 @@ Press &quot;F11&quot; again to exit the hidden instance viewing mode.</sys:Strin
 
     <!-- Setup.About -->
 
-    <sys:String x:Key="Setup.About.Community.Info">The development team of PCL-MOON!</sys:String>
+    <sys:String x:Key="Setup.About.Community.Info">The development team of PCL-CE!</sys:String>
+    <sys:String x:Key="Setup.About.Moon.Info">The development team of PCL-MOON!</sys:String>
     <sys:String x:Key="Setup.About.Community.Name">PCL Community</sys:String>
     <sys:String x:Key="Setup.About.Contributors.Title">Contributors</sys:String>
     <sys:String x:Key="Setup.About.Contributors.ViewMore">View more</sys:String>
@@ -2811,7 +2812,7 @@ Press &quot;F11&quot; again to exit the hidden instance viewing mode.</sys:Strin
     <!-- Setup.About.Legal -->
 
     <sys:String x:Key="Setup.About.Legal.CommunitySource">PCL-MOON source code</sys:String>
-    <sys:String x:Key="Setup.About.Legal.CopyrightText">Copyright © PCL Community &amp; LTCat (龙腾猫跃) 2026.NOT AN OFFICIAL MINECRAFT PRODUCT. NOT APPROVED BY OR ASSOCIATED WITH MOJANG OR MICROSOFT.</sys:String>
+    <sys:String x:Key="Setup.About.Legal.CopyrightText">Copyright © 2026 StarCarefree &amp; PCL Community &amp; LTCat (龙腾猫跃).&#xD;NOT AN OFFICIAL MINECRAFT PRODUCT. NOT APPROVED BY OR ASSOCIATED WITH MOJANG OR MICROSOFT.</sys:String>
     <sys:String x:Key="Setup.About.Legal.OtherInfo">Other information</sys:String>
     <sys:String x:Key="Setup.About.Legal.PrivacyNotice">Privacy statement</sys:String>
     <sys:String x:Key="Setup.About.Legal.PrivacyText">The User Agent of this software includes the launcher version number to count the number of users on each version.Other than this, this software will not upload any other information to the developers.* Online and hardware/software survey features follow their own privacy policies, which are separate from this notice.</sys:String>

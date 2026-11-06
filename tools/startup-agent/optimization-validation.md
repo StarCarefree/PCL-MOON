@@ -8,7 +8,7 @@
 - Java 17 Forge 层关闭时不提取 bootstrap helper；metrics 关闭时不创建、更新 Forge 读取计数器。
 - 启动器复用已计算的资源 SHA-256；游戏计时脚本改为增量扫描新增完整日志行。
 
-Agent 仍默认关闭，不缓存转换后的字节码，不调整 Mod 加载顺序，不跳过 Mixin、签名或类定义。
+本轮性能测量时 Agent 默认关闭；后续已按用户要求将兼容实例改为默认开启，当前开关说明见 [README.md](README.md)。Agent 不缓存转换后的字节码，不调整 Mod 加载顺序，不跳过 Mixin、签名或类定义。
 
 ## 回归检查
 

@@ -1,12 +1,29 @@
 using System;
 using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 
 namespace PCL.Core.App.Essentials;
 
 public static class UpdateHelper
 {
+    /// <summary>
+    /// 去掉发布页附加的安装包说明和校验值，保留更新日志正文。
+    /// </summary>
+    public static string CleanChangelog(string? markdown)
+    {
+        if (string.IsNullOrEmpty(markdown)) return string.Empty;
+
+        var paragraphs = Regex.Split(markdown, @"\r?\n[ \t]*\r?\n");
+        var content = paragraphs.Where(paragraph =>
+            !Regex.IsMatch(paragraph, @"^\s*下载[ \t]+`pcl-moon-[^`\r\n]+\.exe`[。\s]", RegexOptions.IgnoreCase) &&
+            !Regex.IsMatch(paragraph, @"^\s*SHA-256:[ \t]*`?[0-9a-f]{64}`?\s*$", RegexOptions.IgnoreCase))
+            .ToArray();
+        return content.Length == paragraphs.Length ? markdown : string.Join("\n\n", content).Trim();
+    }
+
     /// <summary>
     /// 更新启动器（替换文件）
     /// </summary>

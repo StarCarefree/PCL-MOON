@@ -2751,7 +2751,8 @@ PCL-MOON 的問題請向 PCL-MOON 回饋，不要提交到原版 PCL 或上游 P
 
     <!-- Setup.About -->
 
-    <sys:String x:Key="Setup.About.Community.Info">PCL-MOON 的開發團隊！</sys:String>
+    <sys:String x:Key="Setup.About.Community.Info">PCL-CE 的開發團隊！</sys:String>
+    <sys:String x:Key="Setup.About.Moon.Info">PCL-MOON 的開發團隊！</sys:String>
     <sys:String x:Key="Setup.About.Community.Name">PCL Community</sys:String>
     <sys:String x:Key="Setup.About.Contributors.Title">貢獻者們</sys:String>
     <sys:String x:Key="Setup.About.Contributors.ViewMore">檢視更多</sys:String>
@@ -2804,7 +2805,7 @@ PCL-MOON 的問題請向 PCL-MOON 回饋，不要提交到原版 PCL 或上游 P
     <!-- Setup.About.Legal -->
 
     <sys:String x:Key="Setup.About.Legal.CommunitySource">PCL-MOON 開放原始碼</sys:String>
-    <sys:String x:Key="Setup.About.Legal.CopyrightText">Copyright © 2026 PCL Community &amp; 龙腾猫跃.非 MINECRAFT 官方產品。未經 MOJANG 或 MICROSOFT 批准，也不與 MOJANG 或 MICROSOFT 關聯。</sys:String>
+    <sys:String x:Key="Setup.About.Legal.CopyrightText">Copyright © 2026 StarCarefree &amp; PCL Community &amp; 龙腾猫跃.&#xD;非 MINECRAFT 官方產品。未經 MOJANG 或 MICROSOFT 批准，也不與 MOJANG 或 MICROSOFT 關聯。</sys:String>
     <sys:String x:Key="Setup.About.Legal.OtherInfo">其他資訊</sys:String>
     <sys:String x:Key="Setup.About.Legal.PrivacyNotice">隱私說明</sys:String>
     <sys:String x:Key="Setup.About.Legal.PrivacyText">本軟體的 User Agent 中包含啟動器的版本號，以統計各版本的使用者數量。除此之外，本軟體不會向開發者上傳任何其他資訊。* 連線與軟硬體調查相關功能遵循其自身的隱私政策，與上述說明不通用。</sys:String>

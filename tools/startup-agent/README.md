@@ -1,9 +1,9 @@
 # 实验性启动 Agent
 
-**默认关闭。需要按实例测量，不保证所有整合包更快或绝对无错。** 在启动器实例的额外 JVM 参数中添加：
+**兼容实例默认开启。需要按实例测量，不保证所有整合包更快或绝对无错。** 无需额外添加启用参数。需要关闭时，在启动器实例的额外 JVM 参数中添加：
 
 ```text
--Dpclmoon.startup.enabled=true
+-Dpclmoon.startup.disabled=true
 ```
 
 启动器只对 **64 位 Java 17 / 21** 自动注入，Java 17 还要求实例标记为 Forge；其他 Java、外部参数文件、不完整引号或重复 Agent 保持原启动路径。Agent 以 Java 17 字节码编译，在 Java 17 和 21 分别验证。
@@ -27,7 +27,7 @@
 -Dpclmoon.startup.durationMs=60000               # Java 21 JDK 查找缓存窗口；Java 17 仅为 metrics 打印时间，限制在 1000..120000 ms
 ```
 
-删除启用参数即可恢复启动器原始注入策略。提取资源失败不追加 Agent；未知类/方法形态不修改原字节码。Agent 成功安装后保留转换器，供后续正常重转换重新应用钩子。bootstrap helper 按内容哈希命名（`pcl-moon-startup-helper-<sha256前16位>.jar`）写到 Agent JAR 同目录，跨启动复用、不写 %TEMP%。
+删除关闭参数即可恢复默认开启；`-Dpclmoon.startup.enabled=false` 也可关闭启动器自动注入，旧版 `mooncl.startup` 参数仍兼容。提取资源失败不追加 Agent；未知类/方法形态不修改原字节码。Agent 成功安装后保留转换器，供后续正常重转换重新应用钩子。bootstrap helper 按内容哈希命名（`pcl-moon-startup-helper-<sha256前16位>.jar`）写到 Agent JAR 同目录，跨启动复用、不写 %TEMP%。
 
 追加 bootstrap helper 可能限制应用类 CDS 共享，这是实测时必须包含的成本。未验证任意 JVM、第三方 Agent 或 Mod 的组合，不能作无错误保证。
 

@@ -37,7 +37,7 @@ internal static class StartupAgentLaunch
                 }
             }
             process.Arguments = "-javaagent:\"" + path + "\" " + process.Arguments;
-            ModBase.Log("[Startup] 已按显式选择启用实验性启动索引/Forge 类读取优化；不缓存转换结果，保留 Mod 转换与校验，实际收益以实例测试为准");
+            ModBase.Log("[Startup] 已启用实验性启动索引/Forge 类读取优化；不缓存转换结果，保留 Mod 转换与校验，实际收益以实例测试为准");
         }
         catch (Exception error)
         {

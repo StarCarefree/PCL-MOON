@@ -4,15 +4,15 @@ using System.Text.RegularExpressions;
 
 namespace PCL.Core.Minecraft.Launcher;
 
-/// <summary>Experimental JAR lookup acceleration is strictly opt-in, never a default JVM tuning.</summary>
+/// <summary>兼容实例默认启用启动加速，保留显式关闭和参数安全检查。</summary>
 public static class StartupAccelerationPolicy
 {
     public static bool ShouldInject(int javaMajor, bool is64Bit, string arguments, bool hasForge)
     {
-        if (javaMajor is not (17 or 21) || !is64Bit || string.IsNullOrEmpty(arguments)) return false;
+        if (javaMajor is not (17 or 21) || !is64Bit || arguments is null) return false;
         if (javaMajor == 17 && !hasForge) return false;
         if (arguments.Count(ch => ch == '"') % 2 != 0 || arguments.Contains("\\\"", StringComparison.Ordinal)) return false;
-        var enabled = false;
+        var enabled = true;
         var disabled = false;
         foreach (Match match in Regex.Matches(arguments, """(?:[^\s"]|"[^"]*")+"""))
         {
