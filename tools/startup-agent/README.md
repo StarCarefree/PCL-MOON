@@ -10,11 +10,40 @@
 
 ## 按运行环境选择路径
 
-- **Java 17：Forge 专用试验路径。** 不初始化 `NegativeCache`、不开放 JDK 加载器内部包，也不安装 `URLClassPath` / `ZipFile` 查找补丁。Forge 层关闭时不提取或追加 bootstrap helper。
+- **Java 17：Forge 专用试验路径。** 不初始化 `NegativeCache`、不开放 JDK 加载器内部包，也不安装 `URLClassPath` / `ZipFile` 查找补丁。Forge 层和 MMCSS 均关闭时不提取或追加 bootstrap helper。
 - **Java 21：保守 JAR 位索引、整条类路径缺失判断。** 单 JAR 累计 4 次缺失后才枚举，构建不持有全局缓存锁；整条类路径累计 4 次未被缓存拦截的失败后，复用条目哈希构建聚合索引，不再次枚举 JAR。条目哈希共享 2 MiB 预算，预算不足或并发构建时回退原查找/逐名称缺失缓存。动态目录、Manifest 扩展路径、自定义 handler 等仍绕过或失效；追加路径/关闭前后递增 generation，在途旧结果不得重新登记。
 - **Forge 原始字节正缓存：已移除。** 真实实例中 128 个已登记来源全部旁路、命中为 0，不值得保留资格检查与失效逻辑；现在只剩下面的哈希限定直接读取。
 - **Forge 直接读取：** 仅在 `securejarhandler 2.1.10` 的 `ModuleClassLoader.class` SHA-256 与已检查版本完全一致时，将 `getClassBytes` 的 Optional/Stream 包装替换为直接 open/readAllBytes/close。缺失返回空数组，读取/关闭异常和 suppressed 关系保留；后续 Access Transformer、Mixin、签名和 defineClass 仍执行。其他版本/已有字节码修改不启用此替换。
 - 直接读取路径已在真实 Forge 中确认执行；只有 `metrics=true` 时才创建并更新读取计数器。
+
+## Windows MMCSS（MinecraftMMCSS 集成）
+
+启用本 Agent 后，在 Windows 上额外提供原 MinecraftMMCSS 的 `Games` 调度注册。无需安装 Fabric 模组、JNA 或 JNA platform；本 Agent 现有注入范围仍是 64 位 Java 17/21，Java 17 自动注入仍要求 Forge。
+
+- 仅在实际渲染线程第一次调用 `GLFW.glfwSwapBuffers` 或 LWJGL2 `Display.swapBuffers` 时调用 `AvSetMmThreadCharacteristicsW("Games")`。不会提升 premain 工作线程，也不改变整个进程优先级，不逐帧重复注册。
+- 销毁窗口／GLFW 终止时在调用线程注销；原生 FLS 回调也会在线程退出时注销。`Games` 注册保持到注销，不受 60 秒启动查找缓存窗口限制。
+- 内嵌 Windows x64／ARM64 JNI 桥接库，按内容哈希写到 Agent 同目录并复用。仅从 System32 加载系统 `avrt.dll`。服务不可用、资源缺失或 API 失败时保留原调度，不阻止游戏。
+- `-Dpclmoon.startup.mmcss.disabled=true` 仅关闭 MMCSS；整个 Agent 的总开关仍生效。单独关闭 Forge 查找优化不会关闭 MMCSS。
+- 不保证提升 FPS 或减少卡顿；这里验证的是原生任务注册、释放及 Agent 兼容性，而不是游戏性能承诺。ARM64 桥接经过交叉编译，实际注册测试在 Windows x64 上运行。
+
+来源与完整 MIT 授权见 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)，同样内嵌于交付 JAR 的 `META-INF/MinecraftMMCSS-LICENSE.txt`。
+
+原生库源码位于 `native/mmcss.c`，使用 Zig 0.14.1 和 Windows JDK 头文件重新生成：
+
+```bash
+python -X utf8 tools/startup-agent/native/build.py --zig '<zig.exe>' --javac '<Windows JDK>/bin/javac.exe'
+python -X utf8 tools/startup-agent/build.py
+```
+
+
+真实 LWJGL3 窗口链路（Windows x64，需要本地已有 3.3.3 的 `lwjgl` / `lwjgl-glfw` 及其 Windows native JAR）：
+
+```bash
+python -X utf8 tools/startup-agent/test_real_glfw.py --libraries '<Minecraft 根目录>/libraries'
+```
+
+该测试只创建并销毁独立隐藏窗口，查询真实 avrt 状态，不启动游戏、不读写实例配置。
+常规 Agent 打包直接使用仓库内的桥接 DLL，不要求开发者额外下载编译器。
 
 ## 关闭与诊断
 
@@ -43,7 +72,7 @@ python -X utf8 scripts/test-benchmark-instance-startup.py
 dotnet test PCL.Core.Test/PCL.Core.Test.csproj -c Release --filter 'FullyQualifiedName~StartupAccelerationPolicyTest|FullyQualifiedName~JvmLaunchTuningTest' -p:UseSharedCompilation=false
 ```
 
-当前 Java 17/21 各 15 组回归覆盖：资源/MR/碰撞、动态目录/Manifest、路径追加/关闭、重转换、实际计时器、Forge 哈希门槛与读取异常、metrics 关闭及 Java 17 Forge 层关闭。Java 21 另覆盖延迟建表、聚合复用、预算耗尽、并发构建和停止后禁止重新登记；测试包含 `-Xverify:all`。完整游戏加载、主菜单交互和存档运行是不同验收，不用“窗口出现”冒充全部完成。
+当前 Java 17/21 各 21 组回归：原 15 组覆盖资源/MR/碰撞、动态目录/Manifest、路径追加/关闭、重转换、实际计时器、Forge 哈希门槛与读取异常、metrics 关闭及 Java 17 Forge 层关闭；另 6 组验证 MMCSS 原生注册与 avrt 查询、重复帧、GLFW/LWJGL2 注销、线程退出、总开关、独立开关、非 Windows、关闭 Forge 层和缺失原生资源。Java 21 另覆盖延迟建表、聚合复用、预算耗尽、并发构建和停止后禁止重新登记；测试包含 `-Xverify:all`。完整游戏加载、主菜单交互和存档运行是不同验收，不用“窗口出现”冒充全部完成。
 
 ## 索引性能对照
 
