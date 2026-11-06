@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -204,15 +205,16 @@ namespace PCL
         ///     同一次扫描内批量读取较大的对象目录，避免为每个已有资源单独查询文件系统。
         ///     不跨启动缓存；旧版逻辑路径、小目录与读取失败的条目仍逐文件检查。
         /// </summary>
-        private static Dictionary<string, long> McAssetsFileSizes(List<McAssetsToken> assets)
+        private static ConcurrentDictionary<string, long> McAssetsFileSizes(List<McAssetsToken> assets)
         {
-            var sizes = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
+            var sizes = new ConcurrentDictionary<string, long>(StringComparer.OrdinalIgnoreCase);
             var objectsRoot = Path.Combine(ModFolder.mcFolderSelected, "assets", "objects");
-            foreach (var group in assets.GroupBy(token => Path.GetDirectoryName(token.localPath), StringComparer.OrdinalIgnoreCase))
+            Parallel.ForEach(assets.GroupBy(token => Path.GetDirectoryName(token.localPath), StringComparer.OrdinalIgnoreCase),
+                new ParallelOptions { MaxDegreeOfParallelism = Math.Clamp(Environment.ProcessorCount, 1, 4) }, group =>
             {
-                if (group.Count() < 32 ||
+                if (group.Count() < 8 ||
                     !string.Equals(Path.GetDirectoryName(group.Key), objectsRoot, StringComparison.OrdinalIgnoreCase))
-                    continue;
+                    return;
                 var remaining = group.Select(token => Path.GetFileName(token.localPath)).ToHashSet(StringComparer.OrdinalIgnoreCase);
                 var enumerationLimit = remaining.Count * 4L;
                 try
@@ -231,7 +233,7 @@ namespace PCL
                 }
                 catch (IOException) { } // 缺失目录、枚举期间删除等情况回退到逐文件检查。
                 catch (UnauthorizedAccessException) { }
-            }
+            });
             return sizes;
         }
 

@@ -107,4 +107,65 @@ public class HashCacheLookupTest
         using var exclusive = new FileStream(_file, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
         Assert.IsNull(await _cache.GetCachedSHA1Async(_file));
     }
+
+    [TestMethod]
+    public async Task BatchWritesPersistAllFilesInOneFlush()
+    {
+        var batch = new HashCache(Path.Combine(_directory, "hashes.db"), batchWrites: true);
+        var files = Enumerable.Range(0, 24).Select(i => Path.Combine(_directory, $"library-{i}.jar")).ToArray();
+        foreach (var path in files) File.WriteAllBytes(path, new byte[4096]);
+        var hashes = await Task.WhenAll(files.Select(batch.GetSHA1Async));
+        Assert.IsNull(await _cache.GetCachedSHA1Async(files[0]));
+        using (new FileStream(files[0], FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+            Assert.AreEqual(hashes[0], await batch.GetSHA1Async(files[0]));
+        batch.FlushPendingWrites();
+        var reopened = new HashCache(Path.Combine(_directory, "hashes.db"));
+        for (var i = 0; i < files.Length; i++)
+            Assert.AreEqual(hashes[i], await reopened.GetCachedSHA1Async(files[i]));
+    }
+
+    [TestMethod]
+    public async Task BatchFlushDiscardsModifiedOrDeletedFiles()
+    {
+        var batch = new HashCache(Path.Combine(_directory, "hashes.db"), batchWrites: true);
+        await batch.GetSHA1Async(_file);
+        File.SetLastWriteTimeUtc(_file, File.GetLastWriteTimeUtc(_file).AddMinutes(1));
+        batch.FlushPendingWrites();
+        Assert.IsNull(await _cache.GetCachedSHA1Async(_file));
+        await batch.GetSHA1Async(_file);
+        File.Delete(_file);
+        batch.FlushPendingWrites();
+        Assert.IsNull(await _cache.GetCachedSHA1Async(_file));
+    }
+
+    [TestMethod]
+    public async Task BatchReplacementDoesNotRestoreOldAlgorithmHashes()
+    {
+        var batch = new HashCache(Path.Combine(_directory, "hashes.db"), batchWrites: true);
+        await batch.GetSHA1Async(_file);
+        await batch.GetSHA256Async(_file);
+        batch.FlushPendingWrites();
+        File.WriteAllBytes(_file, new byte[4096]);
+        var expected = await batch.GetSHA256Async(_file);
+        batch.FlushPendingWrites();
+        Assert.IsNull(await _cache.GetCachedSHA1Async(_file));
+        Assert.AreEqual(expected, await _cache.GetSHA256Async(_file));
+    }
+
+    [TestMethod]
+    public async Task QueueComputedHashReusesResultAndRejectsChangedFingerprint()
+    {
+        var batch = new HashCache(Path.Combine(_directory, "hashes.db"), batchWrites: true);
+        var hash = SHA1Provider.Instance.ComputeHash(new byte[8192]).ToHexString();
+        var modified = File.GetLastWriteTimeUtc(_file);
+        batch.QueueComputedHash(_file, SHA1Provider.Instance, hash, 8192, modified);
+        using (new FileStream(_file, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+            Assert.AreEqual(hash, await batch.GetSHA1Async(_file));
+        batch.FlushPendingWrites();
+        Assert.AreEqual(hash, await _cache.GetCachedSHA1Async(_file));
+        File.WriteAllBytes(_file, new byte[4096]);
+        batch.QueueComputedHash(_file, SHA1Provider.Instance, hash, 8192, modified);
+        batch.FlushPendingWrites();
+        Assert.IsNull(await _cache.GetCachedSHA1Async(_file));
+    }
 }

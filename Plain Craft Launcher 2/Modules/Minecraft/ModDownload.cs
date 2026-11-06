@@ -20,7 +20,7 @@ public static class ModDownload
     ///     返回某 Minecraft 版本对应的原版主 Jar 文件的下载信息，要求对应依赖实例已存在。
     ///     失败则抛出异常，不需要下载则返回 Nothing。
     /// </summary>
-    public static DownloadFile DlClientJarGet(McInstance version, bool returnNothingOnFileUseable)
+    public static DownloadFile DlClientJarGet(McInstance version, bool returnNothingOnFileUseable, bool useHashCache = false)
     {
         // 获取底层继承实例
         try
@@ -40,7 +40,9 @@ public static class ModDownload
         // 检查文件
         var checker = new ModBase.FileChecker(1024L, (long)(version.JsonObject["downloads"]["client"]["size"] ?? -1),
             (string)version.JsonObject["downloads"]["client"]["sha1"]);
-        if (returnNothingOnFileUseable && checker.Check(version.PathInstance + version.Name + ".jar") is null)
+        if (returnNothingOnFileUseable &&
+            (useHashCache ? checker.CheckForLaunch(version.PathInstance + version.Name + ".jar") :
+                checker.Check(version.PathInstance + version.Name + ".jar")) is null)
             return null; // 通过校验
         // 返回下载信息
         var jarUrl = (string)version.JsonObject["downloads"]["client"]["url"];
@@ -90,7 +92,8 @@ public static class ModDownload
             {
                 new ModLoader.LoaderTask<string, List<DownloadFile>>(
                     Lang.Text("Minecraft.Download.Stage.AnalyzeMissingLibraries"),
-                    task => task.output = ModLibrary.McLibNetFilesFromInstance(version, includeAuthlib)) { ProgressWeight = 1d },
+                    task => task.output = ModLibrary.McLibNetFilesFromInstance(version, includeAuthlib,
+                        useHashCache: !checkAssetsHash)) { ProgressWeight = 1d },
                 new LoaderDownload(Lang.Text("Minecraft.Download.Stage.DownloadLibraries"), new List<DownloadFile>())
                     { ProgressWeight = 15d }
             };
