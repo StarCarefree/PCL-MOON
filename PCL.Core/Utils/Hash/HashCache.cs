@@ -11,10 +11,15 @@ namespace PCL.Core.Utils.Hash;
 public class HashCache
 {
     private readonly string _dbPath;
+    private readonly bool _batchWrites;
+    private readonly object _flushLock = new();
+    private readonly ConcurrentDictionary<(string Path, string Algorithm), PendingHash> _pendingWrites = new();
+    private sealed record PendingHash(long Size, string LastWrite, string Hash);
 
-    public HashCache(string dbPath)
+    public HashCache(string dbPath, bool batchWrites = false)
     {
         _dbPath = dbPath ?? throw new ArgumentNullException(nameof(dbPath));
+        _batchWrites = batchWrites;
         var dir = Path.GetDirectoryName(Path.GetFullPath(_dbPath));
         if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
             Directory.CreateDirectory(dir);
@@ -82,9 +87,10 @@ public class HashCache
 
     private static readonly ConcurrentDictionary<string, Lazy<Task<string>>> _FileHashComputePending = new();
 
-    public async Task<string> GetHashAsync(string filePath, IHashProvider provider)
-    {
-        var algoName = provider switch
+    public Task<string> GetHashAsync(string filePath, IHashProvider provider) =>
+        _GetHashWithPending(filePath, provider, _AlgorithmName(provider));
+
+    private static string _AlgorithmName(IHashProvider provider) => provider switch
         {
             MD5Provider => "MD5",
             SHA1Provider => "SHA1",
@@ -93,13 +99,21 @@ public class HashCache
             MurmurHash2Provider => "MurmurHash2",
             _ => throw new ArgumentException($"不支持的哈希算法: {provider.GetType().Name}")
         };
-        var computeKey = $"{filePath}:{algoName}";
-        return await _GetHashWithPending(filePath, provider, algoName).ConfigureAwait(false);
+
+    /// <summary>批量模式接收已计算的哈希；指纹不再匹配时丢弃，避免后台重读文件。</summary>
+    public void QueueComputedHash(string filePath, IHashProvider provider, string hash, long size, DateTime modifiedUtc)
+    {
+        if (!_batchWrites) throw new InvalidOperationException("Only batch caches can queue computed hashes.");
+        if (string.IsNullOrEmpty(hash)) return;
+        var fullPath = Path.GetFullPath(filePath);
+        var info = new FileInfo(fullPath);
+        if (!info.Exists || info.Length != size || info.LastWriteTimeUtc != modifiedUtc) return;
+        _pendingWrites[(fullPath, _AlgorithmName(provider))] = new PendingHash(size, modifiedUtc.ToString("O"), hash);
     }
 
     private async Task<string> _GetHashWithPending(string filePath, IHashProvider provider, string algoName)
     {
-        var computeKey = $"{filePath}:{algoName}";
+        var computeKey = $"{Path.GetFullPath(_dbPath)}:{filePath}:{algoName}:{_batchWrites}";
         // GetOrAdd 的工厂可能并发执行多次，用 Lazy 避免同一文件被重复计算。
         var pending = _FileHashComputePending.GetOrAdd(computeKey,
             _ => new Lazy<Task<string>>(() => _GetHashAsync(filePath, provider, algoName)));
@@ -127,6 +141,9 @@ public class HashCache
             var fileSize = fileInfo.Length;
             var lastWrite = fileInfo.LastWriteTimeUtc.ToString("O");
 
+            if (_pendingWrites.TryGetValue((fullPath, algoName), out var pending) &&
+                pending.Size == fileSize && pending.LastWrite == lastWrite)
+                return pending.Hash;
             var cached = await _FindCacheEntryAsync(fullPath).ConfigureAwait(false);
 
             if (cached != null)
@@ -198,22 +215,29 @@ public class HashCache
         _ => null
     };
 
-    private async Task _InsertOrUpdateHashAsync(string fullPath, long fileSize, string lastWrite, string algoName, string hash)
+    private async Task _InsertOrUpdateHashAsync(string fullPath, long fileSize, string lastWrite, string algoName, string hash,
+        SqliteConnection? batchConnection = null, SqliteTransaction? transaction = null)
     {
         if (hash.IsNullOrWhiteSpace()) return;
-        using var conn = _CreateConnection();
-        using var cmd = conn.CreateCommand();
+        if (_batchWrites && batchConnection is null)
+        {
+            _pendingWrites[(fullPath, algoName)] = new PendingHash(fileSize, lastWrite, hash);
+            return;
+        }
+        using var ownedConnection = batchConnection is null ? _CreateConnection() : null;
+        using var cmd = (batchConnection ?? ownedConnection!).CreateCommand();
+        cmd.Transaction = transaction;
         cmd.CommandText = """
             INSERT INTO HashCache (FilePath, FileSize, LastWriteTime, MD5, SHA1, SHA256, SHA512, MurmurHash2)
             VALUES (@FilePath, @FileSize, @LastWriteTime, @MD5, @SHA1, @SHA256, @SHA512, @MurmurHash2)
             ON CONFLICT(FilePath) DO UPDATE SET
                 FileSize = excluded.FileSize,
                 LastWriteTime = excluded.LastWriteTime,
-                MD5 = COALESCE(excluded.MD5, HashCache.MD5),
-                SHA1 = COALESCE(excluded.SHA1, HashCache.SHA1),
-                SHA256 = COALESCE(excluded.SHA256, HashCache.SHA256),
-                SHA512 = COALESCE(excluded.SHA512, HashCache.SHA512),
-                MurmurHash2 = COALESCE(excluded.MurmurHash2, HashCache.MurmurHash2)
+                MD5 = CASE WHEN HashCache.FileSize = excluded.FileSize AND HashCache.LastWriteTime = excluded.LastWriteTime THEN COALESCE(excluded.MD5, HashCache.MD5) ELSE excluded.MD5 END,
+                SHA1 = CASE WHEN HashCache.FileSize = excluded.FileSize AND HashCache.LastWriteTime = excluded.LastWriteTime THEN COALESCE(excluded.SHA1, HashCache.SHA1) ELSE excluded.SHA1 END,
+                SHA256 = CASE WHEN HashCache.FileSize = excluded.FileSize AND HashCache.LastWriteTime = excluded.LastWriteTime THEN COALESCE(excluded.SHA256, HashCache.SHA256) ELSE excluded.SHA256 END,
+                SHA512 = CASE WHEN HashCache.FileSize = excluded.FileSize AND HashCache.LastWriteTime = excluded.LastWriteTime THEN COALESCE(excluded.SHA512, HashCache.SHA512) ELSE excluded.SHA512 END,
+                MurmurHash2 = CASE WHEN HashCache.FileSize = excluded.FileSize AND HashCache.LastWriteTime = excluded.LastWriteTime THEN COALESCE(excluded.MurmurHash2, HashCache.MurmurHash2) ELSE excluded.MurmurHash2 END
             """;
         cmd.Parameters.AddWithValue("@FilePath", fullPath);
         cmd.Parameters.AddWithValue("@FileSize", fileSize);
@@ -224,6 +248,29 @@ public class HashCache
         cmd.Parameters.AddWithValue("@SHA512", algoName == "SHA512" ? hash : DBNull.Value);
         cmd.Parameters.AddWithValue("@MurmurHash2", algoName == "MurmurHash2" ? hash : DBNull.Value);
         await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+    }
+
+    /// <summary>将批量模式计算的哈希放在一次事务中落盘，避免每个支持库单独同步磁盘。</summary>
+    public void FlushPendingWrites()
+    {
+        lock (_flushLock)
+        {
+            if (_pendingWrites.IsEmpty) return;
+            var snapshot = _pendingWrites.ToArray();
+            using var connection = _CreateConnection();
+            using var transaction = connection.BeginTransaction();
+            foreach (var entry in snapshot)
+            {
+                // 文件在校验后被覆盖或删除时，不写入已过时的结果。
+                var info = new FileInfo(entry.Key.Path);
+                if (!info.Exists || info.Length != entry.Value.Size ||
+                    info.LastWriteTimeUtc.ToString("O") != entry.Value.LastWrite) continue;
+                _InsertOrUpdateHashAsync(entry.Key.Path, entry.Value.Size, entry.Value.LastWrite,
+                    entry.Key.Algorithm, entry.Value.Hash, connection, transaction).GetAwaiter().GetResult();
+            }
+            transaction.Commit();
+            foreach (var entry in snapshot) _pendingWrites.TryRemove(entry);
+        }
     }
 
     private async Task _DeleteCacheEntryAsync(string fullPath)

@@ -1240,6 +1240,50 @@ public static class ModBase
         ///     检查文件。若成功则返回 Nothing，失败则返回错误的描述文本，描述文本不以句号结尾。不会抛出错误。
         /// </summary>
         public string Check(string localPath)
+            => CheckCore(localPath, false);
+
+        // 仅正常启动的预检查复用哈希；手动修复与下载后校验始终走 Check。
+        internal string CheckForLaunch(string localPath) => CheckCore(localPath, true);
+
+        private static readonly Lazy<Task<HashCache>> LaunchHashes = new(() => Task.Run(() =>
+            new HashCache(Path.Combine(pathTemp, "Cache", "LaunchHashes.db"), batchWrites: true)));
+        private static readonly ConcurrentQueue<(string Path, IHashProvider Provider, string Hash, long Size, DateTime Modified)> PendingLaunchHashes = new();
+
+        internal static Task FlushLaunchHashes()
+        {
+            if (!LaunchHashes.IsValueCreated) return Task.CompletedTask;
+            return Task.Run(async () =>
+            {
+                try
+                {
+                    var cache = await LaunchHashes.Value.ConfigureAwait(false);
+                    while (PendingLaunchHashes.TryDequeue(out var entry))
+                        cache.QueueComputedHash(entry.Path, entry.Provider, entry.Hash, entry.Size, entry.Modified);
+                    cache.FlushPendingWrites();
+                }
+                catch (Exception ex) { Log(ex, "保存启动哈希缓存失败，下次启动重新校验", LogLevel.Debug); }
+            });
+        }
+
+        private static string VerificationHash(string path, IHashProvider provider, Func<string> compute, bool useCache)
+        {
+            if (!useCache) return compute();
+            var loading = LaunchHashes.Value;
+            if (loading.IsCompletedSuccessfully)
+                try { return loading.Result.GetHashAsync(path, provider).GetAwaiter().GetResult(); }
+                catch (Exception ex) { Log(ex, "启动哈希缓存不可用，回退完整校验", LogLevel.Debug); }
+            // 数据库首次初始化不阻塞启动；保留本次已算出的哈希，后台批量保存，不重复读取文件。
+            var info = new FileInfo(path);
+            var size = info.Length;
+            var modified = info.LastWriteTimeUtc;
+            var hash = compute();
+            info.Refresh();
+            if (!loading.IsFaulted && !string.IsNullOrEmpty(hash) && info.Exists && info.Length == size && info.LastWriteTimeUtc == modified)
+                PendingLaunchHashes.Enqueue((path, provider, hash, size, modified));
+            return hash;
+        }
+
+        private string CheckCore(string localPath, bool useCache)
         {
             try
             {
@@ -1254,19 +1298,19 @@ public static class ModBase
                 {
                     if (hash.Length < 35) // MD5
                     {
-                        var computedHash = GetFileMD5(localPath);
+                        var computedHash = VerificationHash(localPath, MD5Provider.Instance, () => GetFileMD5(localPath), useCache);
                         if ((hash.ToLowerInvariant() ?? "") != (computedHash ?? ""))
                             errorMessage.Add("文件 MD5 应为 " + hash + "，实际为 " + computedHash);
                     }
                     else if (hash.Length == 64) // SHA256
                     {
-                        var computedHash = GetFileSHA256(localPath);
+                        var computedHash = VerificationHash(localPath, SHA256Provider.Instance, () => GetFileSHA256(localPath), useCache);
                         if ((hash.ToLowerInvariant() ?? "") != (computedHash ?? ""))
                             errorMessage.Add("文件 SHA256 应为 " + hash + "，实际为 " + computedHash);
                     }
                     else // SHA1 (40)
                     {
-                        var computedHash = GetFileSHA1(localPath);
+                        var computedHash = VerificationHash(localPath, SHA1Provider.Instance, () => GetFileSHA1(localPath), useCache);
                         if ((hash.ToLowerInvariant() ?? "") != (computedHash ?? ""))
                             errorMessage.Add("文件 SHA1 应为 " + hash + "，实际为 " + computedHash);
                     }

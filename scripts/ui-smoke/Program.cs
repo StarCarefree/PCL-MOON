@@ -27,6 +27,13 @@ internal static class Program
             };
             var assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(path);
             if (args.Contains("--plugin-files")) { Assembly.SetEntryAssembly(assembly); ServerPluginFileChecks.Run(assembly, directory); return 0; }
+            if (args.Contains("--file-completion"))
+            {
+                Assembly.SetEntryAssembly(assembly);
+                InitializeDefaultConfig(directory);
+                FileCompletionChecks.Run(assembly, args);
+                return 0;
+            }
             // WPF absolute resource URIs must resolve against the launcher, not this host.
             if (args.Contains("--page")) Assembly.SetEntryAssembly(assembly);
             var pageType = assembly.GetType("PCL.PageSelectRight", throwOnError: true)!;

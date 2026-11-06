@@ -400,7 +400,8 @@ public static class ModLibrary
     /// <summary>
     ///     获取实例所需支持库文件的 NetFile。
     /// </summary>
-    public static List<DownloadFile> McLibNetFilesFromInstance(McInstance mcInstance, bool includeAuthlib = true)
+    public static List<DownloadFile> McLibNetFilesFromInstance(McInstance mcInstance, bool includeAuthlib = true,
+        bool useHashCache = false)
     {
         if (!mcInstance.IsLoaded)
             mcInstance.Load();
@@ -411,7 +412,7 @@ public static class ModLibrary
         // 主 Jar 文件
         try
         {
-            var mainJar = ModDownload.DlClientJarGet(mcInstance, true);
+            var mainJar = ModDownload.DlClientJarGet(mcInstance, true, useHashCache);
             if (mainJar is not null)
                 result.Add(mainJar);
         }
@@ -421,7 +422,7 @@ public static class ModLibrary
         }
 
         // Library 文件
-        result.AddRange(McLibNetFilesFromTokens(McLibListGet(mcInstance, false)));
+        result.AddRange(McLibNetFilesFromTokens(McLibListGet(mcInstance, false), useHashCache: useHashCache));
 
         // Authlib-Injector 文件
         if (includeAuthlib)
@@ -547,7 +548,8 @@ public static class ModLibrary
     /// <summary>
     ///     将 McLibToken 列表转换为 NetFile。
     /// </summary>
-    public static List<DownloadFile> McLibNetFilesFromTokens(List<McLibToken> libs, string customMcFolder = null)
+    public static List<DownloadFile> McLibNetFilesFromTokens(List<McLibToken> libs, string customMcFolder = null,
+        bool useHashCache = false)
     {
         customMcFolder = customMcFolder ?? ModFolder.mcFolderSelected;
         var result = new List<DownloadFile>();
@@ -556,8 +558,10 @@ public static class ModLibrary
         Parallel.For(0, libs.Count, new ParallelOptions { MaxDegreeOfParallelism = Math.Clamp(Environment.ProcessorCount, 1, 8) }, index =>
         {
             var token = libs[index];
-            checkErrors[index] = new ModBase.FileChecker(actualSize: token.size == 0L ? -1 : token.size, hash: token.Sha1).Check(token.LocalPath);
+            var checker = new ModBase.FileChecker(actualSize: token.size == 0L ? -1 : token.size, hash: token.Sha1);
+            checkErrors[index] = useHashCache ? checker.CheckForLaunch(token.LocalPath) : checker.Check(token.LocalPath);
         });
+        if (useHashCache) _ = ModBase.FileChecker.FlushLaunchHashes();
         // 获取
         for (var index = 0; index < libs.Count; index++)
         {
