@@ -770,7 +770,6 @@ select:focus-visible { outline: 2px solid #f3d7a2; outline-offset: 2px; }
  .rec-copy strong, .rec-copy small { overflow-wrap: anywhere; }
  .rec-copy strong { display: block; -webkit-line-clamp: unset; overflow: visible; }
  .rec-copy small { display: block; -webkit-line-clamp: unset; overflow: visible; white-space: normal; }
- .rec-copy .pill { margin-top: 4px; font-size: 10px; align-self: flex-start; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cards { grid-template-columns: repeat(auto-fill, minmax(min(290px, 100%), 1fr)); }
  .card-body small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .card { flex-direction: row; align-items: flex-start; border-radius: 8px; padding: 16px; gap: 14px; }

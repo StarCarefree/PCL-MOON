@@ -230,7 +230,6 @@ public partial class FormMain
         Grid.SetRow(PanRightSlot, gameLayout ? 1 : 0);
         Grid.SetRowSpan(PanRightSlot, gameLayout ? 1 : 3);
         Grid.SetColumnSpan(PanRightSlot, gameLayout ? 2 : 1);
-        HybridGameHeading.Visibility = gameLayout ? Visibility.Visible : Visibility.Collapsed;
         PanMain.ColumnDefinitions[0].Width = gameLayout ? new GridLength(0) : GridLength.Auto;
         PanMain.ColumnDefinitions[1].Width = new GridLength(1, GridUnitType.Star);
     }

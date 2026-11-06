@@ -227,10 +227,6 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="1*" />
                     </Grid.ColumnDefinitions>
-                    <StackPanel x:Name="HybridGameHeading" Grid.ColumnSpan="2" Visibility="Collapsed" Margin="28,24,16,16" VerticalAlignment="Center">
-                        <TextBlock Text="PLAY / YOUR SPACE" Foreground="{StaticResource Hybrid.Accent}" FontSize="10" FontWeight="SemiBold" Margin="0,0,0,7" />
-                        <TextBlock Text="{DynamicResource Hybrid.Games}" Foreground="{StaticResource Hybrid.Text}" FontSize="26" FontWeight="SemiBold" />
-                    </StackPanel>
                     <Border x:Name="PanRightSlot" Grid.Column="1" Grid.RowSpan="3" Grid.IsSharedSizeScope="True" UseLayoutRounding="True"
                             SnapsToDevicePixels="True">
                         <Border x:Name="PanMainRight" RenderOptions.BitmapScalingMode="NearestNeighbor"
