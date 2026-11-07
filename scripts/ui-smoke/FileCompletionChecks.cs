@@ -4,11 +4,24 @@ using System.IO;
 using System.Reflection;
 using System.Text.Json.Nodes;
 
-// Read-only benchmark of the actual launcher's completion analysis. No launch/download lifecycle.
+// 直接调用启动器的补全分析，不启动游戏或下载；测试数据仅写入隔离目录。
 internal static class FileCompletionChecks
 {
     internal static void Run(Assembly assembly, string[] args)
     {
+        if (args.Contains("--cache-checks"))
+        {
+            var scratch = Environment.GetEnvironmentVariable("PI_SCRATCH_DIR")
+                ?? throw new InvalidOperationException("PI_SCRATCH_DIR is required");
+            var isolated = Path.Combine(scratch, "launch-cache-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(isolated);
+            assembly.GetType("PCL.ModBase", true)!.GetField("pathTemp")!.SetValue(null,
+                isolated + Path.DirectorySeparatorChar);
+            CheckCacheInvalidation(assembly);
+            Flush(assembly);
+            CheckCacheContention(assembly, isolated);
+            return;
+        }
         var option = Array.IndexOf(args, "--instance");
         if (option < 0) throw new ArgumentException("--instance <directory> is required");
         var path = Path.GetFullPath(args[option + 1]).TrimEnd('\\', '/');
@@ -51,6 +64,57 @@ internal static class FileCompletionChecks
         if (useCache) CheckCacheInvalidation(assembly);
     }
 
+    private static void CheckCacheContention(Assembly assembly, string directory)
+    {
+        var type = assembly.GetType("PCL.ModBase+FileChecker", true)!;
+        var path = Path.Combine(directory, "locked-cache-library.jar");
+        var bytes = new byte[8192];
+        File.WriteAllBytes(path, bytes);
+        var hash = Convert.ToHexStringLower(System.Security.Cryptography.SHA1.HashData(bytes));
+        var checker = Activator.CreateInstance(type, -1L, 8192L, hash, true, false)!;
+        var launch = type.GetMethod("CheckForLaunch", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        bool Valid() => launch.Invoke(checker, new object[] { path }) is null;
+        if (!Valid()) throw new Exception("Initial cache-contention verification failed");
+        Flush(assembly);
+
+        var sqlite = Assembly.Load("Microsoft.Data.Sqlite").GetType("Microsoft.Data.Sqlite.SqliteConnection", true)!;
+        sqlite.GetMethod("ClearAllPools")!.Invoke(null, null);
+        using var blocker = (System.Data.Common.DbConnection)Activator.CreateInstance(sqlite,
+            $"Data Source={Path.Combine(directory, "Cache", "LaunchHashes.db")};Pooling=False")!;
+        blocker.Open();
+        using var command = blocker.CreateCommand();
+        command.CommandTimeout = 1;
+        command.CommandText = "PRAGMA journal_mode=DELETE; BEGIN EXCLUSIVE;";
+        command.ExecuteNonQuery();
+        try
+        {
+            var elapsed = Stopwatch.StartNew();
+            if (!Valid()) throw new Exception("Locked cache prevented full hash fallback");
+            var first = elapsed.Elapsed;
+            if (first > TimeSpan.FromSeconds(8)) throw new Exception("Initial cache lock exceeded the short wait budget");
+            elapsed.Restart();
+            for (var i = 0; i < 4; i++)
+                if (!Valid()) throw new Exception("Circuit-breaker fallback rejected a valid file");
+            if (elapsed.Elapsed > TimeSpan.FromSeconds(3))
+                throw new Exception("Subsequent files repeated the database timeout");
+            var subsequent = elapsed.Elapsed;
+            // 保持长度和时间戳，确认熔断后实际重读内容而不是使用旧缓存。
+            var timestamp = File.GetLastWriteTimeUtc(path);
+            bytes[0] = 1;
+            File.WriteAllBytes(path, bytes);
+            File.SetLastWriteTimeUtc(path, timestamp);
+            if (Valid()) throw new Exception("Circuit-breaker fallback trusted a stale cached hash");
+            Console.WriteLine($"PASS launch cache contention: fallback={first.TotalMilliseconds:F0} ms, four subsequent checks={subsequent.TotalMilliseconds:F0} ms, content rechecked");
+        }
+        finally
+        {
+            command.CommandText = "ROLLBACK;";
+            command.ExecuteNonQuery();
+            File.Delete(path);
+            sqlite.GetMethod("ClearAllPools")!.Invoke(null, null);
+        }
+    }
+
     private static void Measure(string name, Func<ICollection> action)
     {
         var first = Stopwatch.StartNew();
@@ -89,7 +153,7 @@ internal static class FileCompletionChecks
             Flush(assembly);
             using (new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
                 if (!Valid()) throw new Exception("Unchanged launch file was rehashed instead of using cache");
-            // Different expected hashes and min-size requirements must not be hidden by a hit.
+            // 缓存命中不能跳过预期哈希和最小文件大小检查。
             type.GetField("hash")!.SetValue(checker, new string('0', 40));
             if (Valid()) throw new Exception("Cache ignored a changed expected hash");
             type.GetField("hash")!.SetValue(checker, hash);

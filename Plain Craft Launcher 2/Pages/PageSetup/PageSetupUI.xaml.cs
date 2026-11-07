@@ -12,10 +12,6 @@ namespace PCL;
 
 public partial class PageSetupUI
 {
-    public string[] ThemeColors => Basics.IsAprilFool 
-        ? [Lang.Text("Setup.Ui.Theme.Color.SkyBlue"), Lang.Text("Setup.Ui.Theme.Color.CatBlue"), Lang.Text("Setup.Ui.Theme.Color.CrashBlue"), Lang.Text("Setup.Ui.Theme.Color.Hmcl")]
-        : [Lang.Text("Setup.Ui.Theme.Color.SkyBlue"), Lang.Text("Setup.Ui.Theme.Color.CatBlue"), Lang.Text("Setup.Ui.Theme.Color.CrashBlue")];
-    
     public new bool isLoaded;
 
     public PageSetupUI()
@@ -40,8 +36,6 @@ public partial class PageSetupUI
         isLoaded = true;
 
         SliderLoad();
-
-        PanLauncherHide.Visibility = Visibility.Visible;
     }
 
     public void Reload()
@@ -51,9 +45,6 @@ public partial class PageSetupUI
             // 启动器
             SliderLauncherOpacity.Value = Config.Preference.Theme.WindowOpacity;
             CheckLauncherLogo.Checked = Config.Preference.ShowStartupLogo;
-            ComboDarkMode.SelectedIndex = (int)Config.Preference.Theme.ColorMode;
-            ComboDarkColor.SelectedIndex = (int)Config.Preference.Theme.DarkColor;
-            ComboLightColor.SelectedIndex = (int)Config.Preference.Theme.LightColor;
             CheckShowLaunchingHint.Checked = Config.Preference.ShowLaunchingHint;
             CheckShowLaunchAnimation.Checked = Config.Preference.ShowLaunchAnimation;
 
@@ -656,20 +647,6 @@ public partial class PageSetupUI
     private void BtnCustomTutorial_Click(object sender, MouseButtonEventArgs e)
     {
         ModBase.OpenWebsite("https://docs.pclc.cc/ce/customization/xaml-format");
-    }
-
-    // 主题
-    private void ThemeColor_Change(object senderRaw, SelectionChangedEventArgs e)
-    {
-        var sender = (MyComboBox)senderRaw;
-        SetByTag(sender.Tag?.ToString(), sender.SelectedIndex);
-        ThemeManager.ThemeRefresh();
-    }
-
-    // 赞助
-    private void BtnLauncherDonate_Click(object sender, MouseButtonEventArgs e)
-    {
-        ModBase.OpenWebsite("https://afdian.com/a/LTCat");
     }
 
     // 滑动条

@@ -43,7 +43,7 @@ public partial class FormMain
             var changelogFile = $"{ModBase.pathTemp}CEUpdateLog.md";
             string changelog;
             if (File.Exists(changelogFile))
-                changelog = ModBase.ReadFile(changelogFile);
+                changelog = UpdateHelper.CleanChangelog(ModBase.ReadFile(changelogFile));
             else
                 changelog = Lang.Text("Main.UpdateLog.Empty");
             if (ModMain.MyMsgBoxMarkdown(changelog,

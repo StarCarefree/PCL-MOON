@@ -2759,6 +2759,7 @@ Press 'F11' again to exit the hidden instance viewing mode.</sys:String>
     <!-- Setup.About -->
 
     <sys:String x:Key="Setup.About.Community.Info">The development team of PCL-MOON!</sys:String>
+    <sys:String x:Key="Setup.About.Moon.Info">The development team of PCL-MOON!</sys:String>
     <sys:String x:Key="Setup.About.Community.Name">PCL Community</sys:String>
     <sys:String x:Key="Setup.About.Contributors.Title">Contributors</sys:String>
     <sys:String x:Key="Setup.About.Contributors.ViewMore">View more</sys:String>

@@ -23,6 +23,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="45" />
                         <RowDefinition Height="45" />
+                        <RowDefinition Height="45" />
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="40" />
@@ -48,14 +49,14 @@
                         Grid.Row="2"
                         Grid.Column="1"
                         Margin="-5,0,15,0"
-                        Info="{DynamicResource Setup.About.Version.Info}"
-                        IsHitTestVisible="False"
-                        Title="{Binding Name}" />
+                        Info="{DynamicResource Setup.About.Moon.Info}"
+                        ToolTip="{DynamicResource Setup.About.Version.Info}"
+                        Title="StarCarefree" />
                     <Image
                         x:Name="ImgPCLLogo"
                         Grid.Row="2"
                         Margin="3" MouseLeftButtonDown="ImgPCLLogo_Click"
-                        Source="/Plain Craft Launcher 2;component/Images/Heads/Logo-CE.png">
+                        Source="/Plain Craft Launcher 2;component/Images/Heads/StarCarefree.png">
                         <Image.Clip>
                             <EllipseGeometry
                                 Center="17 17"
@@ -109,8 +110,6 @@
                         <RowDefinition x:Name="RowMcmod" Height="45" />
                         <RowDefinition Height="45" />
                         <RowDefinition Height="45" />
-                        <RowDefinition Height="45" />
-                        <RowDefinition Height="45" />
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="40" />
@@ -153,41 +152,11 @@
                         Grid.Column="1"
                         Grid.ColumnSpan="2"
                         Margin="-5,0,0,0"
-                        Info="{DynamicResource Setup.About.SpecialThanks.Info.Cloud}"
-                        IsHitTestVisible="False"
-                        Title="{DynamicResource Setup.About.SpecialThanks.Name.Pysio}" />
-                    <local:MyButton
-                        Grid.Row="2"
-                        Grid.Column="2"
-                        Height="35"
-                        local:CustomEventService.EventData="https://www.pysio.online"
-                        local:CustomEventService.EventType="OpenUrl"
-                        Text="{DynamicResource Setup.About.SpecialThanks.GoBlog}" />
-                    <local:MyListItem
-                        Grid.Row="3"
-                        Grid.Column="1"
-                        Grid.ColumnSpan="2"
-                        Margin="-5,0,0,0"
-                        Info="{DynamicResource Setup.About.SpecialThanks.Info.Cloud}"
-                        IsHitTestVisible="False"
-                        Title="{DynamicResource Setup.About.SpecialThanks.Name.Yunmoan}" />
-                    <local:MyButton
-                        Grid.Row="3"
-                        Grid.Column="2"
-                        Height="35"
-                        local:CustomEventService.EventData="https://www.zyghit.cn"
-                        local:CustomEventService.EventType="OpenUrl"
-                        Text="{DynamicResource Setup.About.SpecialThanks.OpenWebsite}" />
-                    <local:MyListItem
-                        Grid.Row="4"
-                        Grid.Column="1"
-                        Grid.ColumnSpan="2"
-                        Margin="-5,0,0,0"
                         Info="{DynamicResource Setup.About.SpecialThanks.Info.Mcim}"
                         IsHitTestVisible="False"
                         Title="{DynamicResource Setup.About.SpecialThanks.Name.Z0z0r4}" />
                     <local:MyListItem
-                        Grid.Row="5"
+                        Grid.Row="3"
                         Grid.Column="1"
                         Grid.ColumnSpan="2"
                         Margin="-5,0,0,0"
@@ -220,28 +189,6 @@
                     <Image
                         Grid.Row="2"
                         Margin="3"
-                        Source="/Plain Craft Launcher 2;component/Images/Heads/Pysio.jpg">
-                        <Image.Clip>
-                            <EllipseGeometry
-                                Center="17 17"
-                                RadiusX="17"
-                                RadiusY="17" />
-                        </Image.Clip>
-                    </Image>
-                    <Image
-                        Grid.Row="3"
-                        Margin="3"
-                        Source="/Plain Craft Launcher 2;component/Images/Heads/Yunmoan.jpg">
-                        <Image.Clip>
-                            <EllipseGeometry
-                                Center="17 17"
-                                RadiusX="17"
-                                RadiusY="17" />
-                        </Image.Clip>
-                    </Image>
-                    <Image
-                        Grid.Row="4"
-                        Margin="3"
                         Source="/Plain Craft Launcher 2;component/Images/Heads/z0z0r4.png">
                         <Image.Clip>
                             <EllipseGeometry
@@ -251,7 +198,7 @@
                         </Image.Clip>
                     </Image>
                     <Image
-                        Grid.Row="5"
+                        Grid.Row="3"
                         Margin="3"
                         Source="/Plain Craft Launcher 2;component/Images/Heads/Emperormummy.png">
                         <Image.Clip>

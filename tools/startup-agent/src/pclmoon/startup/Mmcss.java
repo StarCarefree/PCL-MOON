@@ -1,6 +1,6 @@
 package pclmoon.startup;
 
-/** Bootstrap-visible boundary; no Minecraft, Fabric or JNA classes are required. */
+/** bootstrap 可见的桥接入口，不依赖 Minecraft、Fabric 或 JNA。 */
 public final class Mmcss {
     private static final ThreadLocal<Boolean> ATTEMPTED = new ThreadLocal<>();
     private static volatile String library;
@@ -11,7 +11,7 @@ public final class Mmcss {
 
     public static void configure(String path) { library = path; }
 
-    /** Called by the presentation API on its caller, never on the premain/worker thread. */
+    /** 由交换缓冲区的实际调用线程执行，不在 premain 线程上注册。 */
     public static void enter() {
         try {
             if (unavailable || library == null || ATTEMPTED.get() != null
@@ -43,15 +43,25 @@ public final class Mmcss {
         return true;
     }
 
-    /** Window cleanup is on the render thread. Native FLS also reverts on thread exit. */
+    /** 上下文解绑或同线程销毁时注销；线程退出还有原生 FLS 清理兜底。 */
     public static void leave() {
         try {
             if (loaded && Boolean.TRUE.equals(ATTEMPTED.get()) && !release0()) return;
             ATTEMPTED.remove();
-        } catch (Throwable ignored) { /* Never break window destruction. */ }
+        } catch (Throwable ignored) { /* 不影响原有窗口清理。 */ }
     }
 
-    /** Diagnostic/test query asks avrt about the current native thread's task handle. */
+    public static void contextChanged(long window) {
+        if (window == 0) leave();
+    }
+
+    /** 读取 FLS 回调中成功注销的数量，供线程退出回归使用。 */
+    public static long threadExitReleases() {
+        try { return loaded ? threadExitReleases0() : 0; }
+        catch (Throwable ignored) { return 0; }
+    }
+
+    /** 向 avrt 查询当前原生线程的注册状态。 */
     public static boolean registered() {
         try { return loaded && registered0(); }
         catch (Throwable ignored) { return false; }
@@ -60,4 +70,5 @@ public final class Mmcss {
     private static native boolean acquire0();
     private static native boolean release0();
     private static native boolean registered0();
+    private static native long threadExitReleases0();
 }

@@ -2756,6 +2756,7 @@ PCL-MOON 的問題請向 PCL-MOON 回饋，不要提交到原版 PCL 或上游 P
     <!-- Setup.About -->
 
     <sys:String x:Key="Setup.About.Community.Info">PCL-MOON 的開發團隊！</sys:String>
+    <sys:String x:Key="Setup.About.Moon.Info">PCL-MOON 的開發團隊！</sys:String>
     <sys:String x:Key="Setup.About.Community.Name">PCL Community</sys:String>
     <sys:String x:Key="Setup.About.Contributors.Title">貢獻者們</sys:String>
     <sys:String x:Key="Setup.About.Contributors.ViewMore">檢視更多</sys:String>

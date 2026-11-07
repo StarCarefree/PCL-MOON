@@ -33,7 +33,7 @@ public partial class PageSetupAbout
             return;
         isLoaded = true;
 
-        ItemAboutPcl.Info = ItemAboutPcl.Info.Replace("%VERSION%", ModBase.versionBaseName)
+        ItemAboutPcl.ToolTip = Lang.Text("Setup.About.Version.Info").Replace("%VERSION%", ModBase.versionBaseName)
             .Replace("%VERSIONCODE%", ModBase.versionCode.ToString()).Replace("%BRANCH%", ModBase.versionBranchName)
             .Replace("%COMMIT_HASH%", ModBase.commitHashShort);
 

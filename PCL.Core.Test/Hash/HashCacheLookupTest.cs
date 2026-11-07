@@ -4,6 +4,8 @@ using PCL.Core.Utils.Exts;
 using PCL.Core.Utils.Hash;
 using System;
 using System.IO;
+using System.Diagnostics;
+using System.Threading;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -35,8 +37,14 @@ public class HashCacheLookupTest
     [TestCleanup]
     public void Cleanup()
     {
-        using var connection = new SqliteConnection($"Data Source={Path.Combine(_directory, "hashes.db")};Pooling=True");
-        SqliteConnection.ClearPool(connection);
+        foreach (var timeout in new[] { 1, 30 })
+        {
+            using var connection = new SqliteConnection(new SqliteConnectionStringBuilder
+            {
+                DataSource = Path.GetFullPath(Path.Combine(_directory, "hashes.db")), Pooling = true, DefaultTimeout = timeout
+            }.ToString());
+            SqliteConnection.ClearPool(connection);
+        }
         Directory.Delete(_directory, true);
     }
 
@@ -168,4 +176,138 @@ public class HashCacheLookupTest
         batch.FlushPendingWrites();
         Assert.IsNull(await _cache.GetCachedSHA1Async(_file));
     }
+
+    // 显式重实现接口，保留 SHA1 算法标识并控制两个实例同时处于计算中。
+    private sealed class PausedSHA1Provider : SHA1Provider, IHashProvider
+    {
+        public TaskCompletionSource Entered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource Resume { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        async ValueTask<byte[]> IHashProvider.ComputeHashAsync(Stream input, CancellationToken cancellationToken)
+        {
+            Entered.TrySetResult();
+            await Resume.Task;
+            return await SHA1Provider.Instance.ComputeHashAsync(input, cancellationToken);
+        }
+    }
+
+    [TestMethod]
+    public async Task ConcurrentBatchInstancesEachQueueTheirOwnResult()
+    {
+        var database = Path.Combine(_directory, "hashes.db");
+        var first = new HashCache(database, batchWrites: true);
+        var second = new HashCache(database, batchWrites: true);
+        var provider1 = new PausedSHA1Provider();
+        var provider2 = new PausedSHA1Provider();
+        var task1 = first.GetHashAsync(_file, provider1);
+        Task<string>? task2 = null;
+        try
+        {
+            await provider1.Entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            task2 = second.GetHashAsync(_file, provider2);
+            await provider2.Entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        }
+        finally
+        {
+            provider1.Resume.TrySetResult();
+            provider2.Resume.TrySetResult();
+            await task1;
+            if (task2 is not null) await task2;
+        }
+        second.FlushPendingWrites();
+        Assert.AreEqual(await task1, await new HashCache(database).GetCachedSHA1Async(_file));
+    }
+
+    [TestMethod]
+    public async Task EquivalentPathsShareOneInstanceTask()
+    {
+        var provider = new PausedSHA1Provider();
+        var first = _cache.GetHashAsync(_file, provider);
+        try
+        {
+            await provider.Entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            var secondProvider = new PausedSHA1Provider();
+            var second = _cache.GetHashAsync(Path.Combine(_directory, ".", "example.jar"), secondProvider);
+            secondProvider.Resume.TrySetResult();
+            Assert.IsFalse(secondProvider.Entered.Task.IsCompleted);
+            provider.Resume.TrySetResult();
+            Assert.AreEqual(await first, await second);
+        }
+        finally
+        {
+            provider.Resume.TrySetResult();
+            await first;
+        }
+    }
+
+    [TestMethod]
+    public async Task ExclusiveDatabaseLockUsesConfiguredShortTimeout()
+    {
+        var database = Path.Combine(_directory, "hashes.db");
+        var cache = new HashCache(database, databaseTimeoutSeconds: 1);
+        using var blocker = new SqliteConnection($"Data Source={database};Pooling=False");
+        blocker.Open();
+        // WAL 的闲置连接也会阻止切换日志模式；独占读锁测试先释放连接池。
+        SqliteConnection.ClearAllPools();
+        using var command = blocker.CreateCommand();
+        command.CommandTimeout = 1;
+        command.CommandText = "PRAGMA journal_mode=DELETE; BEGIN EXCLUSIVE;";
+        command.ExecuteNonQuery();
+        try
+        {
+            var elapsed = Stopwatch.StartNew();
+            var error = await Assert.ThrowsAsync<SqliteException>(() => cache.GetCachedSHA1Async(_file));
+            Assert.AreEqual(5, error.SqliteErrorCode);
+            Assert.IsTrue(elapsed.Elapsed < TimeSpan.FromSeconds(8), $"Lock wait: {elapsed.Elapsed}");
+            elapsed.Restart();
+            Assert.Throws<SqliteException>(() => new HashCache(database, databaseTimeoutSeconds: 1));
+            Assert.IsTrue(elapsed.Elapsed < TimeSpan.FromSeconds(8), $"Initialization wait: {elapsed.Elapsed}");
+        }
+        finally
+        {
+            command.CommandText = "ROLLBACK;";
+            command.ExecuteNonQuery();
+        }
+    }
+
+    [TestMethod]
+    public async Task BatchInvalidationDoesNotDeleteWhileAnotherWriterHoldsLock()
+    {
+        await _cache.GetSHA1Async(_file);
+        var batch = new HashCache(Path.Combine(_directory, "hashes.db"), batchWrites: true, databaseTimeoutSeconds: 1);
+        File.WriteAllBytes(_file, new byte[4096]);
+        using var blocker = new SqliteConnection($"Data Source={Path.Combine(_directory, "hashes.db")};Pooling=False");
+        blocker.Open();
+        using (var transaction = blocker.BeginTransaction())
+        {
+            Assert.AreEqual(SHA1Provider.Instance.ComputeHash(new byte[4096]).ToHexString(), await batch.GetSHA1Async(_file));
+            File.Delete(_file);
+            await Assert.ThrowsAsync<FileNotFoundException>(() => batch.GetSHA1Async(_file));
+        }
+        batch.FlushPendingWrites();
+        Assert.IsNull(await _cache.GetCachedSHA1Async(_file));
+    }
+
+    [TestMethod]
+    public async Task FailedBatchFlushDiscardsSnapshot()
+    {
+        var batch = new HashCache(Path.Combine(_directory, "hashes.db"), batchWrites: true, databaseTimeoutSeconds: 1);
+        await batch.GetSHA1Async(_file);
+        using var blocker = new SqliteConnection($"Data Source={Path.Combine(_directory, "hashes.db")};Pooling=False");
+        blocker.Open();
+        using var transaction = blocker.BeginTransaction();
+        Assert.Throws<SqliteException>(() => batch.FlushPendingWrites());
+        batch.FlushPendingWrites();
+        Assert.IsNull(await _cache.GetCachedSHA1Async(_file));
+    }
+
+    [TestMethod]
+    [DataRow(0)]
+    [DataRow(-1)]
+    public void DatabaseTimeoutMustBePositive(int timeout)
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new HashCache(Path.Combine(_directory, "hashes.db"), databaseTimeoutSeconds: timeout));
+    }
+
 }
