@@ -2015,7 +2015,7 @@ public partial class PageInstanceCompResource : IRefreshable
             Lang.Text("Common.Action.Continue"), Lang.Text("Common.Action.Cancel"), isWarn: true) != 1)
             return false;
 
-        // “继续”表示先同步补齐整份列表，再重新构建级联索引；不能在残缺 output 上直接计算 affected。
+        // 尽量补齐后再构建级联索引；用户已确认依赖信息可能不完整，解析失败不能阻止文件操作。
         var output = ModLocalComp.compResourceListLoader.output;
         if (output is null) return false;
         var completed = true;
@@ -2040,8 +2040,8 @@ public partial class PageInstanceCompResource : IRefreshable
         ModLocalComp.CompJijResolved = completed;
         ModMain.frmInstanceModJarInJar?.OnJijResolved();
         if (!completed)
-            HintService.Hint(Lang.Text("Instance.Resource.Ed.ToggleFailed"), HintType.Error);
-        return completed;
+            ModBase.Log("[Mod] 内嵌模组解析不完整，按用户确认继续操作，级联检测仅使用已解析的依赖。", ModBase.LogLevel.Debug);
+        return true;
     }
 
     private List<ModLocalComp.LocalCompFile> _JijFindAffected(List<ModLocalComp.LocalCompFile> targets)
@@ -2077,8 +2077,7 @@ public partial class PageInstanceCompResource : IRefreshable
         foreach (var ModE in modList)
         {
             var modEntity = ModE; // 仅用于去除迭代变量无法修改的限制
-            // 用户可能在 Phase 2 尚未完成时选择继续操作。重命名前先同步补齐该项，
-            // 否则后台仍持有旧路径实体，而新实体会复制空树并永久丢失本次会话的 JIJ 状态。
+            // 重命名前尽量补齐该项；解析不完整不能阻止文件操作，替换实体时保留待解析状态。
             if (currentCompType == ModComp.CompType.Mod && modEntity.JijPending)
             {
                 var resolved = false;
@@ -2095,11 +2094,7 @@ public partial class PageInstanceCompResource : IRefreshable
                     ModJarInJarCache.UseInstance(null);
                 }
                 if (!resolved)
-                {
-                    HintService.Hint(Lang.Text("Instance.Resource.Ed.ToggleFailed"), HintType.Error);
-                    isSuccessful = false;
-                    continue;
-                }
+                    ModBase.Log($"[Mod] 内嵌模组解析不完整，继续切换状态（{modEntity.path}）", ModBase.LogLevel.Debug);
             }
             string newPath = null;
             if (modEntity.State == ModLocalComp.LocalCompFile.LocalFileStatus.Fine && !isEnable)

@@ -1090,6 +1090,9 @@ public static class ModLocalComp
                     _ConflictDeclarations.Add(new EmbeddedConflict
                         { DeclarerId = c.DeclarerId, Target = c.Target, Raw = c.Raw, Hard = c.Hard });
                 _EmbeddedMods = other._EmbeddedMods;
+                _jijPending = other._jijPending;
+                _jijExpectedLastModified = other._jijExpectedLastModified;
+                _jijExpectedSize = other._jijExpectedSize;
                 PreferredLoader = other.PreferredLoader;
                 JijLoader = other.JijLoader;
                 JijTargetMcVersion = other.JijTargetMcVersion;
