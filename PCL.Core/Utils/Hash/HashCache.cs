@@ -10,17 +10,24 @@ namespace PCL.Core.Utils.Hash;
 
 public class HashCache
 {
-    private readonly string _dbPath;
+    private readonly string _connectionString;
     private readonly bool _batchWrites;
     private readonly object _flushLock = new();
     private readonly ConcurrentDictionary<(string Path, string Algorithm), PendingHash> _pendingWrites = new();
     private sealed record PendingHash(long Size, string LastWrite, string Hash);
 
-    public HashCache(string dbPath, bool batchWrites = false)
+    public HashCache(string dbPath, bool batchWrites = false, int databaseTimeoutSeconds = 30)
     {
-        _dbPath = dbPath ?? throw new ArgumentNullException(nameof(dbPath));
+        ArgumentNullException.ThrowIfNull(dbPath);
+        if (databaseTimeoutSeconds <= 0) throw new ArgumentOutOfRangeException(nameof(databaseTimeoutSeconds));
+        _connectionString = new SqliteConnectionStringBuilder
+        {
+            DataSource = Path.GetFullPath(dbPath),
+            Pooling = true,
+            DefaultTimeout = databaseTimeoutSeconds
+        }.ToString();
         _batchWrites = batchWrites;
-        var dir = Path.GetDirectoryName(Path.GetFullPath(_dbPath));
+        var dir = Path.GetDirectoryName(Path.GetFullPath(dbPath));
         if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
             Directory.CreateDirectory(dir);
         _Initialize();
@@ -51,9 +58,17 @@ public class HashCache
 
     private SqliteConnection _CreateConnection()
     {
-        var connection = new SqliteConnection($"Data Source={_dbPath};Pooling=True");
-        connection.Open();
-        return connection;
+        var connection = new SqliteConnection(_connectionString);
+        try
+        {
+            connection.Open();
+            return connection;
+        }
+        catch
+        {
+            connection.Dispose();
+            throw;
+        }
     }
 
     public Task<string> GetMD5Async(string filePath) =>
@@ -85,7 +100,7 @@ public class HashCache
     public Task<string> GetMurmurHash2Async(string filePath) =>
         _GetHashWithPending(filePath, MurmurHash2Provider.Instance, "MurmurHash2");
 
-    private static readonly ConcurrentDictionary<string, Lazy<Task<string>>> _FileHashComputePending = new();
+    private readonly ConcurrentDictionary<(string Path, string Algorithm), Lazy<Task<string>>> _FileHashComputePending = new();
 
     public Task<string> GetHashAsync(string filePath, IHashProvider provider) =>
         _GetHashWithPending(filePath, provider, _AlgorithmName(provider));
@@ -113,10 +128,11 @@ public class HashCache
 
     private async Task<string> _GetHashWithPending(string filePath, IHashProvider provider, string algoName)
     {
-        var computeKey = $"{Path.GetFullPath(_dbPath)}:{filePath}:{algoName}:{_batchWrites}";
+        var fullPath = Path.GetFullPath(filePath);
+        var computeKey = (fullPath, algoName);
         // GetOrAdd 的工厂可能并发执行多次，用 Lazy 避免同一文件被重复计算。
         var pending = _FileHashComputePending.GetOrAdd(computeKey,
-            _ => new Lazy<Task<string>>(() => _GetHashAsync(filePath, provider, algoName)));
+            _ => new Lazy<Task<string>>(() => _GetHashAsync(fullPath, provider, algoName)));
         try
         {
             return await pending.Value.ConfigureAwait(false);
@@ -124,7 +140,7 @@ public class HashCache
         finally
         {
             // 同步命中也在入表后清理；只移除本次任务，避免误删后续计算。
-            _FileHashComputePending.TryRemove(new KeyValuePair<string, Lazy<Task<string>>>(computeKey, pending));
+            _FileHashComputePending.TryRemove(new KeyValuePair<(string Path, string Algorithm), Lazy<Task<string>>>(computeKey, pending));
         }
     }
 
@@ -158,7 +174,7 @@ public class HashCache
                     await _InsertOrUpdateHashAsync(fullPath, fileSize, lastWrite, algoName, computedHash).ConfigureAwait(false);
                     return computedHash;
                 }
-                else
+                else if (!_batchWrites)
                 {
                     await _DeleteCacheEntryAsync(fullPath).ConfigureAwait(false);
                 }
@@ -170,7 +186,7 @@ public class HashCache
         }
         catch (FileNotFoundException)
         {
-            await _DeleteCacheEntryAsync(fullPath).ConfigureAwait(false);
+            if (!_batchWrites) await _DeleteCacheEntryAsync(fullPath).ConfigureAwait(false);
             throw;
         }
     }
@@ -257,19 +273,26 @@ public class HashCache
         {
             if (_pendingWrites.IsEmpty) return;
             var snapshot = _pendingWrites.ToArray();
-            using var connection = _CreateConnection();
-            using var transaction = connection.BeginTransaction();
-            foreach (var entry in snapshot)
+            try
             {
-                // 文件在校验后被覆盖或删除时，不写入已过时的结果。
-                var info = new FileInfo(entry.Key.Path);
-                if (!info.Exists || info.Length != entry.Value.Size ||
-                    info.LastWriteTimeUtc.ToString("O") != entry.Value.LastWrite) continue;
-                _InsertOrUpdateHashAsync(entry.Key.Path, entry.Value.Size, entry.Value.LastWrite,
-                    entry.Key.Algorithm, entry.Value.Hash, connection, transaction).GetAwaiter().GetResult();
+                using var connection = _CreateConnection();
+                using var transaction = connection.BeginTransaction();
+                foreach (var entry in snapshot)
+                {
+                    // 文件在校验后被覆盖或删除时，不写入已过时的结果。
+                    var info = new FileInfo(entry.Key.Path);
+                    if (!info.Exists || info.Length != entry.Value.Size ||
+                        info.LastWriteTimeUtc.ToString("O") != entry.Value.LastWrite) continue;
+                    _InsertOrUpdateHashAsync(entry.Key.Path, entry.Value.Size, entry.Value.LastWrite,
+                        entry.Key.Algorithm, entry.Value.Hash, connection, transaction).GetAwaiter().GetResult();
+                }
+                transaction.Commit();
             }
-            transaction.Commit();
-            foreach (var entry in snapshot) _pendingWrites.TryRemove(entry);
+            finally
+            {
+                // 缓存保存失败也丢弃本次快照，保留并发加入的新结果。
+                foreach (var entry in snapshot) _pendingWrites.TryRemove(entry);
+            }
         }
     }
 

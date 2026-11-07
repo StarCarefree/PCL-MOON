@@ -1246,8 +1246,16 @@ public static class ModBase
         internal string CheckForLaunch(string localPath) => CheckCore(localPath, true);
 
         private static readonly Lazy<Task<HashCache>> LaunchHashes = new(() => Task.Run(() =>
-            new HashCache(Path.Combine(pathTemp, "Cache", "LaunchHashes.db"), batchWrites: true)));
+            new HashCache(Path.Combine(pathTemp, "Cache", "LaunchHashes.db"), batchWrites: true, databaseTimeoutSeconds: 1)));
         private static readonly ConcurrentQueue<(string Path, IHashProvider Provider, string Hash, long Size, DateTime Modified)> PendingLaunchHashes = new();
+
+        private static int LaunchHashesDisabled;
+
+        private static void DisableLaunchHashes()
+        {
+            Interlocked.Exchange(ref LaunchHashesDisabled, 1);
+            PendingLaunchHashes.Clear();
+        }
 
         internal static Task FlushLaunchHashes()
         {
@@ -1261,25 +1269,48 @@ public static class ModBase
                         cache.QueueComputedHash(entry.Path, entry.Provider, entry.Hash, entry.Size, entry.Modified);
                     cache.FlushPendingWrites();
                 }
-                catch (Exception ex) { Log(ex, "保存启动哈希缓存失败，下次启动重新校验", LogLevel.Debug); }
+                catch (Exception ex)
+                {
+                    PendingLaunchHashes.Clear();
+                    if (ex is Microsoft.Data.Sqlite.SqliteException || LaunchHashes.Value.IsFaulted)
+                        DisableLaunchHashes();
+                    Log(ex, "保存启动哈希缓存失败，下次启动重新校验", LogLevel.Debug);
+                }
             });
         }
 
         private static string VerificationHash(string path, IHashProvider provider, Func<string> compute, bool useCache)
         {
-            if (!useCache) return compute();
+            if (!useCache || Volatile.Read(ref LaunchHashesDisabled) != 0) return compute();
             var loading = LaunchHashes.Value;
+            if (loading.IsFaulted || loading.IsCanceled)
+            {
+                _ = loading.Exception;
+                DisableLaunchHashes();
+                return compute();
+            }
             if (loading.IsCompletedSuccessfully)
+            {
                 try { return loading.Result.GetHashAsync(path, provider).GetAwaiter().GetResult(); }
-                catch (Exception ex) { Log(ex, "启动哈希缓存不可用，回退完整校验", LogLevel.Debug); }
+                catch (Exception ex)
+                {
+                    // 文件占用等错误不熔断正常缓存，数据库错误使本进程后续检查直接回退。
+                    if (ex is Microsoft.Data.Sqlite.SqliteException) DisableLaunchHashes();
+                    Log(ex, "启动哈希缓存不可用，回退完整校验", LogLevel.Debug);
+                    return compute();
+                }
+            }
             // 数据库首次初始化不阻塞启动；保留本次已算出的哈希，后台批量保存，不重复读取文件。
             var info = new FileInfo(path);
             var size = info.Length;
             var modified = info.LastWriteTimeUtc;
             var hash = compute();
             info.Refresh();
-            if (!loading.IsFaulted && !string.IsNullOrEmpty(hash) && info.Exists && info.Length == size && info.LastWriteTimeUtc == modified)
+            if (!loading.IsFaulted && Volatile.Read(ref LaunchHashesDisabled) == 0 &&
+                !string.IsNullOrEmpty(hash) && info.Exists && info.Length == size && info.LastWriteTimeUtc == modified)
                 PendingLaunchHashes.Enqueue((path, provider, hash, size, modified));
+            if (loading.IsFaulted || loading.IsCanceled || Volatile.Read(ref LaunchHashesDisabled) != 0)
+                DisableLaunchHashes();
             return hash;
         }
 

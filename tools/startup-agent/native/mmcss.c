@@ -1,5 +1,5 @@
 /* MMCSS Games registration adapted from MinecraftMMCSS (MIT), Copyright (c) 2026 girlbossdev.
- * No JNA/Fabric dependency: invoked on the actual LWJGL presentation thread via JNI.
+ * 通过 JNI 在实际 LWJGL 呈现线程调用，不依赖 JNA 或 Fabric。
  */
 #define WIN32_LEAN_AND_MEAN
 #ifndef _WIN32_WINNT
@@ -16,15 +16,17 @@ static DWORD slot = FLS_OUT_OF_INDEXES;
 static SetCharacteristics set_characteristics;
 static RevertCharacteristics revert_characteristics;
 static QueryResponsiveness query_responsiveness;
+static volatile LONG64 thread_exit_releases = 0;
 
 static VOID CALLBACK release_thread(PVOID handle) {
-    /* FLS cleanup runs on the exiting thread, as required by AvRevertMmThreadCharacteristics. */
-    if (handle && revert_characteristics) revert_characteristics(handle);
+    /* FLS 回调在退出线程执行，满足 avrt 必须由注册线程注销的要求。 */
+    if (handle && revert_characteristics && revert_characteristics(handle))
+        InterlockedIncrement64(&thread_exit_releases);
 }
 
 static BOOL CALLBACK initialize(PINIT_ONCE once, PVOID parameter, PVOID *context) {
     (void)once; (void)parameter; (void)context;
-    /* Do not search the instance directory for a system DLL. Keep the module loaded for FLS cleanup. */
+    /* 系统 DLL 只从 System32 加载，保持模块存活以供 FLS 回调使用。 */
     HMODULE avrt = LoadLibraryExW(L"avrt.dll", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
     if (!avrt) return TRUE;
     set_characteristics = (SetCharacteristics)GetProcAddress(avrt, "AvSetMmThreadCharacteristicsW");
@@ -32,7 +34,7 @@ static BOOL CALLBACK initialize(PINIT_ONCE once, PVOID parameter, PVOID *context
     query_responsiveness = (QueryResponsiveness)GetProcAddress(avrt, "AvQuerySystemResponsiveness");
     if (set_characteristics && revert_characteristics && query_responsiveness)
         slot = FlsAlloc(release_thread);
-    return TRUE; /* A missing service/API is optional, not a reason to retry on every frame. */
+    return TRUE; /* 服务或 API 缺失时保守停用，不在每帧重试。 */
 }
 
 JNIEXPORT jboolean JNICALL Java_pclmoon_startup_Mmcss_acquire0(JNIEnv *env, jclass type) {
@@ -54,8 +56,13 @@ JNIEXPORT jboolean JNICALL Java_pclmoon_startup_Mmcss_registered0(JNIEnv *env, j
     if (slot == FLS_OUT_OF_INDEXES) return JNI_FALSE;
     HANDLE handle = FlsGetValue(slot);
     ULONG responsiveness = 0;
-    /* Verify with Windows, not just a Java boolean or a cached non-null handle. */
+    /* 直接向 Windows 验证句柄状态，不把本地标记当作注册成功。 */
     return handle && query_responsiveness(handle, &responsiveness) ? JNI_TRUE : JNI_FALSE;
+}
+
+JNIEXPORT jlong JNICALL Java_pclmoon_startup_Mmcss_threadExitReleases0(JNIEnv *env, jclass type) {
+    (void)env; (void)type;
+    return (jlong)InterlockedCompareExchange64(&thread_exit_releases, 0, 0);
 }
 
 JNIEXPORT jboolean JNICALL Java_pclmoon_startup_Mmcss_release0(JNIEnv *env, jclass type) {

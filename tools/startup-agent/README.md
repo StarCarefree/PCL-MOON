@@ -21,7 +21,7 @@
 启用本 Agent 后，在 Windows 上额外提供原 MinecraftMMCSS 的 `Games` 调度注册。无需安装 Fabric 模组、JNA 或 JNA platform；本 Agent 现有注入范围仍是 64 位 Java 17/21，Java 17 自动注入仍要求 Forge。
 
 - 仅在实际渲染线程第一次调用 `GLFW.glfwSwapBuffers` 或 LWJGL2 `Display.swapBuffers` 时调用 `AvSetMmThreadCharacteristicsW("Games")`。不会提升 premain 工作线程，也不改变整个进程优先级，不逐帧重复注册。
-- 销毁窗口／GLFW 终止时在调用线程注销；原生 FLS 回调也会在线程退出时注销。`Games` 注册保持到注销，不受 60 秒启动查找缓存窗口限制。
+- 同线程销毁窗口／GLFW 终止时注销；`glfwMakeContextCurrent(0)` 或 LWJGL2 `Display.releaseContext()` 正常返回后也在上下文所属线程注销，重新交换缓冲区时可再次注册。跨线程销毁须遵守 GLFW 约定：先在渲染线程解绑上下文，再由主线程销毁；线程仍存活也不会保留此次注册。原生 FLS 在线程退出时兜底注销，并提供成功释放计数供回归断言。`Games` 注册不受 60 秒启动查找缓存窗口限制。
 - 内嵌 Windows x64／ARM64 JNI 桥接库，按内容哈希写到 Agent 同目录并复用。仅从 System32 加载系统 `avrt.dll`。服务不可用、资源缺失或 API 失败时保留原调度，不阻止游戏。
 - `-Dpclmoon.startup.mmcss.disabled=true` 仅关闭 MMCSS；整个 Agent 的总开关仍生效。单独关闭 Forge 查找优化不会关闭 MMCSS。
 - 不保证提升 FPS 或减少卡顿；这里验证的是原生任务注册、释放及 Agent 兼容性，而不是游戏性能承诺。ARM64 桥接经过交叉编译，实际注册测试在 Windows x64 上运行。
@@ -42,7 +42,7 @@ python -X utf8 tools/startup-agent/build.py
 python -X utf8 tools/startup-agent/test_real_glfw.py --libraries '<Minecraft 根目录>/libraries'
 ```
 
-该测试只创建并销毁独立隐藏窗口，查询真实 avrt 状态，不启动游戏、不读写实例配置。
+该测试创建独立隐藏窗口，查询真实 avrt 状态，并覆盖上下文解绑／重新绑定及渲染线程仍存活时由主线程销毁窗口；不启动游戏、不读写实例配置。
 常规 Agent 打包直接使用仓库内的桥接 DLL，不要求开发者额外下载编译器。
 
 ## 关闭与诊断
@@ -72,7 +72,7 @@ python -X utf8 scripts/test-benchmark-instance-startup.py
 dotnet test PCL.Core.Test/PCL.Core.Test.csproj -c Release --filter 'FullyQualifiedName~StartupAccelerationPolicyTest|FullyQualifiedName~JvmLaunchTuningTest' -p:UseSharedCompilation=false
 ```
 
-当前 Java 17/21 各 21 组回归：原 15 组覆盖资源/MR/碰撞、动态目录/Manifest、路径追加/关闭、重转换、实际计时器、Forge 哈希门槛与读取异常、metrics 关闭及 Java 17 Forge 层关闭；另 6 组验证 MMCSS 原生注册与 avrt 查询、重复帧、GLFW/LWJGL2 注销、线程退出、总开关、独立开关、非 Windows、关闭 Forge 层和缺失原生资源。Java 21 另覆盖延迟建表、聚合复用、预算耗尽、并发构建和停止后禁止重新登记；测试包含 `-Xverify:all`。完整游戏加载、主菜单交互和存档运行是不同验收，不用“窗口出现”冒充全部完成。
+当前 Java 17/21 各 21 组回归：原 15 组覆盖资源/MR/碰撞、动态目录/Manifest、路径追加/关闭、重转换、实际计时器、Forge 哈希门槛与读取异常、metrics 关闭及 Java 17 Forge 层关闭；另 6 组验证 MMCSS 原生注册与 avrt 查询、重复帧、GLFW/LWJGL2 上下文解绑／重新绑定／异常、跨线程窗口销毁、FLS 成功释放计数、总开关、独立开关、非 Windows、关闭 Forge 层和缺失原生资源。Java 21 另覆盖延迟建表、聚合复用、预算耗尽、并发构建和停止后禁止重新登记；测试包含 `-Xverify:all`。完整游戏加载、主菜单交互和存档运行是不同验收，不用“窗口出现”冒充全部完成。
 
 ## 索引性能对照
 
