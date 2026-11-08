@@ -3293,6 +3293,7 @@ IPv6 優先：-Djava.net.preferIPv6Stack=true</sys:String>
 一般建議選擇「僅在有重要通知時顯示公告」，這樣可在不造成干擾的情況下獲得關鍵資訊。
 除非您正在製作伺服器模組包，或經常手動更新啟動器，否則強烈不建議選擇此選項！</sys:String>
     <sys:String x:Key="Setup.Misc.System.Announcement.ImportantOnly">僅在有重要通知時顯示公告</sys:String>
+    <sys:String x:Key="Setup.Misc.System.DisableAds">停用廣告</sys:String>
     <sys:String x:Key="Setup.Misc.System.DisableHardwareAcceleration">停用硬體加速</sys:String>
     <sys:String x:Key="Setup.Misc.System.ExportSettings">匯出設定</sys:String>
     <sys:String x:Key="Setup.Misc.System.ExportSettings.Filter">PCL-MOON 設定檔(*.json)|*.json</sys:String>

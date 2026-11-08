@@ -50,6 +50,7 @@ public partial class PageSetupLauncherMisc
         SliderAniFPS.Value = Config.System.AnimationFpsLimit;
         SliderMaxLog.Value = Config.System.MaxGameLog;
         CheckSystemTelemetry.Checked = Config.System.Telemetry;
+        CheckSystemDisableAds.Checked = Config.System.DisableAds;
 
         // 网络
         TextSystemHttpProxy.Text = Config.Network.HttpProxy.CustomAddress;

@@ -630,6 +630,7 @@ function updateUrlWarning() {
 function render() {
   const t = text();
   document.body.dataset.link = state.link;
+  ui.sponsor.hidden = !state.launcher || state.launcher.config?.disableAds === true;
   document.documentElement.lang = state.language === "zh" ? "zh-CN" : "en";
    document.title = "PCL-MOON";
   setText("connection-text", t.connection[state.link] || t.connection.offline);

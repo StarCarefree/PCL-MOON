@@ -1,6 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 using PCL.Core.App;
 using PCL.Core.Utils;
 using PCL.Core.App.Localization;
@@ -11,11 +12,26 @@ namespace PCL;
 public partial class PageSetupUpdate
 {
     public VersionDataModel updateInfo;
+    private readonly DispatcherTimer _updateProgressTimer;
 
     public PageSetupUpdate()
     {
         InitializeComponent();
-        Loaded += (_, _) => Init();
+        _updateProgressTimer = new DispatcherTimer(DispatcherPriority.Background, Dispatcher)
+        {
+            Interval = TimeSpan.FromMilliseconds(200)
+        };
+        _updateProgressTimer.Tick += (_, _) =>
+        {
+            if (CardUpdate.Visibility == Visibility.Visible && updateInfo is not null)
+                RefreshUpdateButton();
+        };
+        Loaded += (_, _) =>
+        {
+            Init();
+            _updateProgressTimer.Start();
+        };
+        Unloaded += (_, _) => _updateProgressTimer.Stop();
     }
 
     private void Init()
@@ -75,10 +91,11 @@ public partial class PageSetupUpdate
                 Exception checkUpdateEx = null;
                 try
                 {
-                    updateInfo = UpdateManager.remoteServer.GetLatestVersion(
-                        UpdateManager.IsCurrentVersionBeta
-                            ? UpdateChannel.beta
-                            : UpdateChannel.stable, SystemInfo.IsArm64System ? UpdateArch.arm64 : UpdateArch.x64);
+                    updateInfo = null;
+                    var channel = UpdateManager.IsCurrentVersionBeta ? UpdateChannel.beta : UpdateChannel.stable;
+                    var arch = SystemInfo.IsArm64System ? UpdateArch.arm64 : UpdateArch.x64;
+                    // 版本详情可能同步下载 SHA256 文件，不能在界面线程读取。
+                    updateInfo = await Task.Run(() => UpdateManager.remoteServer.GetLatestVersion(channel, arch));
                     TextUpdateName.Text = "PCL-MOON " + VersionNameFormat(updateInfo.VersionName);
                     var summary = updateInfo.Changelog.Between("<summary>", "</summary>");
                     if (!updateInfo.Changelog.Contains("<summary>") || string.IsNullOrWhiteSpace(summary.Trim()))
@@ -109,21 +126,7 @@ public partial class PageSetupUpdate
                     return;
                 }
 
-                if (UpdateManager.updateLoader is not null && UpdateManager.updateLoader.State == ModBase.LoadState.Loading)
-                {
-                    BtnUpdate_Timer();
-                    BtnUpdate.IsEnabled = false;
-                }
-                else if (UpdateManager.isUpdateWaitingRestart)
-                {
-                    BtnUpdate.Text = Lang.Text("Setup.Update.RestartInstall");
-                    BtnUpdate.IsEnabled = true;
-                }
-                else
-                {
-                    BtnUpdate.Text = Lang.Text("Setup.Update.Install");
-                    BtnUpdate.IsEnabled = true;
-                }
+                RefreshUpdateButton();
 
                 CardUpdate.Visibility = Visibility.Visible;
                 CardCheck.Visibility = Visibility.Collapsed;
@@ -148,12 +151,21 @@ public partial class PageSetupUpdate
         }
     }
 
-    public void BtnUpdate_Timer()
+    private void RefreshUpdateButton()
     {
-        while (UpdateManager.updateLoader is not null && UpdateManager.updateLoader.State == ModBase.LoadState.Loading)
+        var loader = UpdateManager.updateLoader;
+        // 每次只刷新一次，让 Dispatcher 继续处理输入、绘制和下载完成回调。
+        if (loader is not null && loader.State == ModBase.LoadState.Loading)
         {
-            ModBase.RunInUi(() => BtnUpdate.Text = Lang.Number(UpdateManager.updateLoader.Progress, "P2"));
-            Thread.Sleep(200);
+            BtnUpdate.Text = Lang.Number(loader.Progress, "P2");
+            BtnUpdate.IsEnabled = false;
+        }
+        else
+        {
+            BtnUpdate.Text = Lang.Text(UpdateManager.isUpdateWaitingRestart
+                ? "Setup.Update.RestartInstall"
+                : "Setup.Update.Install");
+            BtnUpdate.IsEnabled = true;
         }
     }
 
