@@ -3305,6 +3305,7 @@ For example, if a critical bug is found in a certain game version, you may miss 
 In general, choosing 'Show announcements only when important' should keep you mostly undisturbed.
 Unless you are creating a server modpack or frequently update the launcher manually, this option is strongly discouraged!</sys:String>
     <sys:String x:Key="Setup.Misc.System.Announcement.ImportantOnly">Show announcements only when important</sys:String>
+    <sys:String x:Key="Setup.Misc.System.DisableAds">禁用广告</sys:String>
     <sys:String x:Key="Setup.Misc.System.DisableHardwareAcceleration">Disable hardware acceleration</sys:String>
     <sys:String x:Key="Setup.Misc.System.ExportSettings">Export settings</sys:String>
     <sys:String x:Key="Setup.Misc.System.ExportSettings.Filter">PCL-MOON config file (*.json)|*.json</sys:String>
