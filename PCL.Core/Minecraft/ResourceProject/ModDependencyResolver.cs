@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace PCL.Core.Minecraft.ResourceProject;
 
@@ -83,22 +84,24 @@ public sealed class ModDependencyResolver
     private const int MaxDepth = 32;
     private static readonly StringComparer Comparer = StringComparer.OrdinalIgnoreCase;
 
-    public ModDependencyResolutionResult Resolve(ModDependencyRequest request)
+    public ModDependencyResolutionResult Resolve(ModDependencyRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(request.ProjectResolver);
 
+        cancellationToken.ThrowIfCancellationRequested();
         var context = new ResolutionContext(request);
         foreach (var dependency in request.RequiredDependencies)
         {
-            ResolveDependency(context, dependency, 0);
+            ResolveDependency(context, dependency, 0, cancellationToken);
         }
 
         return context.Result;
     }
 
-    private static void ResolveDependency(ResolutionContext context, ModDependencyReference dependency, int depth)
+    private static void ResolveDependency(ResolutionContext context, ModDependencyReference dependency, int depth, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         if (string.IsNullOrWhiteSpace(dependency.ProjectId) || string.IsNullOrWhiteSpace(dependency.Source))
         {
             return;
@@ -129,6 +132,7 @@ public sealed class ModDependencyResolver
         }
 
         var project = context.Request.ProjectResolver(dependency.Source, dependency.ProjectId);
+        cancellationToken.ThrowIfCancellationRequested();
         if (project is null)
         {
             context.AddUnresolved(dependency.ProjectId, dependency.Source, "Dependency project was not found.");
@@ -146,7 +150,7 @@ public sealed class ModDependencyResolver
 
         foreach (var nestedDependency in selectedFile.RequiredDependencies)
         {
-            ResolveDependency(context, nestedDependency, depth + 1);
+            ResolveDependency(context, nestedDependency, depth + 1, cancellationToken);
         }
     }
 

@@ -3357,8 +3357,9 @@ public static class ModComp
     ///     获取某个工程下的全部文件列表。
     ///     必须在工作线程执行，失败会抛出异常。
     /// </summary>
-    public static List<CompFile> CompFilesGet(string projectId, bool fromCurseForge)
+    public static List<CompFile> CompFilesGet(string projectId, bool fromCurseForge, CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         // 1. 获取工程对象（使用 TryGetValue 提高效率并防止并发异常）
         CompProject targetProject = null;
         if (!compProjectCache.TryGetValue(projectId, out targetProject))
@@ -3368,12 +3369,12 @@ public static class ModComp
                 : $"https://api.modrinth.com/v2/project/{projectId}";
             if (fromCurseForge)
             {
-                var json = ModDownload.DlModRequest<JsonObject>(url);
+                var json = ModDownload.DlModRequest<JsonObject>(url, cancellationToken);
                 targetProject = new CompProject((JsonObject)json["data"]);
             }
             else
             {
-                targetProject = new CompProject(ModDownload.DlModRequest<JsonObject>(url));
+                targetProject = new CompProject(ModDownload.DlModRequest<JsonObject>(url, cancellationToken));
             }
             // 假设 CompProject 构造函数内已处理缓存，否则此处应添加缓存逻辑
         }
@@ -3387,7 +3388,7 @@ public static class ModComp
             {
                 // 注意：若 pageSize=10000 失效，需考虑分页逻辑
                 var response = ModDownload.DlModRequest<JsonObject>(
-                    $"https://api.curseforge.com/v1/mods/{projectId}/files?pageSize=10000"
+                    $"https://api.curseforge.com/v1/mods/{projectId}/files?pageSize=10000", cancellationToken
                 );
 
                 resultJsonArray = (JsonArray)response["data"];
@@ -3395,7 +3396,7 @@ public static class ModComp
             else
             {
                 resultJsonArray =
-                    ModDownload.DlModRequest<JsonArray>($"https://api.modrinth.com/v2/project/{projectId}/version?include_changelog=false");
+                    ModDownload.DlModRequest<JsonArray>($"https://api.modrinth.com/v2/project/{projectId}/version?include_changelog=false", cancellationToken);
             }
 
             compFilesCache[projectId] = resultJsonArray.Select(a => new CompFile((JsonObject)a, targetProject.Type))
@@ -3403,6 +3404,7 @@ public static class ModComp
                 .ToList(); // 使用 GroupBy 实现更高效的 Distinct
         }
 
+        cancellationToken.ThrowIfCancellationRequested();
         var currentFiles = compFilesCache[projectId];
 
         // 3. 提取所有需要获取信息的前置 ID（合并必要和可选）
@@ -3422,7 +3424,7 @@ public static class ModComp
                     "https://api.curseforge.com/v1/mods",
                     "POST",
                     "{\"modIds\": [" + string.Join(",", undoneDeps) + "]}",
-                    "application/json"
+                    "application/json", cancellationToken: cancellationToken
                 );
 
                 // 2. 提取 data 数组
@@ -3431,13 +3433,14 @@ public static class ModComp
             else
             {
                 projects = ModDownload.DlModRequest<JsonArray>(
-                    $"https://api.modrinth.com/v2/projects?ids=[\"{undoneDeps.Join("\",\"")}\"]");
+                    $"https://api.modrinth.com/v2/projects?ids=[\"{undoneDeps.Join("\",\"")}\"]", cancellationToken);
             }
 
             foreach (var project in projects)
                 new CompProject((JsonObject)project);
         }
 
+        cancellationToken.ThrowIfCancellationRequested();
         // 5. 建立文件与依赖工程的关联映射
         // 优化：预先筛选出存在于缓存中的依赖工程，避免在多层循环中重复查询字典
         var availableDeps = allRawDeps.Where(id => compProjectCache.ContainsKey(id) && (id ?? "") != (projectId ?? ""))

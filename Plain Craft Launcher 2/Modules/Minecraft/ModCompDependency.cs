@@ -17,7 +17,8 @@ public static class ModCompDependency
         CompProject project,
         string targetMinecraftVersion,
         List<CompLoaderType> targetLoaders,
-        string targetModsFolder)
+        string targetModsFolder,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(file);
         ArgumentNullException.ThrowIfNull(project);
@@ -47,21 +48,23 @@ public static class ModCompDependency
             TargetMinecraftVersion = targetMinecraftVersion ?? string.Empty,
             TargetLoaders = ToLoaderNames(targetLoaders),
             RequiredDependencies = dependencies,
-            InstalledMods = ScanInstalledMods(targetModsFolder),
-            ProjectResolver = ResolveProjectFiles,
+            InstalledMods = ScanInstalledMods(targetModsFolder, cancellationToken),
+            ProjectResolver = (source, projectId) => ResolveProjectFiles(source, projectId, cancellationToken),
         };
     }
 
-    public static List<InstalledModIdentity> ScanInstalledMods(string targetModsFolder)
+    public static List<InstalledModIdentity> ScanInstalledMods(string targetModsFolder, CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var result = new List<InstalledModIdentity>();
         if (string.IsNullOrWhiteSpace(targetModsFolder) || !Directory.Exists(targetModsFolder))
         {
             return result;
         }
 
-        foreach (var path in Directory.GetFiles(targetModsFolder))
+        foreach (var path in Directory.EnumerateFiles(targetModsFolder))
         {
+            cancellationToken.ThrowIfCancellationRequested();
             if (!LocalCompFile.IsModFile(path))
             {
                 continue;
@@ -115,7 +118,7 @@ public static class ModCompDependency
         return result;
     }
 
-    public static ModDependencyProject? ResolveProjectFiles(string source, string projectId)
+    public static ModDependencyProject? ResolveProjectFiles(string source, string projectId, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(source) || string.IsNullOrWhiteSpace(projectId))
         {
@@ -123,7 +126,7 @@ public static class ModCompDependency
         }
 
         var fromCurseForge = string.Equals(source, "CurseForge", StringComparison.OrdinalIgnoreCase);
-        var files = ModComp.CompFilesGet(projectId, fromCurseForge);
+        var files = ModComp.CompFilesGet(projectId, fromCurseForge, cancellationToken);
         if (!ModComp.compProjectCache.TryGetValue(projectId, out var compProject))
         {
             return null;
@@ -178,13 +181,15 @@ public static class ModCompDependency
 
     public static List<(string Filename, DownloadFile File)> BuildDependencyDownloads(
         ModDependencyResolutionResult result,
-        string targetModsFolder)
+        string targetModsFolder,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(result);
 
         var downloads = new List<(string, DownloadFile)>();
         foreach (var install in result.ToInstall.AsEnumerable().Reverse())
         {
+            cancellationToken.ThrowIfCancellationRequested();
             if (!ModComp.compProjectCache.TryGetValue(install.ProjectId, out var depProject))
             {
                 continue;
@@ -196,7 +201,7 @@ public static class ModCompDependency
                 continue;
             }
 
-            var depCompFile = ModComp.CompFilesGet(install.ProjectId, fromCurseForge)
+            var depCompFile = ModComp.CompFilesGet(install.ProjectId, fromCurseForge, cancellationToken)
                 .FirstOrDefault(file => string.Equals(file.Id, install.File.Id, StringComparison.OrdinalIgnoreCase));
             if (depCompFile is null)
             {

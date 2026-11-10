@@ -10,6 +10,66 @@ namespace PCL.Core.Test.Minecraft.ResourceProject;
 public class ModDependencyResolverTest
 {
     [TestMethod]
+    public void CancelledResolutionDoesNotQueryProjects()
+    {
+        using var cancellation = new System.Threading.CancellationTokenSource();
+        cancellation.Cancel();
+        var queries = 0;
+        var request = new ModDependencyRequest
+        {
+            RequiredDependencies = [CreateDependency("B")],
+            ProjectResolver = (_, _) => { queries++; return null; }
+        };
+
+        Assert.ThrowsExactly<OperationCanceledException>(() =>
+            new ModDependencyResolver().Resolve(request, cancellation.Token));
+        Assert.AreEqual(0, queries);
+    }
+
+    [TestMethod]
+    public void CancellationDuringLookupStopsNestedAndRemainingDependencies()
+    {
+        using var cancellation = new System.Threading.CancellationTokenSource();
+        var queries = new List<string>();
+        var request = new ModDependencyRequest
+        {
+            TargetMinecraftVersion = "1.20.1",
+            TargetLoaders = ["Fabric"],
+            RequiredDependencies = [CreateDependency("B"), CreateDependency("D")],
+            ProjectResolver = (_, id) =>
+            {
+                queries.Add(id);
+                cancellation.Cancel();
+                return CreateProject(id, CreateFile("b-file", requiredDependencies: [CreateDependency("C")]));
+            }
+        };
+
+        Assert.ThrowsExactly<OperationCanceledException>(() =>
+            new ModDependencyResolver().Resolve(request, cancellation.Token));
+        CollectionAssert.AreEqual(new[] { "B" }, queries);
+    }
+
+    [TestMethod]
+    public void CancellationDuringLastLookupDoesNotReturnSuccess()
+    {
+        using var cancellation = new System.Threading.CancellationTokenSource();
+        var request = new ModDependencyRequest
+        {
+            TargetMinecraftVersion = "1.20.1",
+            TargetLoaders = ["Fabric"],
+            RequiredDependencies = [CreateDependency("B")],
+            ProjectResolver = (_, id) =>
+            {
+                cancellation.Cancel();
+                return CreateProject(id, CreateFile("b-file"));
+            }
+        };
+
+        Assert.ThrowsExactly<OperationCanceledException>(() =>
+            new ModDependencyResolver().Resolve(request, cancellation.Token));
+    }
+
+    [TestMethod]
     public void ResolvesOneMissingRequiredDependency()
     {
         var resolver = new ModDependencyResolver();

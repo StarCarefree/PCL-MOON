@@ -18,7 +18,7 @@ public static class Requester
             throw new HttpResponseException(response);
     }
 
-    public static async Task<string> FetchStringAsync(string url, RequestParam param = default)
+    public static async Task<string> FetchStringAsync(string url, RequestParam param = default, CancellationToken cancellationToken = default)
     {
         return await FetchAsync(url, new FetchParam
         {
@@ -29,12 +29,12 @@ public static class Requester
             Timeout = param.Timeout,
             Encoding = param.Encoding,
             MakeLog = true
-        }, Math.Max(1, param.Retries == 0 ? 1 : param.Retries)).ConfigureAwait(false);
+        }, Math.Max(1, param.Retries == 0 ? 1 : param.Retries), cancellationToken).ConfigureAwait(false);
     }
 
-    public static string FetchString(string url, RequestParam param = default)
+    public static string FetchString(string url, RequestParam param = default, CancellationToken cancellationToken = default)
     {
-        return FetchStringAsync(url, param).GetAwaiter().GetResult();
+        return FetchStringAsync(url, param, cancellationToken).GetAwaiter().GetResult();
     }
 
     public static async Task<JsonNode> FetchJsonAsync(string url, RequestParam param = default)
@@ -57,14 +57,14 @@ public static class Requester
         return FetchJsonAsync<T>(url, param).GetAwaiter().GetResult();
     }
 
-    public static async Task<string> FetchAsync(string url, FetchParam param)
+    public static async Task<string> FetchAsync(string url, FetchParam param, CancellationToken cancellationToken = default)
     {
-        return await FetchAsync(url, param, 3).ConfigureAwait(false);
+        return await FetchAsync(url, param, 3, cancellationToken).ConfigureAwait(false);
     }
 
-    public static string Fetch(string url, FetchParam param)
+    public static string Fetch(string url, FetchParam param, CancellationToken cancellationToken = default)
     {
-        return FetchAsync(url, param).GetAwaiter().GetResult();
+        return FetchAsync(url, param, cancellationToken).GetAwaiter().GetResult();
     }
 
     public static string Fetch(string url)
@@ -72,7 +72,7 @@ public static class Requester
         return Fetch(url, new FetchParam { Method = "GET", Timeout = 30000, MakeLog = true });
     }
 
-    private static async Task<string> FetchAsync(string url, FetchParam param, int retries)
+    private static async Task<string> FetchAsync(string url, FetchParam param, int retries, CancellationToken cancellationToken)
     {
         var urls = new[] { url, param.FallbackUrl }.Where(u => !string.IsNullOrWhiteSpace(u)).Cast<string>().ToList();
         Exception? lastException = null;
@@ -82,9 +82,10 @@ public static class Requester
             {
                 try
                 {
-                    return await FetchOnceAsync(currentUrl, param).ConfigureAwait(false);
+                    cancellationToken.ThrowIfCancellationRequested();
+                    return await FetchOnceAsync(currentUrl, param, cancellationToken).ConfigureAwait(false);
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
                 {
                     lastException = ex;
                 }
@@ -94,7 +95,7 @@ public static class Requester
         throw lastException ?? new HttpRequestException("请求失败");
     }
 
-    private static async Task<string> FetchOnceAsync(string url, FetchParam param)
+    private static async Task<string> FetchOnceAsync(string url, FetchParam param, CancellationToken cancellationToken)
     {
         HttpResponseMessage? response = null;
         var request = new HttpRequestMessage(ParseMethod(param.Method), RequestSigning.SecretCdnSign(url));
@@ -120,11 +121,11 @@ public static class Requester
                 }
             }
 
-            using var cts = new CancellationTokenSource();
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             cts.CancelAfter(param.Timeout <= 0 ? 30000 : param.Timeout);
             response = await NetworkService.GetClient().SendAsync(request, cts.Token).ConfigureAwait(false);
             EnsureSuccess(response);
-            return await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            return await response.Content.ReadAsStringAsync(cts.Token).ConfigureAwait(false);
         }
         finally
         {
