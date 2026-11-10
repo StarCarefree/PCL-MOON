@@ -1442,6 +1442,22 @@ public static class ModComp
         public int WikiId => DatabaseEntry is null ? 0 : DatabaseEntry.WikiId;
 
         /// <summary>
+        ///     资料库中关联的另一下载平台页面；无对应记录时为空。
+        /// </summary>
+        public string? OtherSourceWebsite
+        {
+            get
+            {
+                if (Type != CompType.Mod) return null;
+                var slug = FromCurseForge ? DatabaseEntry?.ModrinthSlug : DatabaseEntry?.CurseForgeSlug;
+                if (string.IsNullOrWhiteSpace(slug)) return null;
+                return FromCurseForge
+                    ? $"https://modrinth.com/mod/{Uri.EscapeDataString(slug)}"
+                    : $"https://www.curseforge.com/minecraft/mc-mods/{Uri.EscapeDataString(slug)}";
+            }
+        }
+
+        /// <summary>
         ///     翻译后的中文名。若数据库没有则等同于 RawName。
         /// </summary>
         public string TranslatedName =>

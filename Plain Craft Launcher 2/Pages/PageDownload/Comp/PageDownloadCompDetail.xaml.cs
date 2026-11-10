@@ -48,6 +48,11 @@ public partial class PageDownloadCompDetail
 
         // 决定按钮显示
         BtnIntroWeb.Text = _project.FromCurseForge ? "CurseForge" : "Modrinth";
+        BtnIntroWeb.Tag = _project.Website;
+        var otherSourceWebsite = _project.OtherSourceWebsite;
+        BtnIntroOtherWeb.Text = _project.FromCurseForge ? "Modrinth" : "CurseForge";
+        BtnIntroOtherWeb.Tag = otherSourceWebsite;
+        BtnIntroOtherWeb.Visibility = otherSourceWebsite is null ? Visibility.Collapsed : Visibility.Visible;
         BtnIntroWiki.Visibility = Lang.IsChineseMainland && _project.WikiId != 0
             ? Visibility.Visible
             : Visibility.Collapsed;
@@ -565,7 +570,8 @@ public partial class PageDownloadCompDetail
 
     private void BtnIntroWeb_Click(object sender, EventArgs e)
     {
-        ModBase.OpenWebsite(_project.Website);
+        if (sender is FrameworkElement { Tag: string website })
+            ModBase.OpenWebsite(website);
     }
 
     private void BtnIntroWiki_Click(object sender, EventArgs e)
@@ -642,6 +648,7 @@ public partial class PageDownloadCompDetail
         InitializeComponent();
         Load.StateChanged += Load_State;
         BtnIntroWeb.Click += BtnIntroWeb_Click;
+        BtnIntroOtherWeb.Click += BtnIntroWeb_Click;
         BtnIntroWiki.Click += BtnIntroWiki_Click;
         BtnIntroCopy.Click += BtnIntroCopy_Click;
         BtnFavorites.Click += BtnFavorites_Click;

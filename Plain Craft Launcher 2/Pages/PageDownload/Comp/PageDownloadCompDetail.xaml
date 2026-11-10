@@ -18,6 +18,10 @@
                                                 BorderBrush="{DynamicResource ColorBrush6}" BorderThickness="1"
                                                 SvgIcon="lucide/globe"
                                                 Margin="0,0,3,0" HorizontalAlignment="Left" />
+                        <local:MyIconTextButton x:Name="BtnIntroOtherWeb" Visibility="Collapsed"
+                                                BorderBrush="{DynamicResource ColorBrush6}" BorderThickness="1"
+                                                SvgIcon="lucide/globe"
+                                                Margin="0,0,3,0" HorizontalAlignment="Left" />
                         <local:MyIconTextButton x:Name="BtnIntroWiki"
                                                 Text="{DynamicResource Download.Comp.Detail.McMod}"
                                                 BorderBrush="{DynamicResource ColorBrush6}" BorderThickness="1"
