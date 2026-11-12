@@ -2424,8 +2424,9 @@ PCL-MOON 的问题请向 PCL-MOON 反馈，不要提交到原版 PCL 或上游 P
     <!-- Minecraft.Launch.Java -->
 
     <sys:String x:Key="Minecraft.Launch.Java.AutoDownload.Action">自动下载</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Java.AutoDownload.Message">PCL-MOON 未找到 {0}，是否需要自动下载？
-如果已经安装了 {0}，可以在 设置 → 启动选项 → 游戏 Java 中手动导入。</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.AutoDownload.Message">PCL-MOON 未找到 {0}，是否自动下载 Zulu JDK？
+优先使用 Zulu 官方源，失败时使用 INJDK 社区镜像中满足游戏要求的版本。
+如果已经安装，可以在 设置 → 启动选项 → 游戏 Java 中手动导入。</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.AutoDownload.Title">自动下载 Java？</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.Compatibility.CheckFailed">检查 Java 兼容性失败。请查看错误详情。</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.Compatibility.Title">Java 版本不兼容</sys:String>
@@ -2458,6 +2459,16 @@ PCL-MOON 的问题请向 PCL-MOON 反馈，不要提交到原版 PCL 或上游 P
     <sys:String x:Key="Minecraft.Launch.Java.Task.Download">下载 Java</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.Task.DownloadFiles">下载 Java 文件</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.Task.GetDownloadInfo">获取 Java 下载信息</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Task.ResolveJdk">获取 {0} JDK 下载信息</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Task.DownloadJdk">下载 {0} JDK</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Task.InstallJdk">校验并安装 {0} JDK</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Download.AllFailed">未能自动安装兼容的 Zulu JDK {0}（已尝试官方源和 INJDK 社区镜像）。请检查网络，或手动下载对应版本的 JDK 后在 设置 → 启动选项 → 游戏 Java 中导入。</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Download.NoPackage">未找到满足版本与架构要求的 {0} JDK {1}。</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Download.FallbackMirror">Zulu 官方源下载或安装失败，正在尝试 INJDK 社区镜像……</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Download.SourceOfficial">Zulu 官方</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Download.SourceMirror">INJDK 镜像（Zulu）</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Download.RegistrationFailed">JDK 已安装，但无法注册或已被禁用。请在 Java 设置中检查。</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Download.IncompatiblePackage">下载的 JDK 版本、发行商或架构不符合要求，已停止安装。</sys:String>
 
     <!-- Minecraft.Launch.Login -->
 
