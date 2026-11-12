@@ -2428,11 +2428,21 @@ PCL-MOON 的問題請向 PCL-MOON 回饋，不要提交到原版 PCL 或上游 P
 如果已經安裝了 {0}，可以在 設定 → 啟動選項 → 遊戲 Java 中手動匯入。</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.AutoDownload.Title">自動下載 Java？</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.Compatibility.CheckFailed">檢查 Java 相容性失敗。請檢視錯誤詳情。</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.GlobalSelectedOutOfRange">全域指定的 Java（{0}）超出版本要求範圍 [{1}, {2}]，可能導致遊戲崩潰。</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.InstanceSelectedOutOfRange">實例指定的 Java（{0}）超出版本要求範圍 [{1}, {2}]，可能導致遊戲崩潰。</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.Title">Java 版本不兼容</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.SwitchMessage">是否仅本次启动使用推荐 Java？这不会修改你的 Java 设置。
+将自动选择本机兼容的 Java；若未找到，会询问是否下载。</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.AllowedMajors">整合包声明的兼容 Java 主版本：{0}（仍需满足上述版本范围）。</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.UseRecommended">使用推荐 Java</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.KeepSelected">仍然使用</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.CancelLaunch">取消启动</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.GlobalSelectedOutOfRange">全局指定的 Java（{0}）不满足兼容性要求，可能导致游戏崩溃。
+要求的 Java 版本范围：[{1}, {2}]。</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.InstanceSelectedOutOfRange">实例指定的 Java（{0}）不满足兼容性要求，可能导致游戏崩溃。
+要求的 Java 版本范围：[{1}, {2}]。</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.Compatibility.NoMaximum">無上限</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.Compatibility.NoMinimum">無下限</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.RelativePathSelectedOutOfRange">實例相對路徑指定的 Java（{0}）超出版本要求範圍 [{1}, {2}]，可能導致遊戲崩潰。</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.RelativePathSelectedOutOfRange">实例相对路径指定的 Java（{0}）不满足兼容性要求，可能导致游戏崩溃。
+要求的 Java 版本范围：[{1}, {2}]。</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.InstallManuallyHint">請自行搜尋並安裝</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.NeedJava7">你需要安裝 Java 7 才能啟動該版本。
 請自行搜尋並安裝 Java 7，安裝後在 設定 → 啟動選項 → 遊戲 Java 中重新搜尋或匯入。</sys:String>
