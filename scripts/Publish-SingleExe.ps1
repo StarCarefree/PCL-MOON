@@ -369,7 +369,7 @@ function Compile-Bootstrapper([string]$DotNetExe, [string]$OutExe, [string]$ZipP
     $info = Join-Path $script:WorkRoot 'BuildInfo.cs'
     $res = Join-Path $script:WorkRoot 'app.res'
     Write-BuildInfo $info $Architecture $Hash $WebViewBundled
-    Write-Win32Resource $res '2.16.0.0' 'PCL-MOON' (Join-Path $script:ProjectDir 'Images\icon.ico') (Join-Path $script:StubDir 'app.manifest')
+    Write-Win32Resource $res '2.16.1.0' 'PCL-MOON' (Join-Path $script:ProjectDir 'Images\icon.ico') (Join-Path $script:StubDir 'app.manifest')
     $obj = Join-Path $script:WorkRoot 'app.obj'
     $cvtres = Join-Path $fx 'cvtres.exe'
     if (-not (Test-Path -LiteralPath $cvtres -PathType Leaf)) { Throw-Single "缺少 cvtres.exe: $cvtres" }
