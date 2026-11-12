@@ -2432,11 +2432,21 @@ Error message:
 If you have already installed {0}, you can import it manually under Settings → Launch options → Game Java.</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.AutoDownload.Title">Download Java automatically?</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.Compatibility.CheckFailed">Failed to check Java compatibility. See the details below.</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.GlobalSelectedOutOfRange">The globally selected Java ({0}) is outside the required range [{1}, {2}] and may cause the game to crash.</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.InstanceSelectedOutOfRange">The Java selected for this instance ({0}) is outside the required range [{1}, {2}] and may cause the game to crash.</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.Title">Java 版本不兼容</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.SwitchMessage">是否仅本次启动使用推荐 Java？这不会修改你的 Java 设置。
+将自动选择本机兼容的 Java；若未找到，会询问是否下载。</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.AllowedMajors">整合包声明的兼容 Java 主版本：{0}（仍需满足上述版本范围）。</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.UseRecommended">使用推荐 Java</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.KeepSelected">仍然使用</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.CancelLaunch">取消启动</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.GlobalSelectedOutOfRange">全局指定的 Java（{0}）不满足兼容性要求，可能导致游戏崩溃。
+要求的 Java 版本范围：[{1}, {2}]。</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.InstanceSelectedOutOfRange">实例指定的 Java（{0}）不满足兼容性要求，可能导致游戏崩溃。
+要求的 Java 版本范围：[{1}, {2}]。</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.Compatibility.NoMaximum">No maximum</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.Compatibility.NoMinimum">No minimum</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.RelativePathSelectedOutOfRange">The Java selected through this instance's relative path ({0}) is outside the required range [{1}, {2}] and may cause the game to crash.</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.RelativePathSelectedOutOfRange">实例相对路径指定的 Java（{0}）不满足兼容性要求，可能导致游戏崩溃。
+要求的 Java 版本范围：[{1}, {2}]。</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.InstallManuallyHint">Please search and install it manually.</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.NeedJava7">You need to install Java 7 to launch this version.
 Please search and install Java 7 manually, then re-search or import it under 'Settings → Launch options → Game Java'.</sys:String>
