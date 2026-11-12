@@ -4,15 +4,13 @@ using PCL.Core.App;
 using PCL.Core.IO;
 using PCL.Core.Minecraft;
 using PCL.Core.Minecraft.Java.UserPreference;
-using PCL.Network;
-using PCL.Network.Loaders;
 using PCL.Core.App.Localization;
 using PCL.Core.Utils.OS;
 using PCL.Core.Utils;
 
 namespace PCL;
 
-public static class ModJava
+public static partial class ModJava
 {
     public static int javaListCacheVersion = 7;
 
@@ -401,133 +399,6 @@ public static class ModJava
             Lang.Text("Minecraft.Launch.Java.NotFound.Title"));
 
         return false;
-    }
-
-    /// <summary>
-    ///     获取下载 Java 的加载器。需要开启 IsForceRestart 以正常刷新 Java 列表。
-    /// </summary>
-    public static ModLoader.LoaderCombo<string> GetJavaDownloadLoader()
-    {
-        var javaDownloadLoader = new LoaderDownload(
-            Lang.Text("Minecraft.Launch.Java.Task.DownloadFiles"),
-            [])
-        {
-            ProgressWeight = 10d
-        };
-
-        var loader = new ModLoader.LoaderCombo<string>(
-            Lang.Text("Minecraft.Launch.Java.Task.Download"),
-            [
-                new ModLoader.LoaderTask<string, List<DownloadFile>>(
-                    Lang.Text("Minecraft.Launch.Java.Task.GetDownloadInfo"),
-                    JavaFileList)
-                {
-                    ProgressWeight = 2d
-                },
-                javaDownloadLoader
-            ]);
-
-        javaDownloadLoader.OnStateChangedThread += (_, newState, _) =>
-        {
-            switch (newState)
-            {
-                case ModBase.LoadState.Failed or ModBase.LoadState.Aborted
-                    when lastJavaBaseDir is not null:
-                    ModBase.Log(
-                        $"[Java] 由于下载未完成，清理未下载完成的 Java 文件：{lastJavaBaseDir}",
-                        ModBase.LogLevel.Debug);
-
-                    ModBase.DeleteDirectory(lastJavaBaseDir);
-                    break;
-                case ModBase.LoadState.Finished:
-                    Javas.ScanJavaAsync().GetAwaiter().GetResult();
-                    lastJavaBaseDir = null;
-                    break;
-            }
-        };
-
-        javaDownloadLoader.hasOnStateChangedThread = true;
-        return loader;
-    }
-
-    private static string lastJavaBaseDir; // 用于在下载中断或失败时删除未完成下载的 Java 文件夹，防止残留只下了一半但 -version 能跑的 Java
-
-    private static readonly HashSet<string> ignoreHash = new[]
-    {
-        "12976a6c2b227cbac58969c1455444596c894656", "c80e4bab46e34d02826eab226a4441d0970f2aba",
-        "84d2102ad171863db04e7ee22a259d1f6c5de4a5"
-    }.ToHashSet();
-
-    private static void JavaFileList(ModLoader.LoaderTask<string, List<DownloadFile>> loader)
-    {
-        ModBase.Log("[Java] 开始获取 Java 下载信息");
-        var indexFileStr = ModNet.NetGetCodeByLoader(
-            ModDownload.DlVersionListOrder(
-                new[]
-                {
-                    "https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json"
-                },
-                new[]
-                {
-                    "https://bmclapi2.bangbang93.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json"
-                }), isJson: true);
-        // 查找要下载的目标 Java
-        string? targetName = null;
-        JsonNode? targetValue = null;
-        var components =
-            (JsonObject)((JsonObject)ModBase.GetJson(indexFileStr))[$"windows-x{(SystemInfo.Is32BitSystem ? "86" : "64")}"];
-        if (components.ContainsKey(loader.input)) // 精确匹配
-        {
-            targetName = loader.input;
-            targetValue = components[loader.input];
-        }
-        else // 模糊匹配
-        {
-            var match = components.FirstOrDefault(c =>
-                c.Value?.AsArray().FirstOrDefault()?["version"]?["name"]?.ToString().StartsWithF(loader.input) ?? false);
-            targetName = match.Key;
-            targetValue = match.Value;
-            if (targetName is null)
-                throw new Exception($"未能找到所需的 Java {loader.input}");
-        }
-
-        var targetComponent = targetValue?.AsArray().FirstOrDefault();
-        if (targetComponent is null)
-            throw new Exception($"Mojang 未提供所需的 Java {loader.input}");
-        // 获取文件列表
-        var address = (string)targetComponent["manifest"]["url"];
-        ModLaunch.McLaunchLog($"准备下载 Java {targetComponent["version"]["name"]}（{targetName}）：{address}");
-        var listFileStr = (JsonObject)Requester.FetchJson(
-            ModDownload.DlSourceOrder(new[] { address },
-                new[] { address.Replace("piston-meta.mojang.com", "bmclapi2.bangbang93.com") }).First(), RequestParam.WithRetry);
-        lastJavaBaseDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            ".minecraft", "runtime", targetName);
-        var results = new List<DownloadFile>(listFileStr["files"].AsObject().Count);
-        foreach (var File in listFileStr["files"].AsObject())
-        {
-            if (File.Value?.AsObject()?["downloads"]?["raw"] is null)
-                continue;
-
-            var info = File.Value["downloads"]["raw"].AsObject();
-            var checkHash = info["sha1"];
-            if (ignoreHash.Contains((string)checkHash))
-                continue; // 跳过 3 个无意义大量重复文件（#3827）
-
-            var checker = new ModBase.FileChecker(actualSize: (long)info["size"], hash: (string)info["sha1"]);
-            var filePath = Path.GetFullPath(Path.Combine(lastJavaBaseDir, File.Key));
-            if (!Files.IsPathWithinDirectory(filePath, lastJavaBaseDir))
-                throw new Exception($"{filePath} 不在 {lastJavaBaseDir} 中");
-
-            if (checker.Check(filePath) is null)
-                continue; // 跳过已存在的文件
-            var url = (string)info["url"];
-            results.Add(new DownloadFile(
-                ModDownload.DlSourceOrder(new[] { url },
-                    new[] { url.Replace("piston-data.mojang.com", "bmclapi2.bangbang93.com") }), filePath, checker));
-        }
-
-        loader.output = results;
-        ModBase.Log($"[Java] 需要下载 {results.Count} 个文件，目标文件夹：{lastJavaBaseDir}");
     }
 
     #endregion

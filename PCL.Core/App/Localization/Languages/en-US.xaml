@@ -2428,8 +2428,7 @@ Error message:
     <!-- Minecraft.Launch.Java -->
 
     <sys:String x:Key="Minecraft.Launch.Java.AutoDownload.Action">Download automatically</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Java.AutoDownload.Message">PCL-MOON could not find {0}. Would you like PCL-MOON to download it automatically?
-If you have already installed {0}, you can import it manually under Settings → Launch options → Game Java.</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.AutoDownload.Message">PCL-MOON could not find {0}. Download a Zulu JDK automatically?&#xA;The official Zulu source is tried first, then a compatible version from the INJDK community mirror.&#xA;You can also import an installed JDK under Settings → Launch options → Game Java.</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.AutoDownload.Title">Download Java automatically?</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.Compatibility.CheckFailed">Failed to check Java compatibility. See the details below.</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.Compatibility.Title">Incompatible Java version</sys:String>
@@ -2458,6 +2457,16 @@ Please install {0} manually, then re-search or import it under Settings → Laun
     <sys:String x:Key="Minecraft.Launch.Java.Task.Download">Download Java</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.Task.DownloadFiles">Download Java files</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.Task.GetDownloadInfo">Get Java download information</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Task.ResolveJdk">Get {0} JDK download information</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Task.DownloadJdk">Download {0} JDK</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Task.InstallJdk">Verify and install {0} JDK</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Download.AllFailed">Could not install a compatible Zulu JDK {0} from the official source or INJDK community mirror. Check your connection, or download the required JDK and import it under Settings → Launch options → Game Java.</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Download.NoPackage">No {0} JDK {1} package matches the required version and architecture.</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Download.FallbackMirror">The official Zulu download or installation failed. Trying the INJDK community mirror…</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Download.SourceOfficial">Zulu official</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Download.SourceMirror">INJDK mirror (Zulu)</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Download.RegistrationFailed">The JDK was installed but could not be registered or is disabled. Check your Java settings.</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Download.IncompatiblePackage">The downloaded JDK has an unexpected version, vendor, or architecture. Installation was stopped.</sys:String>
 
     <!-- Minecraft.Launch.Login -->
 
