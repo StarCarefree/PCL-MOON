@@ -26,6 +26,12 @@ public static class ModJava
     /// </summary>
     public static JavaManager Javas => JavaService.JavaManager;
 
+    public sealed class LaunchJavaSelection
+    {
+        // 仅在本次启动中保留选择，供下载后的重选复用。
+        public bool UseRecommended { get; set; }
+    }
+
     /// <summary>
     ///     根据要求返回最适合的 Java，若找不到则返回 Nothing。
     ///     最小与最大版本在与输入相同时也会通过。
@@ -33,25 +39,65 @@ public static class ModJava
     /// </summary>
     public static JavaEntry JavaSelect(string cancelException, Version minVersion = null, Version maxVersion = null,
         McInstance relatedInstance = null, bool enforceVersionRange = false,
-        IReadOnlySet<int> compatibleMajors = null)
+        IReadOnlySet<int> compatibleMajors = null, LaunchJavaSelection launchSelection = null)
     {
         ModBase.Log(
             $"[Java] 要求选择合适 Java，要求最低版本 {(minVersion is not null ? minVersion.ToString() : "未指定")}，要求选择的最高版本 {(maxVersion is not null ? maxVersion.ToString() : "未指定")}，关联实例 {(relatedInstance is not null ? relatedInstance.Name : "未指定")}");
 
-        // 版本范围验证函数（安全处理 null 边界）
-        bool IsVersionSuitable(Version ver)
+        var reqMin = minVersion ?? new Version(1, 0, 0);
+        var reqMax = maxVersion ?? new Version(999, 999, 999);
+
+        bool AcceptSelectedJava(JavaEntry candidate, string warningKey)
         {
-            return (minVersion is null || ver >= minVersion) && (maxVersion is null || ver <= maxVersion);
+            var version = candidate.Installation.Version;
+            var suitable = JavaManager.IsVersionSuitable(version, reqMin, reqMax) &&
+                           (compatibleMajors is null ||
+                            compatibleMajors.Contains(JavaManager.NormalizeVersion(version).Major));
+            if (suitable) return true;
+            if (enforceVersionRange)
+            {
+                ModBase.Log($"[Java] 指定的 Java 不满足强制范围要求，继续搜索: {candidate}");
+                return false;
+            }
+            if (launchSelection is not null && relatedInstance?.PathInstance is not null &&
+                Config.Instance.IgnoreJavaCompatibility[relatedInstance.PathInstance])
+            {
+                ModBase.Log($"[Java] 已忽略兼容性警告，使用指定的 Java: {candidate}");
+                return true;
+            }
+
+            var warning = _GetJavaRangeWarning(warningKey, version, minVersion, maxVersion);
+            if (compatibleMajors is not null)
+                warning += "\n" + Lang.Text("Minecraft.Launch.Java.Compatibility.AllowedMajors",
+                    string.Join(", ", compatibleMajors.OrderBy(major => major)));
+            if (launchSelection is null)
+            {
+                HintService.Hint(warning);
+                return true;
+            }
+
+            var choice = ModMain.MyMsgBox(
+                warning + "\n\n" + Lang.Text("Minecraft.Launch.Java.Compatibility.SwitchMessage"),
+                Lang.Text("Minecraft.Launch.Java.Compatibility.Title"),
+                Lang.Text("Minecraft.Launch.Java.Compatibility.UseRecommended"),
+                Lang.Text("Minecraft.Launch.Java.Compatibility.KeepSelected"),
+                Lang.Text("Minecraft.Launch.Java.Compatibility.CancelLaunch"),
+                isWarn: true);
+            switch (choice)
+            {
+                case 1:
+                    launchSelection.UseRecommended = true;
+                    ModBase.Log("[Java] 玩家选择仅本次启动使用推荐 Java");
+                    return false;
+                case 2:
+                    ModBase.Log($"[Java] 玩家选择继续使用不兼容的 Java: {candidate}");
+                    return true;
+                default:
+                    throw new Exception(cancelException);
+            }
         }
 
-        // compatibleJavaMajors 集合成员资格：按规范化后的主版本判断（兼容 Java 8 的 1.8.x 形式）
-        bool IsAllowedMajor(JavaEntry entry)
-        {
-            return compatibleMajors is null ||
-                   compatibleMajors.Contains(JavaManager.NormalizeVersion(entry.Installation.Version).Major);
-        }
-
-        // 自动搜索结果按兼容主版本集合过滤，接受集合未声明的主版本（例如 [8, 17] 的 9 - 16）
+        // 自动搜索结果按兼容主版本集合过滤，排除集合未声明的主版本。
         JavaEntry[] FilterByCompatibleMajors(JavaEntry[] entries)
         {
             return compatibleMajors is null
@@ -63,7 +109,7 @@ public static class ModJava
         }
 
         // ===== 优先级 1：实例专属 Java 偏好 =====
-        if (relatedInstance is not null && relatedInstance.PathInstance is not null)
+        if (launchSelection?.UseRecommended != true && relatedInstance?.PathInstance is not null)
         {
             var rawPreference = Config.Instance.SelectedJava[relatedInstance.PathInstance];
 
@@ -82,12 +128,9 @@ public static class ModJava
 
                             if (candidate is not null && candidate.IsEnabled)
                             {
-                                if (!IsVersionSuitable(candidate.Installation.Version) || !IsAllowedMajor(candidate))
-                                    HintService.Hint(_GetJavaRangeWarning(
-                                        "Minecraft.Launch.Java.Compatibility.InstanceSelectedOutOfRange",
-                                        candidate.Installation.Version,
-                                        minVersion,
-                                        maxVersion));
+                                if (!AcceptSelectedJava(candidate,
+                                        "Minecraft.Launch.Java.Compatibility.InstanceSelectedOutOfRange"))
+                                    break;
                                 ModBase.Log($"[Java] 返回实例 '{relatedInstance.Name}' 指定的 Java: {candidate}");
                                 return candidate;
                             }
@@ -108,13 +151,9 @@ public static class ModJava
                                 var candidate = Javas.Get(absPath);
                                 if (candidate is not null && candidate.IsEnabled)
                                 {
-                                    if (!IsVersionSuitable(candidate.Installation.Version) || !IsAllowedMajor(candidate))
-                                        HintService.Hint(_GetJavaRangeWarning(
-                                                "Minecraft.Launch.Java.Compatibility.RelativePathSelectedOutOfRange",
-                                                candidate.Installation.Version,
-                                                minVersion,
-                                                maxVersion),
-                                            HintType.Error);
+                                    if (!AcceptSelectedJava(candidate,
+                                            "Minecraft.Launch.Java.Compatibility.RelativePathSelectedOutOfRange"))
+                                        break;
                                     ModBase.Log(
                                         $"[Java] 返回实例 '{relatedInstance.Name}' 相对路径指定的 Java ({relPref.RelativePath}): {candidate}");
                                     return candidate;
@@ -151,7 +190,7 @@ public static class ModJava
         }
 
         // ===== 优先级 2：全局指定的 Java =====
-        var globalJavaPath = Config.Launch.SelectedJava;
+        var globalJavaPath = launchSelection?.UseRecommended == true ? null : Config.Launch.SelectedJava;
         if (!string.IsNullOrWhiteSpace(globalJavaPath))
         {
             globalJavaPath = globalJavaPath.Trim();
@@ -159,19 +198,9 @@ public static class ModJava
 
             if (candidate is not null && candidate.IsEnabled)
             {
-                var versionSuitable = IsVersionSuitable(candidate.Installation.Version) && IsAllowedMajor(candidate);
-                if (enforceVersionRange && !versionSuitable)
+                if (AcceptSelectedJava(candidate,
+                        "Minecraft.Launch.Java.Compatibility.GlobalSelectedOutOfRange"))
                 {
-                    ModBase.Log($"[Java] 全局指定的 Java 版本不满足强制范围要求，忽略并继续自动搜索: {candidate}");
-                }
-                else
-                {
-                    if (!versionSuitable)
-                        HintService.Hint(_GetJavaRangeWarning(
-                            "Minecraft.Launch.Java.Compatibility.GlobalSelectedOutOfRange",
-                            candidate.Installation.Version,
-                            minVersion,
-                            maxVersion));
                     ModBase.Log($"[Java] 返回全局指定的 Java: {candidate}");
                     return candidate;
                 }
@@ -189,9 +218,6 @@ public static class ModJava
         // ===== 优先级 3：自动搜索合适版本 =====
         ModBase.Log("[Java] 开始自动搜索符合版本要求的 Java 运行时");
         Javas.CheckAllAvailability();
-
-        var reqMin = minVersion ?? new Version(1, 0, 0);
-        var reqMax = maxVersion ?? new Version(999, 999, 999);
 
         var candidates = FilterByCompatibleMajors(
             Javas.SelectSuitableJavaAsync(reqMin, reqMax).GetAwaiter().GetResult());

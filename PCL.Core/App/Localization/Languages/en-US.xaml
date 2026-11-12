@@ -2432,11 +2432,17 @@ Error message:
 If you have already installed {0}, you can import it manually under Settings → Launch options → Game Java.</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.AutoDownload.Title">Download Java automatically?</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.Compatibility.CheckFailed">Failed to check Java compatibility. See the details below.</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.GlobalSelectedOutOfRange">The globally selected Java ({0}) is outside the required range [{1}, {2}] and may cause the game to crash.</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.InstanceSelectedOutOfRange">The Java selected for this instance ({0}) is outside the required range [{1}, {2}] and may cause the game to crash.</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.Title">Incompatible Java version</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.SwitchMessage">Use recommended Java for this launch only? Your Java settings will stay unchanged.&#xA;A compatible local Java will be selected automatically. If none is found, you will be asked to download one.</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.AllowedMajors">Compatible Java major versions declared by the modpack: {0} (the version range above still applies).</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.UseRecommended">Use recommended Java</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.KeepSelected">Use anyway</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.CancelLaunch">Cancel launch</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.GlobalSelectedOutOfRange">The globally selected Java ({0}) does not meet the compatibility requirements and may cause the game to crash.&#xA;Required Java version range: [{1}, {2}].</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.InstanceSelectedOutOfRange">The Java selected for this instance ({0}) does not meet the compatibility requirements and may cause the game to crash.&#xA;Required Java version range: [{1}, {2}].</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.Compatibility.NoMaximum">No maximum</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.Compatibility.NoMinimum">No minimum</sys:String>
-    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.RelativePathSelectedOutOfRange">The Java selected through this instance's relative path ({0}) is outside the required range [{1}, {2}] and may cause the game to crash.</sys:String>
+    <sys:String x:Key="Minecraft.Launch.Java.Compatibility.RelativePathSelectedOutOfRange">The Java selected through this instance's relative path ({0}) does not meet the compatibility requirements and may cause the game to crash.&#xA;Required Java version range: [{1}, {2}].</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.InstallManuallyHint">Please search and install it manually.</sys:String>
     <sys:String x:Key="Minecraft.Launch.Java.NeedJava7">You need to install Java 7 to launch this version.
 Please search and install Java 7 manually, then re-search or import it under &quot;Settings → Launch options → Game Java&quot;.</sys:String>

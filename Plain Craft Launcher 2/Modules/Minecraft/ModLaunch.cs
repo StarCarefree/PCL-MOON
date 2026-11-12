@@ -1319,13 +1319,14 @@ public static partial class ModLaunch
 
         lock (ModJava.javaLock)
         {
+            var javaSelection = new ModJava.LaunchJavaSelection();
             // 选择 Java
             McLaunchLog("Java 版本需求：最低 " + minVer + "，最高 " + maxVer +
                         (compatibleJavaMajorsSet is null
                             ? ""
                             : "，兼容主版本：" + string.Join(", ", compatibleJavaMajorsSet.OrderBy(major => major))));
             mcLaunchJavaSelected = ModJava.JavaSelect("$$", minVer, maxVer, LaunchingInstance,
-                false, compatibleJavaMajorsSet);
+                false, compatibleJavaMajorsSet, javaSelection);
             if (task.IsAborted)
                 return;
             if (mcLaunchJavaSelected is not null)
@@ -1411,7 +1412,7 @@ public static partial class ModLaunch
 
             // 检查下载结果
             mcLaunchJavaSelected = ModJava.JavaSelect("$$", minVer, maxVer, LaunchingInstance,
-                false, compatibleJavaMajorsSet);
+                false, compatibleJavaMajorsSet, javaSelection);
             if (task.IsAborted)
                 return;
             if (mcLaunchJavaSelected is not null)
