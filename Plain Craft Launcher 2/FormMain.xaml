@@ -32,11 +32,11 @@
             CornerRadius="12"
             GlassFrameThickness="0" />
     </WindowChrome.WindowChrome>
-    <Grid SnapsToDevicePixels="True" UseLayoutRounding="True">
+    <Grid x:Name="GridRoot" SnapsToDevicePixels="True" UseLayoutRounding="True" RenderTransformOrigin="0.5,0.5" Opacity="0">
         <Grid.RenderTransform>
             <TransformGroup>
-                <RotateTransform x:Name="TransformRotate" Angle="-4" />
-                <TranslateTransform x:Name="TransformPos" X="0" Y="60" />
+                <ScaleTransform x:Name="TransformScale" ScaleX="0.968" ScaleY="0.968" />
+                <TranslateTransform x:Name="TransformPos" X="0" Y="14" />
             </TransformGroup>
         </Grid.RenderTransform>
         <Rectangle Stroke="{x:Null}" StrokeThickness="0.0001" IsHitTestVisible="False" Height="10" VerticalAlignment="Top" Margin="16,0">
@@ -282,6 +282,7 @@
                                      Panel.ZIndex="10" Visibility="Collapsed">
                     <Grid x:Name="PanMsg" Background="#00000000" MouseLeftButtonDown="FormDragMove" />
                 </controls:BlurBorder>
+                <local:HybridWindowTransition x:Name="WindowTransitionOverlay" Grid.Row="0" Grid.RowSpan="2" Grid.ColumnSpan="2" Panel.ZIndex="20" />
             </Grid>
         </Border>
     </Grid>

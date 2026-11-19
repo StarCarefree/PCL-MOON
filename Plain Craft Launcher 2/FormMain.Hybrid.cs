@@ -47,7 +47,6 @@ public partial class FormMain
         };
         StateChanged += refreshIfStale;
         IsVisibleChanged += (_, _) => refreshIfStale(this, EventArgs.Empty);
-        HybridSidebarView.PlayEntrance();
         UpdateHybridShell();
         var launch = ModMain.frmLaunchLeft;
         if (launch is not null)
