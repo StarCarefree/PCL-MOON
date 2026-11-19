@@ -9,6 +9,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
 using System.Windows.Media.Imaging;
+using PCL.Core.Utils.Native;
 
 namespace PCL.Core.UI.Effects;
 // ReSharper disable UnusedMember.Local, NotAccessedField.Local, UnusedParameter.Local, UnusedVariable
@@ -19,8 +20,8 @@ namespace PCL.Core.UI.Effects;
 /// </summary>
 internal sealed class SamplingBlurProcessor : IDisposable
 {
-    private static readonly ArrayPool<uint> _UintPool = ArrayPool<uint>.Create();
-    private static readonly ArrayPool<float> _FloatPool = ArrayPool<float>.Create();
+    private static readonly ArrayPool<uint> _UintPool = ArrayPool<uint>.Shared;
+    private static readonly ArrayPool<float> _FloatPool = ArrayPool<float>.Shared;
     private static readonly ConcurrentDictionary<string, CachedBlurResult> _Cache = new();
     
     private readonly object _lockObject = new();
@@ -103,17 +104,82 @@ internal sealed class SamplingBlurProcessor : IDisposable
         var width = source.PixelWidth;
         var height = source.PixelHeight;
         var stride = (width * source.Format.BitsPerPixel + 7) / 8;
+        var totalBytesLong = (long)stride * height;
 
-        // 创建源图像数据缓冲区
-        var sourceBuffer = _UintPool.Rent(width * height);
-        var targetBuffer = _UintPool.Rent(width * height);
+        if ((source.Format == PixelFormats.Bgra32 || source.Format == PixelFormats.Pbgra32) &&
+            width > 0 && height > 0 &&
+            totalBytesLong > 0 && totalBytesLong <= int.MaxValue &&
+            PclNativeInterop.IsAvailable)
+        {
+            var totalBytes = (int)totalBytesLong;
+            var nativeSrcBytes = ArrayPool<byte>.Shared.Rent(totalBytes);
+            try
+            {
+                unsafe
+                {
+                    fixed (byte* srcPtr = nativeSrcBytes)
+                    {
+                        source.CopyPixels(Int32Rect.Empty, (nint)srcPtr, totalBytes, stride);
+                    }
+                }
+
+                var nativeResult = new WriteableBitmap(width, height, source.DpiX, source.DpiY, PixelFormats.Bgra32, null);
+                var nativeOk = false;
+                nativeResult.Lock();
+                try
+                {
+                    var nativeBias = renderingBias == RenderingBias.Quality
+                        ? PclNativeInterop.RenderingBiasQuality
+                        : PclNativeInterop.RenderingBiasPerformance;
+                    var nativeKernel = kernelType == KernelType.Gaussian
+                        ? PclNativeInterop.KernelGaussian
+                        : PclNativeInterop.KernelBox;
+
+                    nativeOk = PclNativeInterop.TryBlurBgra32(
+                        nativeSrcBytes.AsSpan(0, totalBytes),
+                        stride,
+                        nativeResult.BackBuffer,
+                        nativeResult.BackBufferStride,
+                        width,
+                        height,
+                        radius,
+                        samplingRate,
+                        nativeBias,
+                        nativeKernel);
+
+                    if (nativeOk)
+                    {
+                        nativeResult.AddDirtyRect(new Int32Rect(0, 0, width, height));
+                    }
+                }
+                finally
+                {
+                    nativeResult.Unlock();
+                }
+
+                if (nativeOk)
+                {
+                    return nativeResult;
+                }
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(nativeSrcBytes);
+            }
+        }
+
+        // 创建源图像数据缓冲区（纯 C# 回退路径，同样使用共享池避免 1080p LOH 分配）
+        var pixelCount = width * height;
+        var sourceBuffer = _UintPool.Rent(pixelCount);
+        var targetBuffer = _UintPool.Rent(pixelCount);
+        var sourceByteLen = checked((int)totalBytesLong);
+        var sourceBytes = ArrayPool<byte>.Shared.Rent(sourceByteLen);
 
         try
         {
             // 复制源图像数据
-            var sourceBytes = new byte[stride * height];
             source.CopyPixels(sourceBytes, stride, 0);
-            _CopyBytesToUints(sourceBytes, sourceBuffer, width * height);
+            _CopyBytesToUints(sourceBytes, sourceByteLen, sourceBuffer, pixelCount);
 
             // 根据渲染偏向选择算法
             if (renderingBias == RenderingBias.Quality)
@@ -136,7 +202,7 @@ internal sealed class SamplingBlurProcessor : IDisposable
                     var resultPtr = (uint*)result.BackBuffer;
                     fixed (uint* targetPtr = targetBuffer)
                     {
-                        Buffer.MemoryCopy(targetPtr, resultPtr, width * height * 4, width * height * 4);
+                        Buffer.MemoryCopy(targetPtr, resultPtr, (long)pixelCount * 4, (long)pixelCount * 4);
                     }
                 }
 
@@ -151,6 +217,7 @@ internal sealed class SamplingBlurProcessor : IDisposable
         }
         finally
         {
+            ArrayPool<byte>.Shared.Return(sourceBytes);
             _UintPool.Return(sourceBuffer);
             _UintPool.Return(targetBuffer);
         }
@@ -457,17 +524,21 @@ internal sealed class SamplingBlurProcessor : IDisposable
     private static uint _PackColor(byte a, byte r, byte g, byte b) =>
         ((uint)a << 24) | ((uint)r << 16) | ((uint)g << 8) | b;
 
-    private static void _CopyBytesToUints(byte[] source, uint[] target, int count)
+    private static void _CopyBytesToUints(byte[] source, int sourceLength, uint[] target, int count)
     {
         for (var i = 0; i < count; i++)
         {
             var baseIndex = i * 4;
-            if (baseIndex + 3 < source.Length)
+            if (baseIndex + 3 < sourceLength)
             {
                 target[i] = ((uint)source[baseIndex + 3] << 24) |
                            ((uint)source[baseIndex + 2] << 16) |
                            ((uint)source[baseIndex + 1] << 8) |
                            source[baseIndex];
+            }
+            else
+            {
+                target[i] = 0;
             }
         }
     }

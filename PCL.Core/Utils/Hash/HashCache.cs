@@ -1,9 +1,11 @@
 using Microsoft.Data.Sqlite;
 using PCL.Core.Utils.Exts;
+using PCL.Core.Utils.Native;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace PCL.Core.Utils.Hash;
@@ -193,6 +195,11 @@ public class HashCache
 
     private static async Task<string> _ComputeHashAsync(string fullPath, IHashProvider provider)
     {
+        if (provider.GetType() == typeof(MurmurHash2Provider) &&
+            PclNativeInterop.TryMurmurHash2File(fullPath, out var nativeHash))
+        {
+            return BitConverter.GetBytes(nativeHash).ToHexString();
+        }
         using FileStream fs = new(fullPath, FileMode.Open, FileAccess.Read, FileShare.Read);
         return (await provider.ComputeHashAsync(fs).ConfigureAwait(false)).ToHexString();
     }
@@ -294,6 +301,179 @@ public class HashCache
                 foreach (var entry in snapshot) _pendingWrites.TryRemove(entry);
             }
         }
+    }
+
+    /// <summary>
+    /// 批量获取文件列表的 SHA1 与 MurmurHash2；优先复用缓存，未命中项在原生可用时通过单遍并行盘扫描计算并写回缓存。
+    /// 返回值以 <see cref="Path.GetFullPath(string)"/> 为键。
+    /// </summary>
+    public async Task<Dictionary<string, (string Sha1, uint Murmur2)>> GetDualHashesBatchAsync(
+        IReadOnlyList<string> filePaths,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(filePaths);
+        var results = new Dictionary<string, (string Sha1, uint Murmur2)>(StringComparer.OrdinalIgnoreCase);
+        if (filePaths.Count == 0) return results;
+
+        var candidates = new List<(string FullPath, long Size, string LastWrite)>(filePaths.Count);
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var path in filePaths)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (string.IsNullOrWhiteSpace(path)) continue;
+            var fullPath = Path.GetFullPath(path);
+            if (!seen.Add(fullPath)) continue;
+            var info = new FileInfo(fullPath);
+            if (!info.Exists) continue;
+            candidates.Add((fullPath, info.Length, info.LastWriteTimeUtc.ToString("O")));
+        }
+
+        if (candidates.Count == 0) return results;
+
+        var missing = new List<(string FullPath, long Size, string LastWrite)>();
+        using (var conn = _CreateConnection())
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = "SELECT FileSize, LastWriteTime, SHA1, MurmurHash2 FROM HashCache WHERE FilePath = @FilePath";
+            var pathParam = cmd.CreateParameter();
+            pathParam.ParameterName = "@FilePath";
+            cmd.Parameters.Add(pathParam);
+
+            foreach (var item in candidates)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                string? sha1 = null;
+                string? murmurHex = null;
+
+                if (_pendingWrites.TryGetValue((item.FullPath, "SHA1"), out var pendingSha1) &&
+                    pendingSha1.Size == item.Size && pendingSha1.LastWrite == item.LastWrite)
+                    sha1 = pendingSha1.Hash;
+                if (_pendingWrites.TryGetValue((item.FullPath, "MurmurHash2"), out var pendingM2) &&
+                    pendingM2.Size == item.Size && pendingM2.LastWrite == item.LastWrite)
+                    murmurHex = pendingM2.Hash;
+
+                if (sha1 is null || murmurHex is null)
+                {
+                    pathParam.Value = item.FullPath;
+                    using var reader = await cmd.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                    if (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                    {
+                        var cachedSize = reader.GetInt64(0);
+                        var cachedTime = reader.GetString(1);
+                        if (cachedSize == item.Size && cachedTime == item.LastWrite)
+                        {
+                            sha1 ??= reader.IsDBNull(2) ? null : reader.GetString(2);
+                            murmurHex ??= reader.IsDBNull(3) ? null : reader.GetString(3);
+                        }
+                    }
+                }
+
+                if (sha1 is not null && murmurHex is not null)
+                {
+                    try
+                    {
+                        var bytes = murmurHex.HexToBytes();
+                        if (bytes.Length == 4)
+                        {
+                            results[item.FullPath] = (sha1, BitConverter.ToUInt32(bytes));
+                            continue;
+                        }
+                    }
+                    catch
+                    {
+                        // Corrupt cached hex; fall through to recompute.
+                    }
+                }
+
+                missing.Add(item);
+            }
+        }
+
+        if (missing.Count == 0) return results;
+
+        var fallbackList = new List<(string FullPath, long Size, string LastWrite)>();
+        if (PclNativeInterop.IsAvailable)
+        {
+            var missingPaths = new string[missing.Count];
+            for (var i = 0; i < missing.Count; i++) missingPaths[i] = missing[i].FullPath;
+
+            var nativeOut = new PclFileHashResult[missing.Count];
+            var maxThreads = (uint)Math.Clamp(Environment.ProcessorCount, 1, 6);
+            if (PclNativeInterop.TryBatchHashFiles(missingPaths, nativeOut, maxThreads))
+            {
+                var toPersist = new List<(string FullPath, long Size, string LastWrite, string Sha1, string MurmurHex)>(missing.Count);
+                for (var i = 0; i < missing.Count; i++)
+                {
+                    var item = missing[i];
+                    var res = nativeOut[i];
+                    if (res.Status != PclNativeInterop.PclOk)
+                    {
+                        fallbackList.Add(item);
+                        continue;
+                    }
+
+                    var sha1Hex = PclNativeInterop.FormatSha1Hex(in res);
+                    var murmurHex = BitConverter.GetBytes(res.Murmur2).ToHexString();
+                    results[item.FullPath] = (sha1Hex, res.Murmur2);
+
+                    var postInfo = new FileInfo(item.FullPath);
+                    if (postInfo.Exists && postInfo.Length == item.Size &&
+                        postInfo.LastWriteTimeUtc.ToString("O") == item.LastWrite)
+                    {
+                        toPersist.Add((item.FullPath, item.Size, item.LastWrite, sha1Hex, murmurHex));
+                    }
+                }
+
+                if (toPersist.Count > 0)
+                {
+                    if (_batchWrites)
+                    {
+                        foreach (var row in toPersist)
+                        {
+                            _pendingWrites[(row.FullPath, "SHA1")] = new PendingHash(row.Size, row.LastWrite, row.Sha1);
+                            _pendingWrites[(row.FullPath, "MurmurHash2")] = new PendingHash(row.Size, row.LastWrite, row.MurmurHex);
+                        }
+                    }
+                    else
+                    {
+                        using var writeConn = _CreateConnection();
+                        using var tx = writeConn.BeginTransaction();
+                        foreach (var row in toPersist)
+                        {
+                            await _InsertOrUpdateHashAsync(row.FullPath, row.Size, row.LastWrite, "SHA1", row.Sha1, writeConn, tx).ConfigureAwait(false);
+                            await _InsertOrUpdateHashAsync(row.FullPath, row.Size, row.LastWrite, "MurmurHash2", row.MurmurHex, writeConn, tx).ConfigureAwait(false);
+                        }
+                        tx.Commit();
+                    }
+                }
+            }
+            else
+            {
+                fallbackList.AddRange(missing);
+            }
+        }
+        else
+        {
+            fallbackList.AddRange(missing);
+        }
+
+        foreach (var item in fallbackList)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            try
+            {
+                var sha1 = await GetSHA1Async(item.FullPath).ConfigureAwait(false);
+                var murmurHex = await GetMurmurHash2Async(item.FullPath).ConfigureAwait(false);
+                var murmur2 = BitConverter.ToUInt32(murmurHex.HexToBytes());
+                results[item.FullPath] = (sha1, murmur2);
+            }
+            catch
+            {
+                // Keep partial batch tolerant of individual vanished/locked files.
+            }
+        }
+
+        return results;
     }
 
     private async Task _DeleteCacheEntryAsync(string fullPath)

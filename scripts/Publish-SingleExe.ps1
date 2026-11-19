@@ -230,7 +230,13 @@ function Test-FileContainsText([string]$Path, [string]$Name) {
 }
 
 function Assert-NoMissingLibraries([string]$PublishDir, [string]$LauncherExe) {
-    foreach ($name in @('WebView2Loader.dll', 'e_sqlite3.dll')) {
+    $requiredLibs = [System.Collections.Generic.List[string]]::new()
+    $requiredLibs.Add('WebView2Loader.dll')
+    $requiredLibs.Add('e_sqlite3.dll')
+    if ($Architecture -eq 'x64') {
+        $requiredLibs.Add('pcl_native.dll')
+    }
+    foreach ($name in $requiredLibs) {
         $loose = Join-Path $PublishDir $name
         $inBundle = Test-FileContainsText $LauncherExe $name
         $onDisk = Test-Path -LiteralPath $loose -PathType Leaf

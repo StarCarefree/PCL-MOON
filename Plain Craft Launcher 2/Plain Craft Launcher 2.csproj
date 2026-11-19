@@ -153,6 +153,15 @@
                                       Condition="'%(ResolvedFileToPublish.Extension)' == '.dll' And '%(ResolvedFileToPublish.Filename)' != 'PCL.Core' And '%(ResolvedFileToPublish.Filename)' != '$(AssemblyName)'" />
         </ItemGroup>
     </Target>
+    <Target Name="MarkPclNativeForSingleFile" AfterTargets="ComputeFilesToPublish" Condition="'$(Platform)' != 'ARM64' And '$(RuntimeIdentifier)' != 'win-arm64'">
+        <ItemGroup>
+            <ResolvedFileToPublish Update="@(ResolvedFileToPublish)"
+                                   Condition="'%(Filename)%(Extension)' == 'pcl_native.dll'">
+                <AssetType>native</AssetType>
+                <CopyToSingleFile>true</CopyToSingleFile>
+            </ResolvedFileToPublish>
+        </ItemGroup>
+    </Target>
     <ItemGroup>
         <GameLinkAgentSource Include="..\tools\multiplayer-agent\src\**\*.java;..\tools\multiplayer-agent\MANIFEST.MF;..\tools\multiplayer-agent\build.ps1" />
     </ItemGroup>

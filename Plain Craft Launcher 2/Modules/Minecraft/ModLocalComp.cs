@@ -9,6 +9,7 @@ using PCL.Core.App.Localization;
 using PCL.Core.Utils;
 using PCL.Core.Utils.Exts;
 using PCL.Core.Utils.Hash;
+using PCL.Core.Utils.Native;
 using static PCL.ModComp;
 using static PCL.ModLoader;
 
@@ -2268,6 +2269,14 @@ public static class ModLocalComp
         internal void LoadCachedModrinthHash() =>
             _modrinthHash ??= _hashCache.Value.GetCachedSHA1Async(path).GetAwaiter().GetResult();
 
+        internal bool HasCachedCurseForgeHash => _CurseForgeHash is not null;
+
+        internal void SetPrecomputedHashes(string sha1, uint murmur2)
+        {
+            _modrinthHash ??= sha1;
+            _CurseForgeHash ??= murmur2;
+        }
+
         #endregion
 
         #region API
@@ -2746,17 +2755,54 @@ public static class ModLocalComp
             });
         }
 
-        // 未命中的哈希只在后台计算，限制并发以减轻与首屏和内嵌解析的磁盘竞争。
+        // 未命中的哈希只在后台计算，原生可用时合并单遍双哈希（SHA1 + MurmurHash2）并单事务写回，避免重复读盘与 LOH。
         var deferredMods = mods.Where(m => m.CachedModrinthHash is null).ToList();
-        Parallel.ForEach(deferredMods, new ParallelOptions { MaxDegreeOfParallelism = 2 }, (entry, state) =>
+        var batchHashTargets = mods.Where(m => m.CachedModrinthHash is null || !m.HasCachedCurseForgeHash).ToList();
+        var batchHandled = false;
+        if (batchHashTargets.Count > 0 && PclNativeInterop.IsAvailable)
         {
-            if (!IsCurrent()) { state.Stop(); return; }
-            try { _ = entry.ModrinthHash; }
+            try
+            {
+                const int chunkSize = 128;
+                for (var offset = 0; offset < batchHashTargets.Count; offset += chunkSize)
+                {
+                    if (!IsCurrent()) return;
+                    var take = Math.Min(chunkSize, batchHashTargets.Count - offset);
+                    var chunkPaths = new string[take];
+                    for (var i = 0; i < take; i++) chunkPaths[i] = batchHashTargets[offset + i].path;
+
+                    var dualHashes = _hashCache.Value.GetDualHashesBatchAsync(chunkPaths).GetAwaiter().GetResult();
+                    for (var i = 0; i < take; i++)
+                    {
+                        var entry = batchHashTargets[offset + i];
+                        if (string.IsNullOrWhiteSpace(entry.path)) continue;
+                        var fullPath = Path.GetFullPath(entry.path);
+                        if (dualHashes.TryGetValue(fullPath, out var pair))
+                        {
+                            entry.SetPrecomputedHashes(pair.Sha1, pair.Murmur2);
+                        }
+                    }
+                }
+                batchHandled = true;
+            }
             catch (Exception ex)
             {
-                ModBase.Log(ex, "后台读取资源哈希失败（" + entry.path + "）", ModBase.LogLevel.Developer);
+                ModBase.Log(ex, "原生批量计算资源双哈希失败，已回退常规计算", ModBase.LogLevel.Developer);
             }
-        });
+        }
+
+        if (!batchHandled)
+        {
+            Parallel.ForEach(deferredMods, new ParallelOptions { MaxDegreeOfParallelism = 2 }, (entry, state) =>
+            {
+                if (!IsCurrent()) { state.Stop(); return; }
+                try { _ = entry.ModrinthHash; }
+                catch (Exception ex)
+                {
+                    ModBase.Log(ex, "后台读取资源哈希失败（" + entry.path + "）", ModBase.LogLevel.Developer);
+                }
+            });
+        }
         if (!IsCurrent()) return;
         foreach (var entry in deferredMods)
         {

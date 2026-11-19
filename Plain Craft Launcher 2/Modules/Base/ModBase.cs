@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System.Buffers;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -26,6 +27,7 @@ using PCL.Core.Logging;
 using PCL.Core.Utils;
 using PCL.Core.Utils.Codecs;
 using PCL.Core.Utils.Hash;
+using PCL.Core.Utils.Native;
 using PCL.Core.Utils.OS;
 using Brush = System.Windows.Media.Brush;
 using Color = System.Windows.Media.Color;
@@ -2230,6 +2232,114 @@ public static class ModBase
     /// </summary>
     public const int MaxLocalSearchDepth = 25;
 
+    internal static int NativeSearchCacheMinEntries = 64;
+
+    /// <summary>
+    ///     为给定条目创建常驻搜索索引，适合在用户输入过程中高频反复检索。
+    /// </summary>
+    public static CompiledSearchIndex<T> CreateSearchIndex<T>(IReadOnlyList<SearchEntry<T>> entries)
+    {
+        ArgumentNullException.ThrowIfNull(entries);
+        return new CompiledSearchIndex<T>(entries);
+    }
+
+    public sealed class CompiledSearchIndex<T> : IDisposable
+    {
+        private readonly List<SearchEntry<T>> _entries;
+        private NativeSearchIndex? _nativeIndex;
+        private bool _disposed;
+
+        internal CompiledSearchIndex(IReadOnlyList<SearchEntry<T>> entries)
+        {
+            _entries = entries is List<SearchEntry<T>> list ? [.. list] : [.. entries];
+            if (_entries.Count > 0 && PclNativeInterop.IsAvailable &&
+                TryFlattenModBaseEntries(
+                    _entries,
+                    normalizeAliasesInPlace: false,
+                    out var entrySourceCounts,
+                    out var sourceCount,
+                    out var sourceAliasCounts,
+                    out var weights,
+                    out var aliasCount,
+                    out var aliases,
+                    out _))
+            {
+                try
+                {
+                    _nativeIndex = NativeSearchHelper.TryBuildFromFlat(
+                        _entries.Count,
+                        entrySourceCounts,
+                        sourceCount,
+                        sourceAliasCounts,
+                        weights,
+                        aliasCount,
+                        aliases);
+                }
+                finally
+                {
+                    ArrayPool<int>.Shared.Return(entrySourceCounts);
+                    ArrayPool<int>.Shared.Return(sourceAliasCounts);
+                    ArrayPool<double>.Shared.Return(weights);
+                    ArrayPool<string>.Shared.Return(aliases, clearArray: true);
+                }
+            }
+        }
+
+        public int Count => _entries.Count;
+        public bool IsNativeBacked => _nativeIndex is not null && PclNativeInterop.IsAvailable;
+
+        public List<SearchEntry<T>> Search(string query, int maxBlurCount = 5, double minBlurSimilarity = 0.1d)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            if (_entries.Count == 0) return [];
+
+            var queryParts = query.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (queryParts.Length == 0)
+                return [.. _entries];
+
+            if (_nativeIndex is not null &&
+                double.IsFinite(minBlurSimilarity) &&
+                _nativeIndex.TryQueryPooled(
+                    PclNativeInterop.SearchModeModBase,
+                    query.AsSpan(),
+                    maxBlurCount,
+                    minBlurSimilarity,
+                    out var rented,
+                    out var count) &&
+                rented is not null)
+            {
+                try
+                {
+                    var results = new List<SearchEntry<T>>(count);
+                    for (var i = 0; i < count; i++)
+                    {
+                        var item = rented[i];
+                        var entry = _entries[(int)item.EntryIndex];
+                        entry.similarity = item.Similarity;
+                        entry.absoluteRight = item.AbsoluteRight != 0;
+                        results.Add(entry);
+                    }
+                    return results;
+                }
+                finally
+                {
+                    if (rented.Length > 0)
+                        ArrayPool<PclSearchResult>.Shared.Return(rented);
+                }
+            }
+
+            return SearchManaged(_entries, query, maxBlurCount, minBlurSimilarity);
+        }
+
+        public void Dispose()
+        {
+            if (_disposed) return;
+            _disposed = true;
+            _nativeIndex?.Dispose();
+            _nativeIndex = null;
+        }
+    }
+
     /// <summary>
     ///     进行多段文本加权搜索，获取相似度较高的数项结果。
     /// </summary>
@@ -2238,11 +2348,32 @@ public static class ModBase
     public static List<SearchEntry<T>> Search<T>(List<SearchEntry<T>> entries, string query, int maxBlurCount = 5,
         double minBlurSimilarity = 0.1d)
     {
-        var resultList = new List<SearchEntry<T>>();
-
-        if (entries is null || !entries.Any()) return resultList;
+        if (entries is null || entries.Count == 0) return new List<SearchEntry<T>>();
 
         // Preprocess query into parts
+        var queryParts = query.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        if (queryParts.Length == 0)
+        {
+            return new List<SearchEntry<T>>(entries);
+        }
+
+        if (entries.Count >= NativeSearchCacheMinEntries &&
+            PclNativeInterop.IsAvailable &&
+            double.IsFinite(minBlurSimilarity) &&
+            TrySearchNative(entries, query, maxBlurCount, minBlurSimilarity, out var nativeResults))
+        {
+            return nativeResults;
+        }
+
+        return SearchManaged(entries, query, maxBlurCount, minBlurSimilarity);
+    }
+
+    private static List<SearchEntry<T>> SearchManaged<T>(List<SearchEntry<T>> entries, string query, int maxBlurCount,
+        double minBlurSimilarity)
+    {
+        var resultList = new List<SearchEntry<T>>();
+        if (entries is null || !entries.Any()) return resultList;
+
         var queryParts = query.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
         if (queryParts.Length == 0)
         {
@@ -2307,6 +2438,208 @@ public static class ModBase
             }
 
         return resultList;
+    }
+
+    private static string _NormalizeAliasInPlace(string value)
+    {
+        for (var i = 0; i < value.Length; i++)
+        {
+            var ch = value[i];
+            if (ch == ' ' || (ch >= 'A' && ch <= 'Z') || (ch >= 0x80 && char.IsUpper(ch)))
+            {
+                return value.Replace(" ", "").ToLower();
+            }
+        }
+        return value;
+    }
+
+    private static bool TryFlattenModBaseEntries<T>(
+        IReadOnlyList<SearchEntry<T>> entries,
+        bool normalizeAliasesInPlace,
+        out int[] entrySourceCounts,
+        out int sourceCount,
+        out int[] sourceAliasCounts,
+        out double[] weights,
+        out int aliasCount,
+        out string[] aliases,
+        out ulong fingerprint)
+    {
+        var entryCount = entries.Count;
+        sourceCount = 0;
+        aliasCount = 0;
+        for (var i = 0; i < entryCount; i++)
+        {
+            var sources = entries[i].searchSource;
+            if (sources is null)
+            {
+                entrySourceCounts = [];
+                sourceAliasCounts = [];
+                weights = [];
+                aliases = [];
+                fingerprint = 0;
+                return false;
+            }
+
+            var entryWeight = 0.0;
+            for (var s = 0; s < sources.Count; s++)
+            {
+                var src = sources[s];
+                if (src?.aliases is null || !double.IsFinite(src.weight) || src.weight < 0.0)
+                {
+                    entrySourceCounts = [];
+                    sourceAliasCounts = [];
+                    weights = [];
+                    aliases = [];
+                    fingerprint = 0;
+                    return false;
+                }
+                entryWeight += src.weight;
+                aliasCount += src.aliases.Length;
+            }
+            if (entryWeight == 0.0)
+            {
+                entrySourceCounts = [];
+                sourceAliasCounts = [];
+                weights = [];
+                aliases = [];
+                fingerprint = 0;
+                return false;
+            }
+            sourceCount += sources.Count;
+        }
+
+        entrySourceCounts = ArrayPool<int>.Shared.Rent(Math.Max(1, entryCount));
+        sourceAliasCounts = ArrayPool<int>.Shared.Rent(Math.Max(1, sourceCount));
+        weights = ArrayPool<double>.Shared.Rent(Math.Max(1, sourceCount));
+        aliases = ArrayPool<string>.Shared.Rent(Math.Max(1, aliasCount));
+
+        ulong fp = 14695981039346656037UL;
+        fp = NativeSearchHelper.MixFingerprint(fp, (ulong)entryCount);
+        fp = NativeSearchHelper.MixFingerprint(fp, (ulong)sourceCount);
+        fp = NativeSearchHelper.MixFingerprint(fp, (ulong)aliasCount);
+
+        var sIdx = 0;
+        var aIdx = 0;
+        for (var e = 0; e < entryCount; e++)
+        {
+            var sources = entries[e].searchSource;
+            entrySourceCounts[e] = sources.Count;
+            fp = NativeSearchHelper.MixFingerprint(fp, (ulong)sources.Count);
+
+            for (var s = 0; s < sources.Count; s++)
+            {
+                var src = sources[s];
+                var arr = src.aliases;
+                sourceAliasCounts[sIdx] = arr.Length;
+                weights[sIdx] = src.weight;
+                fp = NativeSearchHelper.MixFingerprint(fp, (ulong)arr.Length);
+                fp = NativeSearchHelper.MixFingerprint(fp, (ulong)BitConverter.DoubleToInt64Bits(src.weight));
+
+                for (var a = 0; a < arr.Length; a++)
+                {
+                    var raw = arr[a];
+                    if (raw is null)
+                    {
+                        ArrayPool<int>.Shared.Return(entrySourceCounts);
+                        ArrayPool<int>.Shared.Return(sourceAliasCounts);
+                        ArrayPool<double>.Shared.Return(weights);
+                        ArrayPool<string>.Shared.Return(aliases, clearArray: true);
+                        fingerprint = 0;
+                        return false;
+                    }
+                    var norm = _NormalizeAliasInPlace(raw);
+                    if (normalizeAliasesInPlace && !ReferenceEquals(norm, raw))
+                    {
+                        arr[a] = norm;
+                    }
+                    aliases[aIdx++] = norm;
+                    fp = NativeSearchHelper.MixFingerprint(fp, (ulong)norm.GetHashCode(StringComparison.Ordinal));
+                }
+
+                sIdx++;
+            }
+        }
+
+        fingerprint = fp;
+        return true;
+    }
+
+    private static bool TrySearchNative<T>(
+        List<SearchEntry<T>> entries,
+        string query,
+        int maxBlurCount,
+        double minBlurSimilarity,
+        out List<SearchEntry<T>> results)
+    {
+        results = new List<SearchEntry<T>>();
+        if (!TryFlattenModBaseEntries(
+                entries,
+                normalizeAliasesInPlace: true,
+                out var entrySourceCounts,
+                out var sourceCount,
+                out var sourceAliasCounts,
+                out var weights,
+                out var aliasCount,
+                out var aliases,
+                out var fingerprint))
+        {
+            return false;
+        }
+
+        try
+        {
+            if (!NativeSearchHelper.TryQueryWithLruCache(
+                    PclNativeInterop.SearchModeModBase,
+                    query.AsSpan(),
+                    maxBlurCount,
+                    minBlurSimilarity,
+                    entries.Count,
+                    entrySourceCounts,
+                    sourceCount,
+                    sourceAliasCounts,
+                    weights,
+                    aliasCount,
+                    aliases,
+                    fingerprint,
+                    allowCache: true,
+                    out var rented,
+                    out var resultCount) || rented is null)
+            {
+                return false;
+            }
+
+            try
+            {
+                for (var i = 0; i < entries.Count; i++)
+                {
+                    entries[i].similarity = 0.0;
+                    entries[i].absoluteRight = false;
+                }
+
+                results = new List<SearchEntry<T>>(resultCount);
+                for (var i = 0; i < resultCount; i++)
+                {
+                    var item = rented[i];
+                    var entry = entries[(int)item.EntryIndex];
+                    entry.similarity = item.Similarity;
+                    entry.absoluteRight = item.AbsoluteRight != 0;
+                    results.Add(entry);
+                }
+                return true;
+            }
+            finally
+            {
+                if (rented.Length > 0)
+                    ArrayPool<PclSearchResult>.Shared.Return(rented);
+            }
+        }
+        finally
+        {
+            ArrayPool<int>.Shared.Return(entrySourceCounts);
+            ArrayPool<int>.Shared.Return(sourceAliasCounts);
+            ArrayPool<double>.Shared.Return(weights);
+            ArrayPool<string>.Shared.Return(aliases, clearArray: true);
+        }
     }
 
     #endregion

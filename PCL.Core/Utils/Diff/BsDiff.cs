@@ -51,6 +51,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using ICSharpCode.SharpZipLib.BZip2;
+using PCL.Core.Utils.Native;
 
 namespace PCL.Core.Utils.Diff;
 
@@ -80,8 +81,34 @@ extra block; seek forwards in oldfile by z bytes".
 	
 	public async Task<byte[]> ApplyAsync(byte[] originData, byte[] diffData)
 	{
+		ArgumentNullException.ThrowIfNull(originData);
+		ArgumentNullException.ThrowIfNull(diffData);
+
 		return await Task.Run(() =>
 		{
+			if (PclNativeInterop.IsAvailable)
+			{
+				if (PclNativeInterop.TryBsDiffInspect(diffData, out var newLenNative, out var inspectCode))
+				{
+					if (newLenNative > (ulong)Array.MaxLength)
+						throw new InvalidDataException($"BSDIFF40 target size {newLenNative} exceeds maximum array length");
+
+					var nativeResult = new byte[(int)newLenNative];
+					if (PclNativeInterop.TryBsDiffApply(originData, diffData, nativeResult, out var writtenLen, out var applyCode) &&
+					    writtenLen == newLenNative)
+					{
+						return nativeResult;
+					}
+
+					if (applyCode == PclNativeInterop.PclErrInvalidFormat)
+						throw new InvalidDataException("Invalid or corrupted BSDIFF40 patch payload");
+				}
+				else if (inspectCode is PclNativeInterop.PclErrInvalidFormat or PclNativeInterop.PclErrInvalidArg)
+				{
+					throw new InvalidDataException("Invalid or corrupted BSDIFF40 patch header");
+				}
+			}
+
 			if (diffData.Length < HeaderSize)
 				throw new Exception("Diff file size is less than the header size");
 			if (BitConverter.ToInt64(diffData, HeaderVersionIndex) != HeaderVersion)
