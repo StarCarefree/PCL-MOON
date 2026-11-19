@@ -34,6 +34,18 @@ public sealed class LaunchProgressState
         }
     }
 
+    /// <summary>由启动器进程内直接推送模组加载阶段与计数进度。</summary>
+    public bool ReportProgress(string stage, string detail, string? target = null, long current = 0, long total = 0)
+        => ApplyTelemetry("loading", stage, detail, target, current, total);
+
+    /// <summary>由启动器进程内通知模组入口点声明读取完成，等待游戏窗口就绪。</summary>
+    public bool ReportModComplete(string? target = null)
+        => ApplyTelemetry("ready", "模组初始化完成", "正在等待游戏窗口就绪", target, 1, 1);
+
+    /// <summary>由启动器进程内报告模组清单不可用，回退按游戏窗口状态交接。</summary>
+    public bool ReportUnavailable(string stage, string detail, string? target = null)
+        => ApplyTelemetry("unavailable", stage, detail, target, 0, 0);
+
     /// <summary>Consumes only the bounded, session-authenticated bridge snapshot, not arbitrary log lines.</summary>
     public bool AcceptTelemetry(string json, string token)
     {
@@ -53,43 +65,56 @@ public sealed class LaunchProgressState
             var incoming = Text(root, "target", "");
             string? target = incoming.Length == 0 ? null : incoming;
             long? currentCount = null, totalCount = null;
-            double? progress = null;
             if (root.TryGetProperty("current", out var current) && current.TryGetInt64(out var done) &&
                 root.TryGetProperty("total", out var total) && total.TryGetInt64(out var count))
             {
-                if (done >= 0 && count > 0)
-                {
-                    currentCount = done;
-                    totalCount = count;
-                    progress = Math.Clamp(done / (double)count, 0, 1);
-                }
+                currentCount = done;
+                totalCount = count;
             }
-            lock (_gate)
-            {
-                if (_terminal) return false;
-                _gameStarted = true;
-                target ??= _snapshot.Target;
-                if (status == "unavailable")
-                {
-                    if (_connected) SignalLost();
-                    else _snapshot = new(LaunchProgressPhase.Game, "等待游戏窗口", detail, null, false, stage, target);
-                    return true;
-                }
-                _connected = true;
-                if (status == "ready")
-                {
-                    _modComplete = true;
-                    _terminal = _windowAppeared;
-                    _snapshot = _windowAppeared
-                        ? Ready()
-                        : new(LaunchProgressPhase.Game, "模组初始化完成", "正在等待游戏窗口就绪", null, true, null, target);
-                }
-                else if (!_modComplete)
-                    _snapshot = new(LaunchProgressPhase.Game, stage, detail, progress, true, null, target, currentCount, totalCount);
-                return true;
-            }
+            return ApplyTelemetry(status, stage, detail, target, currentCount, totalCount);
         }
         catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException or OverflowException) { return false; }
+    }
+
+    private bool ApplyTelemetry(string status, string stage, string detail, string? target, long? currentCount, long? totalCount)
+    {
+        if (status is not ("loading" or "ready" or "unavailable")) return false;
+        var stageText = Truncate(stage, "游戏正在加载");
+        var detailText = Truncate(detail, "整合包模组加载进度");
+        var resolvedTarget = string.IsNullOrEmpty(target) ? null : Truncate(target, "");
+        long? boundedCurrent = null, boundedTotal = null;
+        double? progress = null;
+        if (currentCount is { } done && totalCount is { } count && done >= 0 && count > 0)
+        {
+            boundedCurrent = done;
+            boundedTotal = count;
+            progress = Math.Clamp(done / (double)count, 0, 1);
+        }
+
+        lock (_gate)
+        {
+            if (_terminal) return false;
+            _gameStarted = true;
+            resolvedTarget ??= _snapshot.Target;
+            if (status == "unavailable")
+            {
+                if (_connected) SignalLost();
+                else _snapshot = new(LaunchProgressPhase.Game, "等待游戏窗口", detailText, null, false, stageText, resolvedTarget);
+                return true;
+            }
+            _connected = true;
+            if (status == "ready")
+            {
+                _modComplete = true;
+                _terminal = _windowAppeared;
+                _snapshot = _windowAppeared
+                    ? Ready()
+                    : new(LaunchProgressPhase.Game, "模组初始化完成", "正在等待游戏窗口就绪", null, true, null, resolvedTarget);
+            }
+            else if (!_modComplete)
+                _snapshot = new(LaunchProgressPhase.Game, stageText, detailText, progress, true, null, resolvedTarget, boundedCurrent, boundedTotal);
+            return true;
+        }
     }
 
     public void WindowAppeared()
@@ -130,7 +155,12 @@ public sealed class LaunchProgressState
     private static string Text(JsonElement root, string name, string fallback)
     {
         if (!root.TryGetProperty(name, out var value) || value.ValueKind != JsonValueKind.String) return fallback;
-        var text = value.GetString() ?? fallback;
+        return Truncate(value.GetString(), fallback);
+    }
+
+    private static string Truncate(string? text, string fallback)
+    {
+        if (text is null) return fallback;
         return text[..Math.Min(text.Length, 2048)];
     }
 }
