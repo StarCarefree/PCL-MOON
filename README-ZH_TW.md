@@ -78,7 +78,7 @@ x64 與 ARM64 不能混用。不要把便攜包裡的 exe 單獨拷走：瀏覽�
 .\scripts\Publish-Portable.ps1 -Architecture x64 -Configuration Release -FixedRuntimeDirectory <FixedVersion根目錄>
 ```
 
-`x64` 與 `arm64` 必須分別建置。目錄服務在 `pcl-moon-cloud/`，需要 Java 17 或更高版本，見 [pcl-moon-cloud/README.md](pcl-moon-cloud/README.md)。
+`x64` 與 `arm64` 必須分別建置。目錄服務在 `pcl-moon-cloud/`，使用 Rust 建置，見 [pcl-moon-cloud/README.md](pcl-moon-cloud/README.md)。
 
 ## 文件
 

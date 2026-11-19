@@ -1,5 +1,5 @@
-// Node 22+; no npm packages. Starts its own Java service and isolated headless Chromium.
-// Usage: node scripts/test-admin-ui.mjs [path/to/boot.jar]
+// Node 22+; no npm packages. Starts its own Rust service and isolated headless Chromium.
+// Usage: node scripts/test-admin-ui.mjs [path/to/pcl-moon-cloud]
 // PCL_MOON_BROWSER may point to Chrome/Edge on other platforms. Output is under build/ui-smoke/.
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
@@ -15,14 +15,14 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const output = join(root, 'build', 'ui-smoke', String(Date.now()));
 await mkdir(output, { recursive: true });
 const token = randomBytes(32).toString('hex');
-const jar = resolve(process.argv[2] || join(root, 'build/libs/pcl-moon-cloud-1.0.0.jar'));
+const bin = resolve(process.argv[2] || join(root, 'target', 'release', process.platform === 'win32' ? 'pcl-moon-cloud.exe' : 'pcl-moon-cloud'));
 const browserPath = process.env.PCL_MOON_BROWSER || [
   join(process.env['ProgramFiles(x86)'] || '', 'Microsoft/Edge/Application/msedge.exe'),
   join(process.env.ProgramFiles || '', 'Google/Chrome/Application/chrome.exe'),
   '/usr/bin/chromium', '/usr/bin/google-chrome'
 ].find(existsSync);
 assert.ok(browserPath, 'Set PCL_MOON_BROWSER to a Chromium browser executable');
-assert.ok(existsSync(jar), 'Build bootJar first');
+assert.ok(existsSync(bin), 'Build release binary first (cargo build --release)');
 async function freePort() {
   const server = createServer();
   await new Promise((accept) => server.listen(0, '127.0.0.1', accept));
@@ -59,11 +59,11 @@ async function adminApi(path, method = 'GET', payload, tag) {
   return { data: await response.json(), tag: response.headers.get('etag') };
 }
 try {
-  app = spawn(process.env.JAVA || 'java', ['-Xms64m', '-Xmx256m', '-jar', jar], { env: environment, cwd: root, stdio: ['ignore', 'pipe', 'pipe'] });
+  app = spawn(bin, [], { env: environment, cwd: root, stdio: ['ignore', 'pipe', 'pipe'] });
   app.on('error', (error) => { appLog += error.message; });
   app.stdout.on('data', (chunk) => { appLog += chunk; });
   app.stderr.on('data', (chunk) => { appLog += chunk; });
-  await until(async () => (await fetch(publicOrigin + '/healthz')).ok, 'Java service startup');
+  await until(async () => (await fetch(publicOrigin + '/healthz')).ok, 'PCL-MOON Cloud service startup');
   assert.equal((await fetch(publicOrigin + '/api/admin/packs')).status, 404);
   assert.equal((await fetch(origin + '/api/admin/packs')).status, 401);
   check('真实双端口启动、路由隔离和令牌校验');
@@ -185,7 +185,15 @@ try {
       await new Promise((accept) => { const killer = spawn('taskkill', ['/PID', String(browser.pid), '/T', '/F'], { stdio: 'ignore' }); killer.on('exit', accept); killer.on('error', accept); });
     } else browser.kill('SIGTERM');
   }
-  app?.kill('SIGTERM');
+  if (app && app.exitCode === null) {
+    app.kill('SIGTERM');
+    if (process.platform === 'win32') {
+      await Promise.race([
+        new Promise((accept) => app.once('exit', accept)),
+        delay(500).then(() => { if (app.exitCode === null) app.kill(); }),
+      ]);
+    }
+  }
   await writeFile(join(output, 'service.log'), appLog);
   await writeFile(join(output, 'browser.log'), browserLog);
 }

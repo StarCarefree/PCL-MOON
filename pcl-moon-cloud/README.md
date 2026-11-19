@@ -1,30 +1,32 @@
 # PCL-MOON Cloud
 
-Java 17+ / Spring Boot 3.5 + Gradle 8.14.4 的整合包目录服务，附中文网页管理台。独立于启动器，可部署到 Linux/Windows 云服务器。
+基于 Rust（Tokio + Axum / Hyper）实现的整合包目录服务，内嵌中文网页管理台，编译为单二进制即可运行（无需 JRE）。独立于启动器，可部署到 Linux/Windows 云服务器。
 
 ## 启动
 
-构建需要 JDK 17 或更高版本，运行需要 Java 17 或更高版本。固定使用 `--release 17`（class 61），在 JDK 21 上构建也不会生成仅支持 Java 21 的产物。复用已存在的 Gradle 8.14.4 可执行 `gradle test bootJar`；也提供标准 Wrapper。
+构建需要 Rust 工具链（`cargo` / `rustc`）。
 
 Windows PowerShell：
 
 ```powershell
 cd pcl-moon-cloud
-.\gradlew.bat test bootJar
+cargo test
+cargo build --release
 # 生成本机随机管理令牌。请保存到密码管理器；不要提交仓库。
 $env:PCL_MOON_ADMIN_TOKEN = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
 $env:PCL_MOON_ADMIN_TOKEN # 复制到管理页登录框
-java -Xms64m -Xmx256m -jar .\build\libs\pcl-moon-cloud-1.0.0.jar
+.\target\release\pcl-moon-cloud.exe
 ```
 
 Linux：
 
 ```sh
 cd pcl-moon-cloud
-sh gradlew test bootJar
+cargo test
+cargo build --release
 export PCL_MOON_ADMIN_TOKEN="$(openssl rand -hex 32)"
 printf '%s\n' "$PCL_MOON_ADMIN_TOKEN" # 保存后输入到管理网页
-java -Xms64m -Xmx256m -jar build/libs/pcl-moon-cloud-1.0.0.jar
+./target/release/pcl-moon-cloud
 ```
 
 - 获取端口：`http://服务器:6664/index.json`（兼容 `/catalog.json`），只允许 GET/HEAD。
@@ -104,16 +106,16 @@ URL 必须是完整 HTTP(S) 地址，不得包含用户名、密码或片段。�
 - 公开目录/详情保存在不可变内存快照中，请求不读盘、不序列化、不压缩、不重新算散列。
 - 更新时一次性生成紧凑 JSON、Gzip 和各自的强 ETag；支持 `Accept-Encoding` 的 q 值、`Vary: Accept-Encoding`、弱/列表条件 ETag、304、HEAD 和 Content-Length。
 - 默认 `Cache-Control: public, max-age=60, stale-while-revalidate=300`，可接 CDN。若需要立刻看到更新，客户端发送 `Cache-Control: no-cache` 让 CDN 重新验证；否则中间缓存可能延迟 60 秒，允许 stale-while-revalidate 的缓存最多额外 300 秒。下架不是立即撤销已经下发的下载 URL。
-- 下载仅 302 重定向，不双倍占用云服务器带宽、不把大文件装入 Java 堆；压缩只用于元数据和网页资源。
-- 网页无 CDN/第三方 JS/字体依赖，静态文件也预生成 Gzip/ETag；管理 API 禁止缓存。
-- Tomcat NIO，公共连接上限 2048、工作线程 64，管理连接上限 128、线程 16；连接超时 10 秒、Keep-Alive 15 秒。两个连接器隔离线程预算，但共享 JVM/进程，仍应通过网关限制请求速率和连接数。
-- `-Xmx256m` 是小目录部署的起点，不是容量保证。未给出云机器/带宽前不承诺 QPS；上线后应按真实目录和并发压测。
+- 下载仅 302 重定向，不双倍占用云服务器带宽、不把大文件装入服务端内存；压缩只用于元数据和网页资源。
+- 网页无 CDN/第三方 JS/字体依赖，静态文件通过 `include_bytes!` 编译进二进制并预生成 Gzip/ETag；管理 API 禁止缓存。
+- Rust / Hyper 独立双监听器隔离：公共端口连接上限 2048，管理端口连接上限 128；连接超时 10 秒、Keep-Alive 15 秒。两者各自运行在同一进程内，无 JVM 运行时与堆内存开销，公网仍应通过网关限制请求速率和连接数。
+- 静态资源与运行时内存开销极低（典型常驻占用数 MiB），但未给出云机器/带宽前不承诺 QPS；上线后应按真实目录和并发压测。
 
 ## Linux 部署
 
 `deploy/pcl-moon-cloud.service`、`deploy/pcl-moon.env.example`、`deploy/nginx.conf.example` 提供 systemd + HTTPS Nginx 示例。
 
-1. 安装 Java 17 或更高版本，创建无登录 `pcl-moon` 用户；把 bootJar 复制为 `/opt/pcl-moon/pcl-moon-cloud.jar`。
+1. 在目标架构 Linux 环境执行 `cargo build --release`（无需安装 Java），创建无登录 `pcl-moon` 用户；把产物 `target/release/pcl-moon-cloud` 复制为 `/opt/pcl-moon/pcl-moon-cloud` 并赋予可执行权限（`chmod +x /opt/pcl-moon/pcl-moon-cloud`）。
 2. 创建 `/var/lib/pcl-moon`，归属 pcl-moon；创建 `/etc/pcl-moon/pcl-moon.env`，填入随机令牌，权限 `600`。不要使用示例占位令牌。
 3. 安装 systemd 单元，`systemctl daemon-reload && systemctl enable --now pcl-moon-cloud`。
 4. 配置 Nginx 域名/证书，测试配置后重载。该示例只代理公共目录；管理仍通过 SSH 隧道。
@@ -122,10 +124,12 @@ URL 必须是完整 HTTP(S) 地址，不得包含用户名、密码或片段。�
 ## 验证
 
 ```powershell
-.\gradlew.bat test bootJar
-node --check src/main/resources/admin/app.js
+cargo fmt -- --check
+cargo clippy --all-targets -- -D warnings
+cargo test
+cargo build --release
+node --check admin/app.js
+node scripts/test-admin-ui.mjs
 ```
 
 测试使用真实随机的两个 TCP 监听端口，覆盖访问隔离、令牌校验、CRUD/草稿隐藏、乐观并发、重启恢复、写入失败、损坏文件保护、输入校验、chunked 上限、Gzip/ETag/HEAD、备用下载跳转。浏览器联调运行 `node scripts/test-admin-ui.mjs`（Node 22+ 与本机 Chrome/Edge，可用 `PCL_MOON_BROWSER` 指定可执行文件），脚本自动启动隔离测试实例，结果/截图输出到 `build/ui-smoke/`，结束时关闭自己启动的进程，不访问实际下载源。
-
-若本机系统盘空间不足，可用已有 Gradle 指定 `-g build/gradle-home`，并把 `JAVA_TOOL_OPTIONS=-Djava.io.tmpdir=<项目绝对路径>/build/tmp` 指到有空间的磁盘；不要删除其他工程缓存。
