@@ -144,8 +144,9 @@ public partial class FormMain
     {
         if (HybridSidebarView is null || PanMain is null) return;
         var browse = _webUi.IsPresented;
+        var multiplayer = HybridMultiplayerView.Visibility == Visibility.Visible;
         var page = (PageType)pageCurrent;
-        var route = HybridMultiplayerView.Visibility == Visibility.Visible ? "multiplayer" : browse ? "browse" : page switch
+        var route = multiplayer ? "multiplayer" : browse ? "browse" : page switch
         {
             PageType.Download or PageType.CompDetail => "download",
             PageType.Setup => "settings",
@@ -176,7 +177,7 @@ public partial class FormMain
         }
         // Swap before the page-change animation so the native launch button never flashes on the left.
         ApplyHybridGameLayout(page == PageType.Launch);
-        PanLeft.Visibility = browse || page == PageType.Launch ? Visibility.Collapsed : Visibility.Visible;
+        PanLeft.Visibility = browse || multiplayer || page == PageType.Launch ? Visibility.Collapsed : Visibility.Visible;
         var account = ProfileService.Current;
         var skin = account is null ? null : ModMain.frmLoginProfileSkin?.Skin;
         HybridSidebarView.UpdateAccount(account?.UserName ?? Lang.Text("Hybrid.NotLoggedIn"),
@@ -268,7 +269,7 @@ public partial class FormMain
         if (route == "browse") { await ShowWebUiAsync(); return; }
         switch (route)
         {
-            case "multiplayer": _webUi.Hide(); SetMultiplayerVisible(true); break;
+            case "multiplayer": _webUi.Hide(); ExitSubPageIfNeeded(); SetMultiplayerVisible(true); break;
             case "games":
                 _webUi.Hide();
                 var replayGames = (PageType)pageCurrent == PageType.Launch;
@@ -290,6 +291,31 @@ public partial class FormMain
             case "tasks": _webUi.Hide(); PageChange(PageType.TaskManager); break;
         }
         UpdateHybridShell();
+    }
+
+    /// <summary>
+    /// 切到浏览、多人游戏等顶级覆盖视图前，退出当前二级子页面并恢复主标题栏。
+    /// </summary>
+    private void ExitSubPageIfNeeded()
+    {
+        if (pageStack.Count > 0)
+        {
+            var root = pageStack.LastOrDefault(item => string.IsNullOrEmpty(PageNameGet(item))) ?? (PageStackData)PageType.Launch;
+            PageChange(root);
+            return;
+        }
+        if (PanTitleInner.Visibility == Visibility.Visible || PanTitleMain.Visibility != Visibility.Visible)
+        {
+            // 兜底：栈已空但二级标题栏退场动画尚未结束或残留可见时，立即切回主标题栏
+            ModAnimation.AniStop("FrmMain Titlebar FirstLayer");
+            PanTitleInner.Visibility = Visibility.Collapsed;
+            PanTitleInner.Opacity = 0;
+            PanTitleInner.IsHitTestVisible = false;
+            PanTitleMain.Visibility = Visibility.Visible;
+            PanTitleMain.Opacity = 1;
+            PanTitleMain.Margin = new Thickness(0);
+            PanTitleMain.IsHitTestVisible = true;
+        }
     }
 
     private void OpenVersionSettings(McInstance instance)

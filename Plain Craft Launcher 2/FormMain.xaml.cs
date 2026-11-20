@@ -1332,7 +1332,11 @@ public partial class FormMain
 
     #endregion
 
-    public Task ShowWebUiAsync() => _webUi.AttachAsync(this);
+    public Task ShowWebUiAsync()
+    {
+        ExitSubPageIfNeeded();
+        return _webUi.AttachAsync(this);
+    }
 
     #region 切换页面
 
