@@ -3057,6 +3057,8 @@ PCL-MOON 可嘗試升級這些版本的 Authlib 支援庫以解決問題。
     <sys:String x:Key="Setup.Launch.Advanced.DisableLF">停用 LegacyFix</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.DisableLF.ToolTip">PCL-MOON 會在啟動 1.5.x 及以下版本時使用 LegacyFix 來改善舊版本遊戲體驗和修復相容性問題。</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.LockMemory">鎖定記憶體分配（-Xms = -Xmx）</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.AppCds">啟用 AppCDS 應用類別資料共享加速啟動</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.AppCds.ToolTip">實驗性啟動加速（Java 19–25，64 位元）。自動追加 -XX:+AutoCreateSharedArchive 與實例獨立歸檔，首次正常結束後產生共享歸檔，後續啟動可加速類別載入。若目前啟動包含 Java Agent（如外置登入、啟動加速 Agent）、外置參數檔、非 ASCII 路徑或已手動設定 CDS 參數，將自動略過以確保相容性。</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.LockMemory.ToolTip">啟用後，啟動器會額外追加 -Xms 參數並令其等於最大堆 -Xmx，從而固定堆大小。這會隱式停用堆記憶體歸還（Uncommit），減少作業系統取消對映/重新分配記憶體頁帶來的延遲抖動，也有利於 ZGC 的回收預測。代價是遊戲全程會佔用接近最大分配的記憶體。</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.DisableLwjglUnsafeAgent">停用 LWJGL Unsafe Agent</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.DisableLwjglUnsafeAgent.ToolTip">Minecraft 26.1 使用了 LWJGL 3.4.1，LWJGL 3.4.1 使用了 FFM API 以在 JDK 25+ 上存取原生記憶體。由於 JDK 最佳化能力限制，某些情況下這會產生嚴重的效能問題。

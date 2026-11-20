@@ -2860,6 +2860,9 @@ public static partial class ModLaunch
             mcLaunchJavaSelected.Installation.Is64Bit, LaunchingInstance.Info.HasForge);
         FrameGenerationLaunch.Prepare(startInfo, mcLaunchJavaSelected.Installation.MajorVersion,
             mcLaunchJavaSelected.Installation.Is64Bit, LaunchingInstance.PathInstance);
+        AppCdsLaunch.Prepare(startInfo, mcLaunchJavaSelected.Installation.MajorVersion,
+            mcLaunchJavaSelected.Installation.Is64Bit, mcLaunchJavaSelected.Installation.JavaExePath,
+            LaunchingInstance.PathInstance);
         _launchSession.Value?.Presentation?.PrepareProcess(startInfo, LaunchingInstance.Info.HasFabric || LaunchingInstance.Info.HasQuilt);
         var gameLink = GameLinkLaunch.Prepare(startInfo, LaunchingInstance);
         gameProcess.StartInfo = startInfo;

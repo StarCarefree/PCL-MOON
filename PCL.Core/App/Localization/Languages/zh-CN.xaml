@@ -2709,6 +2709,8 @@
     <sys:String x:Key="Setup.Launch.Advanced.DisableLF.ToolTip">PCL-MOON 会在启动 1.5.x 及以下版本时使用 LegacyFix 来改善老版本游戏体验和修复兼容性问题。</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.LockMemory">锁定内存分配（-Xms = -Xmx）</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.LockMemory.ToolTip">启用后，启动器会额外追加 -Xms 参数并令其等于最大堆 -Xmx，从而固定堆大小。这会隐式禁用堆内存归还（Uncommit），减少操作系统取消映射/重新分配内存页带来的延迟抖动，也有利于 ZGC 的回收预测。代价是游戏全程会占用接近最大分配的内存。</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.AppCds">启用 AppCDS 应用类数据共享加速启动</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.AppCds.ToolTip">实验性启动加速（Java 19–25，64 位）。自动追加 -XX:+AutoCreateSharedArchive 与实例独立归档，首次正常退出后生成共享归档，后续启动可加速类加载。若当前启动包含 Java Agent（如外置登录、启动加速 Agent）、外置参数文件、非 ASCII 路径或已手动设置 CDS 参数，将自动跳过以保证兼容性。</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.FrameGeneration">实验性游戏画面插帧（2×，目标 60 FPS）</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.FrameGeneration.ToolTip">下次启动生效。使用通用 OpenGL 3.2 双向块匹配生成中间帧，无 NVIDIA 专属依赖。目标呈现 60 FPS、真实渲染约 30 FPS，会增加延迟及显卡开销，HUD 也会参与插值。建议游戏帧率上限不低于 60；过慢、失焦或超预算时跳过插帧。不能消除 GC/主线程停顿。Vulkan 不支持；1.16.5–26.3 尚未逐版本及逐显卡实测。</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.FrameDiagnostics">记录游戏长帧诊断（定位瞬间 0 FPS）</sys:String>

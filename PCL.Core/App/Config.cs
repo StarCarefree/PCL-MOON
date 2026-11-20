@@ -461,6 +461,9 @@ public static partial class Config
         /// <summary>实验性内部超分：降低世界渲染分辨率后由 GPU 重建，默认关闭；不代表当前适配器已生效。</summary>
         [ConfigItem<bool>("LaunchSuperResolution", false, ConfigSource.Local)] public partial bool SuperResolution { get; set; }
 
+        /// <summary>是否启用 AppCDS（应用类数据共享）加速启动；默认关闭，存在 Java Agent 或不兼容条件时自动跳过。</summary>
+        [ConfigItem<bool>("LaunchAppCds", false, ConfigSource.Local)] public partial bool AppCds { get; set; }
+
         /// <summary>
         /// 优先 IP 协议栈。
         /// </summary>

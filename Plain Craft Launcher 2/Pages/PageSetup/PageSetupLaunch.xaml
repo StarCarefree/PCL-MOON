@@ -313,6 +313,8 @@
                                           ToolTip="{DynamicResource Setup.Launch.Advanced.DisableCrashAnalysis.ToolTip}" />
                         <local:MyCheckBox Height="28" Text="{DynamicResource Setup.Launch.Advanced.LockMemory}" x:Name="CheckAdvanceLockMemory" Tag="LaunchAdvanceLockMemory" Change="CheckBoxChange"
                                           ToolTip="{DynamicResource Setup.Launch.Advanced.LockMemory.ToolTip}" />
+                        <local:MyCheckBox Height="28" Text="{DynamicResource Setup.Launch.Advanced.AppCds}" x:Name="CheckAppCds" Tag="LaunchAppCds" Change="CheckBoxChange"
+                                          ToolTip="{DynamicResource Setup.Launch.Advanced.AppCds.ToolTip}" />
                         <local:MyCheckBox Height="28" Text="{DynamicResource Setup.Launch.Advanced.FrameGeneration}" x:Name="CheckFrameGeneration" Tag="LaunchFrameGeneration" Change="CheckBoxChange"
                                           ToolTip="{DynamicResource Setup.Launch.Advanced.FrameGeneration.ToolTip}" />
                         <local:MyCheckBox Height="28" Text="{DynamicResource Setup.Launch.Advanced.FrameDiagnostics}" x:Name="CheckFrameDiagnostics" Tag="LaunchFrameDiagnostics" Change="CheckBoxChange"

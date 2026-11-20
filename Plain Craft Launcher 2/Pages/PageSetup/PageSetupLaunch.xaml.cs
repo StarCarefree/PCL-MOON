@@ -85,6 +85,7 @@ public partial class PageSetupLaunch
             CheckAdvanceDisableLwjglUnsafeAgent.Checked = Config.Launch.DisableLwjglUnsafeAgent;
             CheckAdvanceDisableCrashAnalysis.Checked = Config.Launch.DisableCrashAnalysis;
             CheckAdvanceLockMemory.Checked = Config.Launch.LockMemory;
+            CheckAppCds.Checked = Config.Launch.AppCds;
             CheckFrameGeneration.Checked = Config.Launch.FrameGeneration;
             CheckFrameDiagnostics.Checked = Config.Launch.FrameDiagnostics;
             CheckFrameSettingsButton.Checked = Config.Launch.FrameSettingsButton;
