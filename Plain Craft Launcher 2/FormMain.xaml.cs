@@ -110,8 +110,8 @@ public partial class FormMain
             var savedHeight = States.UI.WindowHeight;
             if (States.UI.HybridLayoutRevision < 1)
             {
-                if (savedWidth < 1664) savedWidth = Math.Max(1664, savedWidth * 1.3);
-                if (savedHeight < 1014) savedHeight = Math.Max(1014, savedHeight * 1.3);
+                if (savedWidth < 1213) savedWidth = Math.Max(1213, savedWidth * 1.3);
+                if (savedHeight < 805) savedHeight = Math.Max(805, savedHeight * 1.3);
                 States.UI.HybridLayoutRevision = 1;
             }
             // Fit high-DPI and smaller displays without losing the user's subsequent resize preference.

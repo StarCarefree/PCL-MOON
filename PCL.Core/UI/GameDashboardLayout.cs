@@ -46,8 +46,7 @@ public sealed class GameDashboardLayout
         [
             new() { Kind = "hero", Wide = true },
             new() { Kind = "greeting" },
-            new() { Kind = "recent" },
-            new() { Kind = "library", Wide = true }
+            new() { Kind = "library" }
         ]
     };
 
@@ -140,7 +139,36 @@ public sealed class GameDashboardLayout
             normalized.Add(widget);
         }
 
+        MergeLegacyRecentIntoLibrary(normalized);
         Widgets = normalized;
+    }
+
+    /// <summary>
+    /// 兼容旧布局：将遗留的 recent 组件并入 library，同时存在时保留较前位置并沿用 recent 的宽度设置。
+    /// </summary>
+    private static void MergeLegacyRecentIntoLibrary(List<GameDashboardWidget> widgets)
+    {
+        var recentIndex = widgets.FindIndex(item => item.Kind == "recent");
+        if (recentIndex < 0) return;
+        var libraryIndex = widgets.FindIndex(item => item.Kind == "library");
+        if (libraryIndex >= 0)
+        {
+            var recent = widgets[recentIndex];
+            var library = widgets[libraryIndex];
+            var keepIndex = Math.Min(recentIndex, libraryIndex);
+            var merged = widgets[keepIndex];
+            merged.Kind = "library";
+            merged.Wide = recent.Wide;
+            if (string.IsNullOrEmpty(merged.Title))
+                merged.Title = !string.IsNullOrEmpty(library.Title) ? library.Title : recent.Title;
+            widgets.RemoveAll(item => !ReferenceEquals(item, merged) && item.Kind is "recent" or "library");
+        }
+        else
+        {
+            var firstRecent = widgets[recentIndex];
+            firstRecent.Kind = "library";
+            widgets.RemoveAll(item => !ReferenceEquals(item, firstRecent) && item.Kind == "recent");
+        }
     }
 
     private static string Truncate(string? value, int max)

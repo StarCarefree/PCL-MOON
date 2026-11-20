@@ -12,7 +12,7 @@
     x:Name="WindMain" x:Class="PCL.FormMain" Style="{StaticResource MyWindow}"
      AllowDrop="True" Topmost="True" Title="PCL-MOON" MinHeight="760" MinWidth="1120"
     ScrollViewer.VerticalScrollBarVisibility="Disabled" Icon="/Plain Craft Launcher 2;component/Images/icon.ico"
-    ResizeMode="CanResize" Background="#111315" d:DesignWidth="1664" d:DesignHeight="1014" Width="1664" Height="1014"
+    ResizeMode="CanResize" Background="#111315" d:DesignWidth="1213" d:DesignHeight="805" Width="1213" Height="805"
     WindowStartupLocation="CenterScreen" WindowStyle="SingleBorderWindow" AllowsTransparency="False">
     <Window.Resources>
         <ResourceDictionary>

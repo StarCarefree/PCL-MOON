@@ -188,12 +188,12 @@ public static partial class States
         /// <summary>
         /// 窗口高度。
         /// </summary>
-        [ConfigItem<double>("WindowHeight", 1014, ConfigSource.Local)] public partial double WindowHeight { get; set; }
+        [ConfigItem<double>("WindowHeight", 805, ConfigSource.Local)] public partial double WindowHeight { get; set; }
 
         /// <summary>
         /// 窗口宽度。
         /// </summary>
-        [ConfigItem<double>("WindowWidth", 1664, ConfigSource.Local)] public partial double WindowWidth { get; set; }
+        [ConfigItem<double>("WindowWidth", 1213, ConfigSource.Local)] public partial double WindowWidth { get; set; }
 
         [ConfigItem<int>("HybridLayoutRevision", 0, ConfigSource.Local)] public partial int HybridLayoutRevision { get; set; }
 
