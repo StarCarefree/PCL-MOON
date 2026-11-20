@@ -93,6 +93,117 @@ public class HashCache
             : null;
     }
 
+    /// <summary>
+    /// 批量查询仍有效的 SHA1 缓存（含待刷新写队列与分块 SQL <c>IN</c> 查询），
+    /// 仅返回指纹匹配且非空的记录，键为 <see cref="Path.GetFullPath(string)"/>。
+    /// </summary>
+    public Dictionary<string, string> GetCachedSha1Batch(IReadOnlyList<string> filePaths)
+    {
+        ArgumentNullException.ThrowIfNull(filePaths);
+        if (filePaths.Count == 0)
+            return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        var metas = new (string FullPath, long Size, DateTime LastWriteUtc)?[filePaths.Count];
+        void Probe(int i)
+        {
+            var path = filePaths[i];
+            if (string.IsNullOrWhiteSpace(path)) return;
+            var fullPath = Path.GetFullPath(path);
+            var info = new FileInfo(fullPath);
+            if (info.Exists)
+                metas[i] = (fullPath, info.Length, info.LastWriteTimeUtc);
+        }
+
+        if (filePaths.Count > 8)
+        {
+            Parallel.For(0, filePaths.Count,
+                new ParallelOptions { MaxDegreeOfParallelism = Math.Clamp(Environment.ProcessorCount, 1, 8) }, Probe);
+        }
+        else
+        {
+            for (var i = 0; i < filePaths.Count; i++) Probe(i);
+        }
+
+        var list = new List<(string FullPath, long Size, DateTime LastWriteUtc)>(filePaths.Count);
+        foreach (var m in metas)
+        {
+            if (m is { } v) list.Add(v);
+        }
+        return GetCachedSha1Batch(list);
+    }
+
+    /// <summary>
+    /// 使用调用方已采集的文件元数据批量查询 SHA1 缓存，避免重复文件系统 stat，
+    /// 并将数据库查询合并为最多 500 项一批的 <c>WHERE FilePath IN (...)</c> 单次查询。
+    /// 要求每项 <c>FullPath</c> 已通过 <see cref="Path.GetFullPath(string)"/> 规范化。
+    /// </summary>
+    public Dictionary<string, string> GetCachedSha1Batch(
+        IReadOnlyList<(string FullPath, long Size, DateTime LastWriteUtc)> files)
+    {
+        ArgumentNullException.ThrowIfNull(files);
+        var results = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (files.Count == 0) return results;
+
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var dbCandidates = new List<(string FullPath, long Size, string LastWrite)>(files.Count);
+        foreach (var item in files)
+        {
+            if (string.IsNullOrWhiteSpace(item.FullPath)) continue;
+            if (!seen.Add(item.FullPath)) continue;
+            var lastWrite = item.LastWriteUtc.ToString("O");
+
+            if (_pendingWrites.TryGetValue((item.FullPath, "SHA1"), out var pending) &&
+                pending.Size == item.Size && pending.LastWrite == lastWrite &&
+                !string.IsNullOrEmpty(pending.Hash))
+            {
+                results[item.FullPath] = pending.Hash;
+                continue;
+            }
+
+            dbCandidates.Add((item.FullPath, item.Size, lastWrite));
+        }
+
+        if (dbCandidates.Count == 0) return results;
+
+        const int chunkSize = 500;
+        using var conn = _CreateConnection();
+        for (var offset = 0; offset < dbCandidates.Count; offset += chunkSize)
+        {
+            var count = Math.Min(chunkSize, dbCandidates.Count - offset);
+            using var cmd = conn.CreateCommand();
+            var sql = new System.Text.StringBuilder("SELECT FilePath, FileSize, LastWriteTime, SHA1 FROM HashCache WHERE FilePath IN (");
+            var expected = new Dictionary<string, (long Size, string LastWrite)>(count, StringComparer.OrdinalIgnoreCase);
+            for (var i = 0; i < count; i++)
+            {
+                var candidate = dbCandidates[offset + i];
+                if (i > 0) sql.Append(',');
+                var paramName = $"@p{i}";
+                sql.Append(paramName);
+                cmd.Parameters.AddWithValue(paramName, candidate.FullPath);
+                expected[candidate.FullPath] = (candidate.Size, candidate.LastWrite);
+            }
+            sql.Append(')');
+            cmd.CommandText = sql.ToString();
+
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                var dbPath = reader.GetString(0);
+                if (!expected.TryGetValue(dbPath, out var exp)) continue;
+                if (reader.GetInt64(1) == exp.Size &&
+                    reader.GetString(2) == exp.LastWrite &&
+                    !reader.IsDBNull(3))
+                {
+                    var sha1 = reader.GetString(3);
+                    if (!string.IsNullOrEmpty(sha1))
+                        results[dbPath] = sha1;
+                }
+            }
+        }
+
+        return results;
+    }
+
     public Task<string> GetSHA256Async(string filePath) =>
         _GetHashWithPending(filePath, SHA256Provider.Instance, "SHA256");
 

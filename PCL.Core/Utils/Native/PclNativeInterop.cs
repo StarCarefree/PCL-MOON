@@ -55,6 +55,16 @@ public unsafe struct PclFileHashResult
 }
 
 [StructLayout(LayoutKind.Sequential)]
+public unsafe struct PclSha1FileResult
+{
+    public int Status;
+    public uint Reserved;
+    public ulong FileSize;
+    public fixed byte Sha1[20];
+    public fixed byte Pad[4];
+}
+
+[StructLayout(LayoutKind.Sequential)]
 public unsafe struct PclJarScanItem
 {
     public int Status;
@@ -86,7 +96,7 @@ public static unsafe partial class PclNativeInterop
 {
     public const string LibraryName = "pcl_native";
     public const string LibraryFileName = "pcl_native.dll";
-    public const uint ExpectedAbiVersion = 1;
+    public const uint ExpectedAbiVersion = 2;
     public const string DisableEnvVarName = "PCL_DISABLE_NATIVE";
 
     public const int PclOk = 0;
@@ -310,6 +320,22 @@ public static unsafe partial class PclNativeInterop
         PclFileHashResult* outResultsPtr);
 
     [LibraryImport(LibraryName)]
+    internal static partial int pcl_native_sha1_file(
+        ushort* pathPtr,
+        nuint pathLen,
+        byte* outSha1Ptr,
+        ulong* outFileSizePtr);
+
+    [LibraryImport(LibraryName)]
+    internal static partial int pcl_native_batch_sha1_files(
+        ushort* pathsUtf16Ptr,
+        nuint pathsTotalLen,
+        PclUtf16Span* spansPtr,
+        nuint fileCount,
+        PclSha1FileResult* outResultsPtr,
+        uint maxThreads);
+
+    [LibraryImport(LibraryName)]
     internal static partial int pcl_native_batch_scan_jars(
         ushort* textBufPtr,
         nuint textBufLen,
@@ -470,6 +496,103 @@ public static unsafe partial class PclNativeInterop
         return false;
     }
 
+    private static bool _RentAndPackPaths(
+        IReadOnlyList<string> filePaths,
+        out char[] textBuf,
+        out PclUtf16Span[] spans,
+        out int totalChars)
+    {
+        textBuf = [];
+        spans = [];
+        totalChars = 0;
+
+        var count = filePaths.Count;
+        for (var i = 0; i < count; i++)
+        {
+            var p = filePaths[i];
+            if (string.IsNullOrEmpty(p)) return false;
+            totalChars += p.Length;
+        }
+
+        textBuf = ArrayPool<char>.Shared.Rent(Math.Max(1, totalChars));
+        spans = ArrayPool<PclUtf16Span>.Shared.Rent(count);
+        var offset = 0;
+        for (var i = 0; i < count; i++)
+        {
+            var p = filePaths[i];
+            p.AsSpan().CopyTo(textBuf.AsSpan(offset));
+            spans[i] = new PclUtf16Span { Offset = (uint)offset, Len = (uint)p.Length };
+            offset += p.Length;
+        }
+        return true;
+    }
+
+    public static bool TrySha1File(string filePath, out string sha1Hex, out long fileSize)
+    {
+        sha1Hex = string.Empty;
+        fileSize = 0;
+        if (!IsAvailable || string.IsNullOrEmpty(filePath)) return false;
+
+        try
+        {
+            var digest = stackalloc byte[20];
+            ulong nativeSize = 0;
+            fixed (char* p = filePath)
+            {
+                if (pcl_native_sha1_file((ushort*)p, (nuint)filePath.Length, digest, &nativeSize) == PclOk)
+                {
+                    sha1Hex = Convert.ToHexStringLower(new ReadOnlySpan<byte>(digest, 20));
+                    fileSize = checked((long)nativeSize);
+                    return true;
+                }
+            }
+        }
+        catch
+        {
+            // Seamless fallback to managed path
+        }
+        return false;
+    }
+
+    public static bool TryBatchSha1Files(
+        IReadOnlyList<string> filePaths,
+        Span<PclSha1FileResult> results,
+        uint maxThreads = 0)
+    {
+        if (!IsAvailable || filePaths is null) return false;
+        var count = filePaths.Count;
+        if (count == 0) return true;
+        if (results.Length < count) return false;
+
+        if (!_RentAndPackPaths(filePaths, out var textBuf, out var spans, out var totalChars))
+            return false;
+
+        try
+        {
+            fixed (char* tPtr = textBuf)
+            fixed (PclUtf16Span* sPtr = spans)
+            fixed (PclSha1FileResult* rPtr = results)
+            {
+                return pcl_native_batch_sha1_files(
+                    (ushort*)tPtr,
+                    (nuint)totalChars,
+                    sPtr,
+                    (nuint)count,
+                    rPtr,
+                    maxThreads) == PclOk;
+            }
+        }
+        catch
+        {
+            return false;
+        }
+        finally
+        {
+            ArrayPool<char>.Shared.Return(textBuf);
+            ArrayPool<PclUtf16Span>.Shared.Return(spans);
+        }
+    }
+
     public static bool TryBatchHashFiles(
         IReadOnlyList<string> filePaths,
         Span<PclFileHashResult> outResults,
@@ -480,27 +603,11 @@ public static unsafe partial class PclNativeInterop
         if (count == 0) return true;
         if (outResults.Length < count) return false;
 
-        var totalChars = 0;
-        for (var i = 0; i < count; i++)
-        {
-            var p = filePaths[i];
-            if (string.IsNullOrEmpty(p)) return false;
-            totalChars += p.Length;
-        }
+        if (!_RentAndPackPaths(filePaths, out var textBuf, out var spans, out var totalChars))
+            return false;
 
-        var textBuf = ArrayPool<char>.Shared.Rent(Math.Max(1, totalChars));
-        var spans = ArrayPool<PclUtf16Span>.Shared.Rent(count);
         try
         {
-            var offset = 0;
-            for (var i = 0; i < count; i++)
-            {
-                var p = filePaths[i];
-                p.AsSpan().CopyTo(textBuf.AsSpan(offset));
-                spans[i] = new PclUtf16Span { Offset = (uint)offset, Len = (uint)p.Length };
-                offset += p.Length;
-            }
-
             fixed (char* tPtr = textBuf)
             fixed (PclUtf16Span* sPtr = spans)
             fixed (PclFileHashResult* rPtr = outResults)
@@ -541,28 +648,12 @@ public static unsafe partial class PclNativeInterop
             return true;
         }
 
-        var totalChars = 0;
-        for (var i = 0; i < count; i++)
-        {
-            var p = filePaths[i];
-            if (string.IsNullOrEmpty(p)) return false;
-            totalChars += p.Length;
-        }
+        if (!_RentAndPackPaths(filePaths, out var textBuf, out var spans, out var totalChars))
+            return false;
 
-        var textBuf = ArrayPool<char>.Shared.Rent(Math.Max(1, totalChars));
-        var spans = ArrayPool<PclUtf16Span>.Shared.Rent(count);
         PclJarScanBatch* batchPtr = null;
         try
         {
-            var offset = 0;
-            for (var i = 0; i < count; i++)
-            {
-                var p = filePaths[i];
-                p.AsSpan().CopyTo(textBuf.AsSpan(offset));
-                spans[i] = new PclUtf16Span { Offset = (uint)offset, Len = (uint)p.Length };
-                offset += p.Length;
-            }
-
             fixed (char* tPtr = textBuf)
             fixed (PclUtf16Span* sPtr = spans)
             {
@@ -618,11 +709,19 @@ public static unsafe partial class PclNativeInterop
         }
     }
 
+    public static string FormatSha1Hex(in PclSha1FileResult result)
+    {
+        fixed (byte* p = result.Sha1)
+        {
+            return Convert.ToHexStringLower(new ReadOnlySpan<byte>(p, 20));
+        }
+    }
+
     public static string FormatSha1Hex(in PclFileHashResult result)
     {
         fixed (byte* p = result.Sha1)
         {
-            return Convert.ToHexString(new ReadOnlySpan<byte>(p, 20)).ToLowerInvariant();
+            return Convert.ToHexStringLower(new ReadOnlySpan<byte>(p, 20));
         }
     }
 
@@ -630,7 +729,7 @@ public static unsafe partial class PclNativeInterop
     {
         fixed (byte* p = item.Sha1)
         {
-            return Convert.ToHexString(new ReadOnlySpan<byte>(p, 20)).ToLowerInvariant();
+            return Convert.ToHexStringLower(new ReadOnlySpan<byte>(p, 20));
         }
     }
 }

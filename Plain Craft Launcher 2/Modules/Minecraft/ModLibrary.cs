@@ -409,12 +409,11 @@ public static class ModLibrary
 
         // 更新此方法时需要同步更新 Forge 新版自动安装方法！
 
-        // 主 Jar 文件
+        // 主 Jar 文件（若可得，与所有支持库合并到同一次批量校验中）
+        DownloadFile? mainJarCandidate = null;
         try
         {
-            var mainJar = ModDownload.DlClientJarGet(mcInstance, true, useHashCache);
-            if (mainJar is not null)
-                result.Add(mainJar);
+            mainJarCandidate = ModDownload.DlClientJarGet(mcInstance, false, useHashCache: false);
         }
         catch (Exception ex)
         {
@@ -422,7 +421,8 @@ public static class ModLibrary
         }
 
         // Library 文件
-        result.AddRange(McLibNetFilesFromTokens(McLibListGet(mcInstance, false), useHashCache: useHashCache));
+        var libTokens = McLibListGet(mcInstance, false);
+        result.AddRange(McLibNetFilesFromTokensCore(libTokens, customMcFolder: null, useHashCache: useHashCache, mainJarCandidate: mainJarCandidate));
 
         // Authlib-Injector 文件
         if (includeAuthlib)
@@ -548,26 +548,45 @@ public static class ModLibrary
     /// <summary>
     ///     将 McLibToken 列表转换为 NetFile。
     /// </summary>
-    public static List<DownloadFile> McLibNetFilesFromTokens(List<McLibToken> libs, string customMcFolder = null,
+    public static List<DownloadFile> McLibNetFilesFromTokens(List<McLibToken> libs, string? customMcFolder = null,
         bool useHashCache = false)
+        => McLibNetFilesFromTokensCore(libs, customMcFolder, useHashCache, mainJarCandidate: null);
+
+    private static List<DownloadFile> McLibNetFilesFromTokensCore(List<McLibToken> libs, string? customMcFolder,
+        bool useHashCache, DownloadFile? mainJarCandidate)
     {
         customMcFolder = customMcFolder ?? ModFolder.mcFolderSelected;
         var result = new List<DownloadFile>();
-        // 并行预校验所有文件，串行阶段直接使用结果
-        var checkErrors = new string[libs.Count];
-        Parallel.For(0, libs.Count, new ParallelOptions { MaxDegreeOfParallelism = Math.Clamp(Environment.ProcessorCount, 1, 8) }, index =>
+        var hasMainJar = mainJarCandidate?.Check is not null;
+        var total = libs.Count + (hasMainJar ? 1 : 0);
+        if (total == 0)
+            return result;
+
+        // 将主 JAR（若有）与所有支持库合并到同一次批量预检中
+        var checkers = new ModBase.FileChecker[libs.Count];
+        var batchItems = new (ModBase.FileChecker Checker, string LocalPath)[total];
+        for (var index = 0; index < libs.Count; index++)
         {
             var token = libs[index];
             var checker = new ModBase.FileChecker(actualSize: token.size == 0L ? -1 : token.size, hash: token.Sha1);
-            checkErrors[index] = useHashCache ? checker.CheckForLaunch(token.LocalPath) : checker.Check(token.LocalPath);
-        });
+            checkers[index] = checker;
+            batchItems[index] = (checker, token.LocalPath);
+        }
+        if (hasMainJar)
+            batchItems[libs.Count] = (mainJarCandidate!.Check, mainJarCandidate.LocalPath);
+
+        var checkErrors = ModBase.FileChecker.CheckBatch(batchItems, useHashCache);
         if (useHashCache) _ = ModBase.FileChecker.FlushLaunchHashes();
+
+        if (mainJarCandidate is not null && (!hasMainJar || checkErrors[libs.Count] is not null))
+            result.Add(mainJarCandidate);
+
         // 获取
         for (var index = 0; index < libs.Count; index++)
         {
             var token = libs[index];
             // 检查文件
-            var checker = new ModBase.FileChecker(actualSize: token.size == 0L ? -1 : token.size, hash: token.Sha1);
+            var checker = checkers[index];
             if (checkErrors[index] is null)
                 continue;
             if (token.IsLocal)

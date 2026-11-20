@@ -1061,7 +1061,7 @@ public static class ModBase
         try
         {
             // 获取 MD5
-            using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 262144, FileOptions.SequentialScan))
             {
                 return (string)GetHexString(MD5Provider.Instance.ComputeHash(fs));
             }
@@ -1094,7 +1094,7 @@ public static class ModBase
             // '检测该文件是否在下载中，若在下载则放弃检测
             // If IgnoreOnDownloading AndAlso NetManage.Files.ContainsKey(FilePath) AndAlso NetManage.Files(FilePath).State <= NetState.Merge Then Return ""
             // 获取 SHA512
-            using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 262144, FileOptions.SequentialScan))
             {
                 return (string)GetHexString(SHA512Provider.Instance.ComputeHash(fs));
             }
@@ -1127,7 +1127,7 @@ public static class ModBase
             // '检测该文件是否在下载中，若在下载则放弃检测
             // If IgnoreOnDownloading AndAlso NetManage.Files.ContainsKey(FilePath) AndAlso NetManage.Files(FilePath).State <= NetState.Merge Then Return ""
             // 获取 SHA256
-            using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 262144, FileOptions.SequentialScan))
             {
                 return (string)GetHexString(SHA256Provider.Instance.ComputeHash(fs));
             }
@@ -1152,13 +1152,16 @@ public static class ModBase
     /// </summary>
     public static string GetFileSHA1(string filePath)
     {
+        if (PclNativeInterop.TrySha1File(filePath, out var nativeSha1, out _))
+            return nativeSha1;
+
         var retry = false;
         Re: ;
 
         try
         {
             // 获取 SHA1
-            using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 262144, FileOptions.SequentialScan))
             {
                 return (string)GetHexString(SHA1Provider.Instance.ComputeHash(fs));
             }
@@ -1316,15 +1319,184 @@ public static class ModBase
             return hash;
         }
 
-        private string CheckCore(string localPath, bool useCache)
+        internal static string[] CheckBatch(IReadOnlyList<(FileChecker Checker, string LocalPath)> items, bool useCache)
+        {
+            var results = new string[items.Count];
+            if (items.Count == 0) return results;
+
+            // 全流程对每个待检文件仅执行一次 FileInfo stat
+            var itemMetas = new (string? FullPath, bool Exists, long Size, DateTime LastWriteUtc)[items.Count];
+            void CollectMeta(int i)
+            {
+                var (checker, localPath) = items[i];
+                if (checker is null || checker.isJson || checker.hash is not { Length: 40 } || string.IsNullOrWhiteSpace(localPath))
+                    return;
+                try
+                {
+                    var fullPath = Path.GetFullPath(localPath);
+                    var info = new FileInfo(fullPath);
+                    itemMetas[i] = info.Exists
+                        ? (fullPath, true, info.Length, info.LastWriteTimeUtc)
+                        : (fullPath, false, 0L, default);
+                }
+                catch
+                {
+                    // 非法路径等保持 null，交由 CheckCore 生成原有错误文案
+                }
+            }
+
+            if (items.Count > 8)
+                Parallel.For(0, items.Count, new ParallelOptions { MaxDegreeOfParallelism = Math.Clamp(Environment.ProcessorCount, 1, 8) }, CollectMeta);
+            else
+                for (var i = 0; i < items.Count; i++) CollectMeta(i);
+
+            var uniqueSeen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var uniqueMetas = new List<(string FullPath, long Size, DateTime LastWriteUtc)>(items.Count);
+            for (var i = 0; i < itemMetas.Length; i++)
+            {
+                var meta = itemMetas[i];
+                if (meta.Exists && meta.FullPath is { } fp && uniqueSeen.Add(fp))
+                    uniqueMetas.Add((fp, meta.Size, meta.LastWriteUtc));
+            }
+
+            Dictionary<string, string>? sha1Map = null;
+            if (uniqueMetas.Count > 0)
+            {
+                sha1Map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                HashCache? readyCache = null;
+
+                if (useCache && Volatile.Read(ref LaunchHashesDisabled) == 0)
+                {
+                    var loading = LaunchHashes.Value;
+                    if (loading.IsFaulted || loading.IsCanceled)
+                    {
+                        _ = loading.Exception;
+                        DisableLaunchHashes();
+                    }
+                    else if (loading.IsCompletedSuccessfully)
+                    {
+                        readyCache = loading.Result;
+                        try
+                        {
+                            sha1Map = readyCache.GetCachedSha1Batch(uniqueMetas);
+                        }
+                        catch (Exception ex)
+                        {
+                            if (ex is Microsoft.Data.Sqlite.SqliteException)
+                            {
+                                DisableLaunchHashes();
+                                readyCache = null;
+                            }
+                            Log(ex, "启动哈希批量查询不可用，回退完整校验", LogLevel.Debug);
+                            sha1Map.Clear();
+                        }
+                    }
+                }
+
+                if (PclNativeInterop.IsAvailable && sha1Map.Count < uniqueMetas.Count)
+                {
+                    var uncached = new List<(string FullPath, long Size, DateTime LastWriteUtc)>(uniqueMetas.Count - sha1Map.Count);
+                    foreach (var meta in uniqueMetas)
+                    {
+                        if (!sha1Map.ContainsKey(meta.FullPath))
+                            uncached.Add(meta);
+                    }
+
+                    if (uncached.Count > 0)
+                    {
+                        var nativePaths = new string[uncached.Count];
+                        for (var i = 0; i < uncached.Count; i++) nativePaths[i] = uncached[i].FullPath;
+                        var nativeResults = new PclSha1FileResult[uncached.Count];
+                        var maxThreads = (uint)Math.Clamp(Environment.ProcessorCount, 1, 12);
+
+                        if (PclNativeInterop.TryBatchSha1Files(nativePaths, nativeResults, maxThreads))
+                        {
+                            var queueCache = useCache && Volatile.Read(ref LaunchHashesDisabled) == 0;
+                            for (var i = 0; i < uncached.Count; i++)
+                            {
+                                if (nativeResults[i].Status != PclNativeInterop.PclOk) continue;
+                                var item = uncached[i];
+                                var hex = PclNativeInterop.FormatSha1Hex(in nativeResults[i]);
+                                sha1Map[item.FullPath] = hex;
+
+                                if (queueCache)
+                                {
+                                    if (readyCache is not null)
+                                    {
+                                        readyCache.QueueComputedHash(item.FullPath, SHA1Provider.Instance, hex, item.Size, item.LastWriteUtc);
+                                    }
+                                    else
+                                    {
+                                        var postInfo = new FileInfo(item.FullPath);
+                                        if (!LaunchHashes.Value.IsFaulted && Volatile.Read(ref LaunchHashesDisabled) == 0 &&
+                                            postInfo.Exists && postInfo.Length == item.Size && postInfo.LastWriteTimeUtc == item.LastWriteUtc)
+                                        {
+                                            PendingLaunchHashes.Enqueue((item.FullPath, SHA1Provider.Instance, hex, item.Size, item.LastWriteUtc));
+                                        }
+                                        if (LaunchHashes.Value.IsFaulted || LaunchHashes.Value.IsCanceled || Volatile.Read(ref LaunchHashesDisabled) != 0)
+                                        {
+                                            DisableLaunchHashes();
+                                            queueCache = false;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            List<int>? fallbackIndices = null;
+            for (var i = 0; i < items.Count; i++)
+            {
+                var meta = itemMetas[i];
+                if (meta.Exists && meta.FullPath is { } fp && sha1Map is not null && sha1Map.TryGetValue(fp, out var preSha1))
+                {
+                    results[i] = items[i].Checker.CheckCore(items[i].LocalPath, useCache, preSha1, meta.Size);
+                }
+                else
+                {
+                    fallbackIndices ??= new List<int>();
+                    fallbackIndices.Add(i);
+                }
+            }
+
+            if (fallbackIndices is not null)
+            {
+                if (fallbackIndices.Count > 4)
+                {
+                    Parallel.ForEach(fallbackIndices, new ParallelOptions { MaxDegreeOfParallelism = Math.Clamp(Environment.ProcessorCount, 1, 8) }, idx =>
+                    {
+                        results[idx] = items[idx].Checker.CheckCore(items[idx].LocalPath, useCache);
+                    });
+                }
+                else
+                {
+                    foreach (var idx in fallbackIndices)
+                        results[idx] = items[idx].Checker.CheckCore(items[idx].LocalPath, useCache);
+                }
+            }
+
+            return results;
+        }
+
+        private string CheckCore(string localPath, bool useCache, string? precomputedSha1 = null, long? precomputedFileSize = null)
         {
             try
             {
                 Log($"[Checker] 开始校验文件 {localPath}", LogLevel.Developer);
-                var info = new FileInfo(localPath);
-                if (!info.Exists)
-                    return "文件不存在：" + localPath;
-                var fileSize = info.Length;
+                long fileSize;
+                if (precomputedFileSize is { } knownSize)
+                {
+                    fileSize = knownSize;
+                }
+                else
+                {
+                    var info = new FileInfo(localPath);
+                    if (!info.Exists)
+                        return "文件不存在：" + localPath;
+                    fileSize = info.Length;
+                }
                 var errorMessage = new List<string>();
                 var allowIgnore = false; // 允许相信哈希正确但是大小不正确
                 if (!string.IsNullOrEmpty(hash))
@@ -1343,7 +1515,9 @@ public static class ModBase
                     }
                     else // SHA1 (40)
                     {
-                        var computedHash = VerificationHash(localPath, SHA1Provider.Instance, () => GetFileSHA1(localPath), useCache);
+                        var computedHash = !string.IsNullOrEmpty(precomputedSha1)
+                            ? precomputedSha1
+                            : VerificationHash(localPath, SHA1Provider.Instance, () => GetFileSHA1(localPath), useCache);
                         if ((hash.ToLowerInvariant() ?? "") != (computedHash ?? ""))
                             errorMessage.Add("文件 SHA1 应为 " + hash + "，实际为 " + computedHash);
                     }

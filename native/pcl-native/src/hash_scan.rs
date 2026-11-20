@@ -15,6 +15,7 @@ use crate::{
 const MURMUR2_MUL: u32 = 0x5BD1_E995;
 const IN_MEMORY_READ_LIMIT: u64 = 16 * 1024 * 1024;
 const STREAM_CHUNK_SIZE: usize = 64 * 1024;
+const SHA1_STREAM_BUF_SIZE: usize = 256 * 1024;
 const MAX_METADATA_BYTES: u64 = 16 * 1024 * 1024;
 
 /// Mod loader identifiers returned by `pcl_native_batch_scan_jars`.
@@ -48,6 +49,17 @@ pub struct PclFileHashResult {
     pub file_size: u64,
 }
 
+/// Result record written by `pcl_native_batch_sha1_files` (40 bytes, 8-byte aligned).
+#[repr(C)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct PclSha1FileResult {
+    pub status: i32,
+    pub _reserved: u32,
+    pub file_size: u64,
+    pub sha1: [u8; 20],
+    pub _pad: [u8; 4],
+}
+
 #[repr(C)]
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct PclJarScanItem {
@@ -72,6 +84,7 @@ pub struct PclJarScanBatch {
 
 thread_local! {
     static FILE_SCRATCH_BUF: RefCell<Vec<u8>> = const { RefCell::new(Vec::new()) };
+    static SHA1_SCRATCH_BUF: RefCell<Vec<u8>> = const { RefCell::new(Vec::new()) };
 }
 
 #[inline]
@@ -469,6 +482,175 @@ pub unsafe extern "C" fn pcl_native_batch_hash_files(
                             };
                         }
                     }
+                });
+        });
+
+        match res {
+            Ok(()) => PCL_OK,
+            Err(code) => code,
+        }
+    })
+}
+
+fn sha1_file_streaming(path: &Path) -> Result<([u8; 20], u64), i32> {
+    let mut file = open_file_shared_read(path)?;
+    SHA1_SCRATCH_BUF.with(|cell| {
+        let mut buf = cell.borrow_mut();
+        if buf.len() < SHA1_STREAM_BUF_SIZE {
+            buf.resize(SHA1_STREAM_BUF_SIZE, 0);
+        }
+        let mut hasher = Sha1::new();
+        let mut file_size = 0_u64;
+        loop {
+            let n = file.read(&mut buf[..]).map_err(|_| PCL_ERR_IO)?;
+            if n == 0 {
+                break;
+            }
+            hasher.update(&buf[..n]);
+            file_size += n as u64;
+        }
+        Ok((hasher.finalize().into(), file_size))
+    })
+}
+
+fn compute_sha1_result(text_buf: &[u16], sp: PclUtf16Span) -> PclSha1FileResult {
+    let wide = &text_buf[sp.offset as usize..(sp.offset + sp.len) as usize];
+    let path = match utf16_to_path_buf(wide) {
+        Ok(p) => p,
+        Err(code) => {
+            return PclSha1FileResult {
+                status: code,
+                ..Default::default()
+            };
+        }
+    };
+    match sha1_file_streaming(&path) {
+        Ok((sha1, file_size)) => PclSha1FileResult {
+            status: PCL_OK,
+            _reserved: 0,
+            file_size,
+            sha1,
+            _pad: [0; 4],
+        },
+        Err(code) => PclSha1FileResult {
+            status: code,
+            ..Default::default()
+        },
+    }
+}
+
+/// Computes `SHA-1` (`[u8; 20]`) and optional byte length of a single file using a 256 KiB
+/// streaming buffer and hardware-accelerated SHA-NI when available.
+///
+/// # Safety
+/// - `path_ptr` must be valid for reads of `path_len` UTF-16 code units.
+/// - `out_sha1` must be valid for 20 bytes of writes.
+/// - When non-null, `out_file_size` must be properly aligned and valid for `u64` write.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn pcl_native_sha1_file(
+    path_ptr: *const u16,
+    path_len: usize,
+    out_sha1: *mut u8,
+    out_file_size: *mut u64,
+) -> i32 {
+    ffi_guard(|| {
+        if out_sha1.is_null() {
+            return PCL_ERR_NULL_PTR;
+        }
+        if !out_file_size.is_null()
+            && !(out_file_size as usize).is_multiple_of(std::mem::align_of::<u64>())
+        {
+            return PCL_ERR_INVALID_ARG;
+        }
+        // SAFETY: Caller guarantees `path_ptr` is valid for `path_len` `u16`s.
+        let wide = match unsafe { slice_from_raw_parts_checked(path_ptr, path_len) } {
+            Ok(s) => s,
+            Err(code) => return code,
+        };
+        let path = match utf16_to_path_buf(wide) {
+            Ok(p) => p,
+            Err(code) => return code,
+        };
+        // SAFETY: Caller guarantees `out_sha1` is valid for 20 bytes of writes.
+        let out_digest = match unsafe { mut_slice_from_raw_parts_checked(out_sha1, 20) } {
+            Ok(s) => s,
+            Err(code) => return code,
+        };
+        let (digest, file_size) = match sha1_file_streaming(&path) {
+            Ok(v) => v,
+            Err(code) => return code,
+        };
+        out_digest.copy_from_slice(&digest);
+        if !out_file_size.is_null() {
+            // SAFETY: Checked `out_file_size` is non-null and `u64`-aligned.
+            unsafe {
+                *out_file_size = file_size;
+            }
+        }
+        PCL_OK
+    })
+}
+
+/// Computes `SHA-1` (`[u8; 20]`) and file sizes over multiple UTF-16 file paths in parallel.
+///
+/// # Safety
+/// - `paths_utf16` must be valid for `paths_total_len` `u16` reads.
+/// - `spans` must be valid for `file_count` `PclUtf16Span` reads.
+/// - `out_results` must be valid for `file_count` `PclSha1FileResult` writes.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn pcl_native_batch_sha1_files(
+    paths_utf16: *const u16,
+    paths_total_len: usize,
+    spans: *const PclUtf16Span,
+    file_count: usize,
+    out_results: *mut PclSha1FileResult,
+    max_threads: u32,
+) -> i32 {
+    ffi_guard(|| {
+        // SAFETY: Caller guarantees valid slices for the given counts.
+        let text_buf = match unsafe { slice_from_raw_parts_checked(paths_utf16, paths_total_len) } {
+            Ok(s) => s,
+            Err(code) => return code,
+        };
+        // SAFETY: Same as above.
+        let path_spans = match unsafe { slice_from_raw_parts_checked(spans, file_count) } {
+            Ok(s) => s,
+            Err(code) => return code,
+        };
+        // SAFETY: Same as above.
+        let results = match unsafe { mut_slice_from_raw_parts_checked(out_results, file_count) } {
+            Ok(s) => s,
+            Err(code) => return code,
+        };
+
+        if let Err(code) = validate_path_spans(text_buf, path_spans) {
+            return code;
+        }
+        if file_count == 0 {
+            return PCL_OK;
+        }
+        if file_count <= 2 {
+            for (out, sp) in results.iter_mut().zip(path_spans.iter()) {
+                *out = compute_sha1_result(text_buf, *sp);
+            }
+            return PCL_OK;
+        }
+
+        let threads = if max_threads == 0 {
+            std::thread::available_parallelism()
+                .map(|n| n.get())
+                .unwrap_or(4)
+                .clamp(1, 12)
+        } else {
+            (max_threads as usize).clamp(1, 16)
+        };
+
+        let res = run_with_optional_pool(threads as u32, || {
+            results
+                .par_iter_mut()
+                .zip(path_spans.par_iter())
+                .for_each(|(out, sp)| {
+                    *out = compute_sha1_result(text_buf, *sp);
                 });
         });
 
@@ -1309,5 +1491,123 @@ modId="neo_test""#;
 
             assert_eq!(pcl_native_free_jar_scan_results(batch_ptr), PCL_OK);
         }
+    }
+
+    #[test]
+    fn sha1_file_and_batch_handle_empty_large_missing_and_invalid_args() {
+        assert_eq!(std::mem::size_of::<PclSha1FileResult>(), 40);
+        assert_eq!(std::mem::align_of::<PclSha1FileResult>(), 8);
+
+        let tmp = TempDirGuard::new("sha1_batch");
+        let empty_path = tmp.path.join("empty.bin");
+        let large_path = tmp.path.join("超过256KB_测试.jar");
+        let missing_path = tmp.path.join("not_exists.jar");
+
+        std::fs::write(&empty_path, b"").unwrap();
+        let large_bytes: Vec<u8> = (0..(300 * 1024 + 17))
+            .map(|i| ((i * 29 + 7) & 0xFF) as u8)
+            .collect();
+        std::fs::write(&large_path, &large_bytes).unwrap();
+
+        let exp_empty: [u8; 20] = Sha1::digest(b"").into();
+        let exp_large: [u8; 20] = Sha1::digest(&large_bytes).into();
+
+        let empty_w: Vec<u16> = empty_path.to_string_lossy().encode_utf16().collect();
+        let large_w: Vec<u16> = large_path.to_string_lossy().encode_utf16().collect();
+        let missing_w: Vec<u16> = missing_path.to_string_lossy().encode_utf16().collect();
+
+        let mut digest = [0u8; 20];
+        let mut size_out = u64::MAX;
+
+        // SAFETY: All pointers and lengths match allocated local buffers.
+        unsafe {
+            assert_eq!(
+                pcl_native_sha1_file(
+                    empty_w.as_ptr(),
+                    empty_w.len(),
+                    digest.as_mut_ptr(),
+                    &mut size_out
+                ),
+                PCL_OK
+            );
+            assert_eq!(digest, exp_empty);
+            assert_eq!(size_out, 0);
+
+            assert_eq!(
+                pcl_native_sha1_file(
+                    large_w.as_ptr(),
+                    large_w.len(),
+                    digest.as_mut_ptr(),
+                    std::ptr::null_mut()
+                ),
+                PCL_OK
+            );
+            assert_eq!(digest, exp_large);
+
+            assert_eq!(
+                pcl_native_sha1_file(
+                    missing_w.as_ptr(),
+                    missing_w.len(),
+                    digest.as_mut_ptr(),
+                    &mut size_out
+                ),
+                PCL_ERR_IO
+            );
+            assert_eq!(
+                pcl_native_sha1_file(
+                    empty_w.as_ptr(),
+                    empty_w.len(),
+                    std::ptr::null_mut(),
+                    &mut size_out
+                ),
+                PCL_ERR_NULL_PTR
+            );
+            let mut unaligned = [0u8; 16];
+            assert_eq!(
+                pcl_native_sha1_file(
+                    empty_w.as_ptr(),
+                    empty_w.len(),
+                    digest.as_mut_ptr(),
+                    unaligned.as_mut_ptr().add(1).cast::<u64>()
+                ),
+                PCL_ERR_INVALID_ARG
+            );
+        }
+
+        let mut text_buf = Vec::new();
+        let mut spans = Vec::new();
+        for u16s in [&empty_w, &large_w, &missing_w] {
+            let off = text_buf.len() as u32;
+            text_buf.extend_from_slice(u16s);
+            spans.push(PclUtf16Span {
+                offset: off,
+                len: u16s.len() as u32,
+            });
+        }
+
+        let mut batch_out = vec![PclSha1FileResult::default(); 3];
+        // SAFETY: Valid buffers and spans.
+        unsafe {
+            assert_eq!(
+                pcl_native_batch_sha1_files(
+                    text_buf.as_ptr(),
+                    text_buf.len(),
+                    spans.as_ptr(),
+                    spans.len(),
+                    batch_out.as_mut_ptr(),
+                    0,
+                ),
+                PCL_OK
+            );
+        }
+        assert_eq!(batch_out[0].status, PCL_OK);
+        assert_eq!(batch_out[0].file_size, 0);
+        assert_eq!(batch_out[0].sha1, exp_empty);
+
+        assert_eq!(batch_out[1].status, PCL_OK);
+        assert_eq!(batch_out[1].file_size, large_bytes.len() as u64);
+        assert_eq!(batch_out[1].sha1, exp_large);
+
+        assert_eq!(batch_out[2].status, PCL_ERR_IO);
     }
 }

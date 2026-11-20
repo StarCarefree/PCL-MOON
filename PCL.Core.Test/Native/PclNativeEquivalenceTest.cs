@@ -99,8 +99,70 @@ public sealed class PclNativeEquivalenceTest
         Assert.AreEqual(24, sizeof(PclSearchResult));
         Assert.AreEqual(8, sizeof(PclUtf16Span));
         Assert.AreEqual(40, sizeof(PclFileHashResult));
+        Assert.AreEqual(40, sizeof(PclSha1FileResult));
         Assert.AreEqual(48, sizeof(PclJarScanItem));
         Assert.AreEqual(32, sizeof(PclJarScanBatch));
+    }
+
+    [TestMethod]
+    public void Sha1FileAndBatch_MatchManagedAndRespectDisableSwitch()
+    {
+        if (!PclNativeInterop.IsSupportedPlatform)
+            return;
+
+        var emptyFile = Path.Combine(_tempDir, "empty.bin");
+        var largeFile = Path.Combine(_tempDir, "超过256KB_示例.jar");
+        var smallFile = Path.Combine(_tempDir, "small_😀.jar");
+        var missingFile = Path.Combine(_tempDir, "missing.jar");
+
+        File.WriteAllBytes(emptyFile, []);
+        var largeBytes = BuildMixedPayload(320 * 1024 + 19);
+        var smallBytes = BuildMixedPayload(1537);
+        File.WriteAllBytes(largeFile, largeBytes);
+        File.WriteAllBytes(smallFile, smallBytes);
+
+        var expEmpty = Convert.ToHexStringLower(SHA1.HashData([]));
+        var expLarge = Convert.ToHexStringLower(SHA1.HashData(largeBytes));
+        var expSmall = Convert.ToHexStringLower(SHA1.HashData(smallBytes));
+
+        Assert.IsTrue(PclNativeInterop.TrySha1File(emptyFile, out var gotEmpty, out var sizeEmpty));
+        Assert.AreEqual(expEmpty, gotEmpty);
+        Assert.AreEqual(0L, sizeEmpty);
+
+        Assert.IsTrue(PclNativeInterop.TrySha1File(largeFile, out var gotLarge, out var sizeLarge));
+        Assert.AreEqual(expLarge, gotLarge);
+        Assert.AreEqual((long)largeBytes.Length, sizeLarge);
+
+        Assert.IsFalse(PclNativeInterop.TrySha1File(missingFile, out _, out _));
+
+        string[] paths = [emptyFile, largeFile, smallFile, missingFile];
+        var batchOut = new PclSha1FileResult[paths.Length];
+        Assert.IsTrue(PclNativeInterop.TryBatchSha1Files(paths, batchOut, maxThreads: 4));
+
+        Assert.AreEqual(PclNativeInterop.PclOk, batchOut[0].Status);
+        Assert.AreEqual(0UL, batchOut[0].FileSize);
+        Assert.AreEqual(expEmpty, PclNativeInterop.FormatSha1Hex(in batchOut[0]));
+
+        Assert.AreEqual(PclNativeInterop.PclOk, batchOut[1].Status);
+        Assert.AreEqual((ulong)largeBytes.Length, batchOut[1].FileSize);
+        Assert.AreEqual(expLarge, PclNativeInterop.FormatSha1Hex(in batchOut[1]));
+
+        Assert.AreEqual(PclNativeInterop.PclOk, batchOut[2].Status);
+        Assert.AreEqual((ulong)smallBytes.Length, batchOut[2].FileSize);
+        Assert.AreEqual(expSmall, PclNativeInterop.FormatSha1Hex(in batchOut[2]));
+
+        Assert.AreEqual(PclNativeInterop.PclErrIo, batchOut[3].Status);
+
+        try
+        {
+            Environment.SetEnvironmentVariable(PclNativeInterop.DisableEnvVarName, "1");
+            Assert.IsFalse(PclNativeInterop.TrySha1File(largeFile, out _, out _));
+            Assert.IsFalse(PclNativeInterop.TryBatchSha1Files(paths, batchOut));
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(PclNativeInterop.DisableEnvVarName, null);
+        }
     }
 
     [TestMethod]

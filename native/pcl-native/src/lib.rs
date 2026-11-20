@@ -7,7 +7,7 @@ use std::mem::{align_of, size_of};
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
 /// Current C ABI version for `pcl_native`.
-pub const PCL_NATIVE_ABI_VERSION: u32 = 1;
+pub const PCL_NATIVE_ABI_VERSION: u32 = 2;
 
 /// Operation succeeded.
 pub const PCL_OK: i32 = 0;
@@ -124,7 +124,7 @@ mod tests {
 
     #[test]
     fn abi_version_is_positive() {
-        assert_eq!(pcl_native_abi_version(), 1);
+        assert_eq!(pcl_native_abi_version(), 2);
     }
 
     #[test]
