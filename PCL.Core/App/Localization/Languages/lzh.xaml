@@ -3060,6 +3060,18 @@ PCL-MOON 可尝试升级这些版本的 Authlib 支持库以解决问题。
     <sys:String x:Key="Setup.Launch.Advanced.DisableLF.ToolTip">PCL-MOON 会在启动 1.5.x 及以下版本时使用 LegacyFix 来改善老版本游戏体验和修复兼容性问题。</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.LockMemory">锁定内存分配（-Xms = -Xmx）</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.LockMemory.ToolTip">启用后，启动器会额外追加 -Xms 参数并令其等于最大堆 -Xmx，从而固定堆大小。这会隐式禁用堆内存归还（Uncommit），减少操作系统取消映射/重新分配内存页带来的延迟抖动，也有利于 ZGC 的回收预测。代价是游戏全程会占用接近最大分配的内存。</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.AppCds">启用 AppCDS 应用类数据共享加速启动</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.AppCds.ToolTip">实验性启动加速（Java 19–25，64 位）。自动追加 -XX:+AutoCreateSharedArchive 与实例独立归档，首次正常退出后生成共享归档，后续启动可加速类加载。若当前启动包含 Java Agent（如外置登录、启动加速 Agent）、外置参数文件、非 ASCII 路径或已手动设置 CDS 参数，将自动跳过以保证兼容性。</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.FrameGeneration">实验性游戏画面插帧（2×，目标 60 FPS）</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.FrameGeneration.ToolTip">下次启动生效。使用通用 OpenGL 3.2 双向块匹配生成中间帧，无 NVIDIA 专属依赖。目标呈现 60 FPS、真实渲染约 30 FPS，会增加延迟及显卡开销，HUD 也会参与插值。建议游戏帧率上限不低于 60；过慢、失焦或超预算时跳过插帧。不能消除 GC/主线程停顿。Vulkan 不支持；1.16.5–26.3 尚未逐版本及逐显卡实测。</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.FrameDiagnostics">记录游戏长帧诊断（定位瞬间 0 FPS）</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.FrameDiagnostics.ToolTip">下次启动生效，可独立于插帧启用。检测超过 250ms 的呈现间隔，在启动日志输出 [PCL FrameTime]、GC 时间变化和渲染线程栈；仅采样，不自动修改 JVM 或游戏设置。加载、切换窗口也可能产生长间隔。</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.FrameSettingsButton">在游戏窗口显示插帧设置齿轮</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.FrameSettingsButton.ToolTip">下次启动生效。游戏窗口右上角显示齿轮，点击可实时开关插帧、长帧诊断及调整目标 FPS，仅作用于本次游戏。先按 Esc 释放鼠标再点击。切到其他应用时隐藏，随游戏窗口移动和关闭；独占全屏可能遮住叠加层，建议窗口化或无边框模式。显示按钮不会自动开启插帧。</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.FramePacing">启用独立限帧与实例配置支持</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.FramePacing.ToolTip">下次启动加载帧节奏组件，即使未开启插帧。默认不限帧；在游戏齿轮或实例配置中设置 1–999 FPS，0 为关闭。精确模式会额外占用 CPU。此选项控制独立加载；组件因插帧或齿轮已加载时，仍可使用限帧。不会修改游戏配置或启用 Linux 线程配额。</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.SuperResolution">实验性内部超分（降低世界渲染分辨率）</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.SuperResolution.ToolTip">默认关闭，下次启动生效。降低世界渲染分辨率后由 GPU 重建到窗口大小，HUD 与鼠标坐标保持原生。当前仅 1.21.11 原生适配器、OpenGL 3.3 有首个实现；显卡是否真正支持要在运行时检查，未知版本或后端保持原生。勾选不代表当前已生效。游戏内齿轮和实例配置可热切换比例与锐化。</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.DisableLwjglUnsafeAgent">禁用 LWJGL Unsafe Agent</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.DisableLwjglUnsafeAgent.ToolTip">Minecraft 26.1 使用了 LWJGL 3.4.1，LWJGL 3.4.1 使用了 FFM API 以在 JDK 25+ 上访问原生内存。由于 JDK 优化能力限制，某些情况下这会产生严重的性能问题。
 PCL-MOON 会使用 LWJGL Unsafe Agent 修复这个问题，以解决可能存在的性能问题。
@@ -3114,6 +3126,7 @@ PCL-MOON 会使用 LWJGL Unsafe Agent 修复这个问题，以解决可能存在
     <sys:String x:Key="Setup.Launch.Advanced.Renderer.Warning.Confirm">我知道我在做什么</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.Renderer.Warning.Message">修改此项会严重影响游戏的稳定性与性能。如果你不知道你在做什么，不要修改此选项！
 你确定要继续修改吗？</sys:String>
+    <sys:String x:Key="Setup.Launch.Acceleration.Title">启动加速</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.Title">高级启动选项</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.UseJavaExe">使用 java.exe 而不是 javaw.exe</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.UseJavaExe.ToolTip">如果遇到游戏窗口长时间不出现等故障可尝试启用此项，PCL-MOON 将使用 java.exe 来运行游戏，这样会让游戏进程拥有标准输入/输出流，以尽可能避免打印日志时出现问题。
