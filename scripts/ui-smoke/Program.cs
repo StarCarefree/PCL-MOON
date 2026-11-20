@@ -27,11 +27,20 @@ internal static class Program
             };
             var assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(path);
             if (args.Contains("--plugin-files")) { Assembly.SetEntryAssembly(assembly); ServerPluginFileChecks.Run(assembly, directory); return 0; }
+            if (args.Contains("--mod-toggle-ui"))
+            {
+                Assembly.SetEntryAssembly(assembly);
+                InitializeDefaultConfig(directory);
+                ModToggleUiChecks.Run(assembly, args);
+                return 0;
+            }
             if (args.Contains("--mod-toggle"))
             {
                 Assembly.SetEntryAssembly(assembly);
                 InitializeDefaultConfig(directory);
                 ModToggleChecks.Run(assembly, args);
+                return 0;
+            }
                 return 0;
             }
             if (args.Contains("--file-completion"))

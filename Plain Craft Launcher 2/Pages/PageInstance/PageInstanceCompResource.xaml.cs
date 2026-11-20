@@ -2015,7 +2015,7 @@ public partial class PageInstanceCompResource : IRefreshable
             Lang.Text("Common.Action.Continue"), Lang.Text("Common.Action.Cancel"), isWarn: true) != 1)
             return false;
 
-        // 尽量补齐后再构建级联索引；“继续”允许在依赖信息不完整时操作，不能把解析失败当成文件被占用。
+        // 尽量补齐后再构建级联索引；用户已确认依赖信息可能不完整，解析失败不能阻止文件操作。
         var output = ModLocalComp.compResourceListLoader.output;
         if (output is null) return false;
         var completed = true;
