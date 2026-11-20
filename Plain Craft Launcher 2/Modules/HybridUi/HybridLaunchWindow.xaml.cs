@@ -1,6 +1,8 @@
 using System;
 using System.ComponentModel;
 using System.Windows;
+using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
@@ -147,8 +149,17 @@ public partial class HybridLaunchWindow : Window
 
     private void ScreenHomeRequested(object? sender, EventArgs e) => Close();
     private void ScreenCancelRequested(object? sender, EventArgs e) => CancelRequested?.Invoke(this, EventArgs.Empty);
-    private void MinimizeClick(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
-    private void CloseClick(object sender, RoutedEventArgs e) => Close();
+
+    // 去除顶部标题条后，在卡片任意非按钮区域按住左键即可拖动窗口
+    private void ShellMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ButtonState != MouseButtonState.Pressed || e.ClickCount != 1) return;
+        for (var current = e.OriginalSource as DependencyObject; current is not null; current = VisualTreeHelper.GetParent(current))
+        {
+            if (current is ButtonBase) return;
+        }
+        try { DragMove(); } catch { }
+    }
     private void WindowStateChanged(object? sender, EventArgs e)
     {
         Screen?.SetPresentationSuspended(WindowState == WindowState.Minimized);

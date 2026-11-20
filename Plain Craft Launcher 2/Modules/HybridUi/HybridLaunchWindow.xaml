@@ -3,68 +3,34 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:PCL"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
-        Title="PCL-MOON · 游戏启动" Width="760" Height="440" MinWidth="540" MinHeight="400"
+        Title="PCL-MOON · 游戏启动" Width="760" Height="416" MinWidth="540" MinHeight="376"
         WindowStartupLocation="CenterScreen" WindowStyle="None" ResizeMode="CanResize"
-        ShowInTaskbar="True" Topmost="False" Background="#111315" Foreground="#ECEDEF"
-        FontFamily="Segoe UI, Microsoft YaHei UI" UseLayoutRounding="True"
+        ShowInTaskbar="True" Topmost="False" Background="#0D0F12" Foreground="#ECEDEF"
+        FontFamily="Segoe UI, Microsoft YaHei UI" UseLayoutRounding="True" SnapsToDevicePixels="True"
         StateChanged="WindowStateChanged" Closed="WindowClosed">
     <shell:WindowChrome.WindowChrome>
-        <shell:WindowChrome CaptionHeight="36" ResizeBorderThickness="6" GlassFrameThickness="0" CornerRadius="0" NonClientFrameEdges="None" />
+        <shell:WindowChrome CaptionHeight="0" ResizeBorderThickness="6" GlassFrameThickness="0" CornerRadius="0" NonClientFrameEdges="None" />
     </shell:WindowChrome.WindowChrome>
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries><ResourceDictionary Source="HybridTheme.xaml" /></ResourceDictionary.MergedDictionaries>
-            <Style x:Key="Launch.CaptionButton" TargetType="Button">
-                <Setter Property="Width" Value="44" />
-                <Setter Property="Height" Value="36" />
-                <Setter Property="Background" Value="Transparent" />
-                <Setter Property="Foreground" Value="#9299A3" />
-                <Setter Property="BorderBrush" Value="Transparent" />
-                <Setter Property="BorderThickness" Value="1" />
-                <Setter Property="shell:WindowChrome.IsHitTestVisibleInChrome" Value="True" />
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="Button">
-                            <Border x:Name="Plate" Background="{TemplateBinding Background}"
-                                    BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Plate" Property="Background" Value="#2A2D32" />
-                                    <Setter Property="Foreground" Value="#ECEDEF" />
-                                </Trigger>
-                                <Trigger Property="IsPressed" Value="True"><Setter TargetName="Plate" Property="Background" Value="#454038" /></Trigger>
-                                <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Plate" Property="BorderBrush" Value="#FFB942" /></Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
         </ResourceDictionary>
     </Window.Resources>
-    <Border x:Name="Shell" BorderBrush="#35383C" BorderThickness="1">
-        <Grid>
-            <Grid.RowDefinitions><RowDefinition Height="36" /><RowDefinition Height="1" /><RowDefinition Height="*" /></Grid.RowDefinitions>
-            <!-- WindowChrome provides native dragging, double-click maximize and edge resizing. -->
-            <Grid Background="#15171A">
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,12,0" IsHitTestVisible="False">
-                    <Ellipse Width="6" Height="6" Fill="#FFB942" Margin="0,0,8,0" />
-                    <TextBlock Text="PCL-MOON" FontSize="10" FontWeight="SemiBold" Foreground="#ECEDEF" />
-                    <TextBlock Text=" / 游戏启动" FontSize="10" Foreground="#9299A3" Margin="8,0,0,0" />
-                </StackPanel>
-                <Button Grid.Column="1" Style="{StaticResource Launch.CaptionButton}" Click="MinimizeClick" ToolTip="最小化"
-                        AutomationProperties.Name="最小化" AutomationProperties.AutomationId="LaunchWindow.Minimize">
-                    <Path Data="M 0,0 L 10,0" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1" />
-                </Button>
-                <Button Grid.Column="2" Style="{StaticResource Launch.CaptionButton}" Click="CloseClick" ToolTip="关闭此窗口，启动任务继续运行"
-                        AutomationProperties.Name="关闭启动窗口（不取消任务）" AutomationProperties.AutomationId="LaunchWindow.Close">
-                    <Path Data="M 0,0 L 9,9 M 0,9 L 9,0" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1" />
-                </Button>
-            </Grid>
-            <Border Grid.Row="1" Background="#26292D" />
-            <local:HybridLaunchScreen x:Name="Screen" Grid.Row="2" />
-        </Grid>
+    <Border x:Name="Shell" BorderThickness="1" MouseLeftButtonDown="ShellMouseLeftButtonDown">
+        <Border.BorderBrush>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Color="#473B28" Offset="0" />
+                <GradientStop Color="#282B31" Offset="0.35" />
+                <GradientStop Color="#1F2227" Offset="1" />
+            </LinearGradientBrush>
+        </Border.BorderBrush>
+        <Border.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#0F1115" Offset="0" />
+                <GradientStop Color="#0D0F12" Offset="0.58" />
+                <GradientStop Color="#12110F" Offset="1" />
+            </LinearGradientBrush>
+        </Border.Background>
+        <local:HybridLaunchScreen x:Name="Screen" />
     </Border>
 </Window>
