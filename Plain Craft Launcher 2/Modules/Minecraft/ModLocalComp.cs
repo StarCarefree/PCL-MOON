@@ -3220,4 +3220,118 @@ public static class ModLocalComp
 
         return null;
     }
+
+    /// <summary>
+    /// 批量计算文件列表的 SHA1（优先走本地哈希缓存；数量大于 1 且原生加速可用时并行单遍扫描）。
+    /// 返回字典键为规范化后的完整路径。
+    /// </summary>
+    internal static Dictionary<string, string> GetFileSha1Batch(
+        IReadOnlyList<string> filePaths,
+        CancellationToken cancellationToken = default)
+    {
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (filePaths.Count == 0) return result;
+
+        var pending = filePaths;
+        if (PclNativeInterop.IsAvailable && filePaths.Count > 1)
+        {
+            try
+            {
+                const int chunkSize = 128;
+                var failedPaths = new List<string>();
+                for (var offset = 0; offset < filePaths.Count; offset += chunkSize)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    var take = Math.Min(chunkSize, filePaths.Count - offset);
+                    var chunkPaths = new string[take];
+                    for (var i = 0; i < take; i++) chunkPaths[i] = filePaths[offset + i];
+
+                    var dualHashes = _hashCache.Value.GetDualHashesBatchAsync(chunkPaths, cancellationToken)
+                        .GetAwaiter().GetResult();
+                    for (var i = 0; i < take; i++)
+                    {
+                        var path = chunkPaths[i];
+                        if (string.IsNullOrWhiteSpace(path)) continue;
+                        var fullPath = Path.GetFullPath(path);
+                        if (dualHashes.TryGetValue(fullPath, out var pair) && !string.IsNullOrWhiteSpace(pair.Sha1))
+                            result[fullPath] = pair.Sha1;
+                        else
+                            failedPaths.Add(path);
+                    }
+                }
+                pending = failedPaths;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                ModBase.Log(ex, "[Mod] 批量计算文件 SHA1 失败，回退逐个计算", ModBase.LogLevel.Developer);
+                pending = filePaths;
+            }
+        }
+
+        foreach (var path in pending)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (string.IsNullOrWhiteSpace(path)) continue;
+            try
+            {
+                var fullPath = Path.GetFullPath(path);
+                if (result.ContainsKey(fullPath)) continue;
+                var sha1 = _hashCache.Value.GetSHA1Async(fullPath).GetAwaiter().GetResult();
+                if (!string.IsNullOrWhiteSpace(sha1))
+                    result[fullPath] = sha1;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                ModBase.Log(ex, $"[Mod] 计算文件 SHA1 失败：{path}", ModBase.LogLevel.Developer);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// 读取 LocalComp.json 中记录的本地资源详情缓存并按文件 SHA1 索引，避免触发 CompProject 缓存副作用。
+    /// </summary>
+    internal static Dictionary<string, JsonObject> LoadLocalCompCacheBySha1()
+    {
+        var result = new Dictionary<string, JsonObject>(StringComparer.OrdinalIgnoreCase);
+        try
+        {
+            var cachePath = Path.Combine(ModBase.pathTemp, "Cache", "LocalComp.json");
+            if (!File.Exists(cachePath)) return result;
+
+            var cacheContent = ModBase.ReadFile(cachePath);
+            if (string.IsNullOrWhiteSpace(cacheContent)) return result;
+            if (ModBase.GetJson(cacheContent) is not JsonObject cache) return result;
+            if (!cache.ContainsKey("version") || cache["version"]?.ToObject<int>() != localModCacheVersion)
+                return result;
+
+            foreach (var kv in cache)
+            {
+                if (string.Equals(kv.Key, "version", StringComparison.Ordinal)) continue;
+                if (kv.Key.Length < 40 || kv.Value is not JsonObject entryObj) continue;
+
+                var sha1 = kv.Key[..40];
+                if (!result.TryGetValue(sha1, out var existing) ||
+                    (!existing.ContainsKey("CompFile") && entryObj.ContainsKey("CompFile")))
+                {
+                    result[sha1] = entryObj;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            ModBase.Log(ex, "[Mod] 读取 LocalComp.json 缓存索引失败", ModBase.LogLevel.Developer);
+        }
+
+        return result;
+    }
 }

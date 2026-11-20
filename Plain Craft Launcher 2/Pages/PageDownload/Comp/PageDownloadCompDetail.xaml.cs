@@ -427,8 +427,8 @@ public partial class PageDownloadCompDetail
                     {
                         new ModLoader.LoaderTask<int, List<DownloadFile>>(
                             Lang.Text("Update.Task.GetDownloadInfo"), task =>
-                                task.output = PrepareResourceDownload(file, project, target, allowedLoaders,
-                                    knownInstances, task))
+                                task.output = ModCompDependency.PrepareResourceDownload(file, project, target,
+                                    allowedLoaders, knownInstances, task))
                         {
                             ProgressWeight = 1,
                             block = true
@@ -459,113 +459,6 @@ public partial class PageDownloadCompDetail
                     userSummary: Lang.Text("Download.Comp.Error.OperationFailed"));
             }
         }, "Download CompDetail Save");
-    }
-
-    private static List<DownloadFile> PrepareResourceDownload(
-        ModComp.CompFile file, ModComp.CompProject project, string target,
-        List<ModComp.CompLoaderType> allowedLoaders, List<McInstance> knownInstances,
-        ModLoader.LoaderTask<int, List<DownloadFile>> task)
-    {
-        var cancellationToken = task.AbortedToken;
-        cancellationToken.ThrowIfCancellationRequested();
-        var downloads = new List<DownloadFile>();
-        if (file.Type == ModComp.CompType.Mod && Config.Download.Comp.AutoInstallDependencies &&
-            file.Dependencies.Any())
-        {
-            var targetDir = ModBase.GetPathFromFullPath(target);
-            using var resolutionCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            resolutionCancellation.CancelAfter(TimeSpan.FromMinutes(2));
-            var resolutionToken = resolutionCancellation.Token;
-            try
-            {
-                var targetInstance = knownInstances.Distinct().FirstOrDefault(instance =>
-                    targetDir.StartsWith(instance.PathIndie, StringComparison.OrdinalIgnoreCase));
-                if (targetInstance is not null && !targetInstance.IsLoaded)
-                    targetInstance.Load();
-
-                var mcVersion = targetInstance?.Info?.VanillaName
-                                ?? file.GameVersions.FirstOrDefault(version => version.Contains("."))
-                                ?? string.Empty;
-                var targetLoaders = new List<ModComp.CompLoaderType>();
-                if (targetInstance is not null)
-                {
-                    if (targetInstance.Info.HasForge || targetInstance.Info.HasCleanroom)
-                        targetLoaders.Add(ModComp.CompLoaderType.Forge);
-                    if (targetInstance.Info.HasFabric || targetInstance.Info.HasLegacyFabric)
-                        targetLoaders.Add(ModComp.CompLoaderType.Fabric);
-                    if (targetInstance.Info.HasQuilt)
-                        targetLoaders.Add(ModComp.CompLoaderType.Quilt);
-                    if (targetInstance.Info.HasNeoForge)
-                        targetLoaders.Add(ModComp.CompLoaderType.NeoForge);
-                    if (targetInstance.Info.HasLiteLoader)
-                        targetLoaders.Add(ModComp.CompLoaderType.LiteLoader);
-                }
-                if (!targetLoaders.Any()) targetLoaders = allowedLoaders.ToList();
-
-                ModBase.Log($"[CompDeps] 开始解析必需前置: {file.Dependencies.Count} 个依赖");
-                var request = ModCompDependency.BuildRequest(file, project, mcVersion, targetLoaders,
-                    targetDir, resolutionToken);
-                task.Progress = 0.2;
-                var result = new ModDependencyResolver().Resolve(request, resolutionToken);
-                // 下载信息也在后台准备；用户确认期间不计算检索超时。
-                var depDownloads = ModCompDependency.BuildDependencyDownloads(result, targetDir, resolutionToken);
-                resolutionToken.ThrowIfCancellationRequested();
-                resolutionCancellation.CancelAfter(Timeout.InfiniteTimeSpan);
-                task.Progress = 0.8;
-
-                if (result.Unresolved.Any() || result.ToInstall.Any())
-                {
-                    var installChoice = ModBase.RunInUiWait(() =>
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-                        return ModCompDependency.ConfirmDependencyInstall(result);
-                    });
-                    cancellationToken.ThrowIfCancellationRequested();
-                    switch (installChoice)
-                    {
-                        case ModComp.CompDepsInstallTypes.WithDeps:
-                            downloads.AddRange(depDownloads.Select(download => download.File));
-                            ModBase.Log($"[CompDeps] 准备下载: {downloads.Count} 个前置");
-                            break;
-                        case ModComp.CompDepsInstallTypes.Unresolved:
-                        case ModComp.CompDepsInstallTypes.WithoutDeps:
-                            ModBase.Log("[CompDeps] 用户选择仅下载 Mod 本体，跳过前置下载");
-                            break;
-                        default:
-                            ModBase.Log("[CompDeps] 用户取消安装");
-                            throw new ModBase.CancelledException();
-                    }
-                }
-                else
-                {
-                    ModBase.Log("[CompDeps] 已满足: 所有必需前置已安装");
-                }
-            }
-            catch (ModBase.CancelledException)
-            {
-                throw;
-            }
-            catch (Exception depEx) when (!cancellationToken.IsCancellationRequested)
-            {
-                ModBase.Log(depEx, "[CompDeps] 依赖解析失败或超时，跳过前置安装");
-                var message = ExceptionDetails.Compose(
-                    Lang.Text("Download.Comp.Dependency.ResolveFailed.Message"), depEx);
-                ModBase.RunInUiWait(() =>
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    ModMain.MyMsgBox(message,
-                        Lang.Text("Download.Comp.Dependency.ResolveFailed.Title"),
-                        Lang.Text("Download.Comp.Dependency.ResolveFailed.Continue"),
-                        isWarn: true, forceWait: true);
-                });
-            }
-        }
-
-        cancellationToken.ThrowIfCancellationRequested();
-        downloads.Add(file.Type == ModComp.CompType.Mod
-            ? file.ToNetFile(target)
-            : file.ToNetFile(target, ModComp.DownloadReason.Standalone, null));
-        return downloads;
     }
 
     private void BtnIntroWeb_Click(object sender, EventArgs e)

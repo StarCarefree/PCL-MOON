@@ -34,6 +34,7 @@ public sealed record class ModDependencyFile
     public string Id { get; init; } = string.Empty;
     public string DisplayName { get; init; } = string.Empty;
     public string? Version { get; init; }
+    public string? Hash { get; init; }
     public List<string> GameVersions { get; init; } = [];
     public List<string> Loaders { get; init; } = [];
     public int ReleaseType { get; init; }
@@ -46,6 +47,7 @@ public sealed record class InstalledModIdentity
     public string? SourceProjectId { get; init; }
     public string? Source { get; init; }
     public string? ModId { get; init; }
+    public List<string> FileHashes { get; init; } = [];
     public List<string> GameVersions { get; init; } = [];
     public List<string> Loaders { get; init; } = [];
 }
@@ -139,6 +141,12 @@ public sealed class ModDependencyResolver
             return;
         }
 
+        if (context.IsInstalledByProjectFiles(project))
+        {
+            context.AddSatisfied(project.ProjectId, project.Source, "Already installed and compatible.");
+            return;
+        }
+
         var selectedFile = SelectBestFile(project.Files, context.TargetMinecraftVersion, context.TargetLoaders);
         if (selectedFile is null)
         {
@@ -168,7 +176,7 @@ public sealed class ModDependencyResolver
             .FirstOrDefault();
     }
 
-    private static bool IsCompatibleFile(ModDependencyFile file, string targetMinecraftVersion, HashSet<string> targetLoaders)
+    internal static bool IsCompatibleFile(ModDependencyFile file, string targetMinecraftVersion, HashSet<string> targetLoaders)
     {
         if (!HasExactGameVersionMatch(file, targetMinecraftVersion))
         {
@@ -219,6 +227,7 @@ public sealed class ModDependencyResolver
         private readonly HashSet<string> _installDedupe = new(Comparer);
         private readonly HashSet<string> _unresolvedDedupe = new(Comparer);
         private readonly HashSet<string> _satisfiedDedupe = new(Comparer);
+        private readonly HashSet<string> _installedHashes;
 
         public ResolutionContext(ModDependencyRequest request)
         {
@@ -230,6 +239,12 @@ public sealed class ModDependencyResolver
                 request.TargetLoaders.Where(static loader => !string.IsNullOrWhiteSpace(loader)),
                 Comparer);
             LoaderSetKey = string.Join(",", TargetLoaders.OrderBy(static loader => loader, Comparer));
+            _installedHashes = new HashSet<string>(
+                request.InstalledMods
+                    .SelectMany(static installed => installed.FileHashes)
+                    .Where(static hash => !string.IsNullOrWhiteSpace(hash))
+                    .Select(static hash => hash.Trim()),
+                Comparer);
         }
 
         public ModDependencyRequest Request { get; }
@@ -251,6 +266,19 @@ public sealed class ModDependencyResolver
                 && Comparer.Equals(installed.Source, source)
                 && installed.GameVersions.Any(version => Comparer.Equals(version, TargetMinecraftVersion))
                 && LoadersCompatible(installed.Loaders));
+        }
+
+        public bool IsInstalledByProjectFiles(ModDependencyProject project)
+        {
+            if (_installedHashes.Count == 0 || project.Files.Count == 0)
+            {
+                return false;
+            }
+
+            return project.Files.Any(file =>
+                !string.IsNullOrWhiteSpace(file.Hash)
+                && _installedHashes.Contains(file.Hash)
+                && IsCompatibleFile(file, TargetMinecraftVersion, TargetLoaders));
         }
 
         public void AddInstall(ModDependencyProject project, ModDependencyFile file)

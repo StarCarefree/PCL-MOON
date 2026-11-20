@@ -344,6 +344,73 @@ public class ModDependencyResolverTest
         Assert.AreEqual(0, result.Unresolved.Count);
     }
 
+    [TestMethod]
+    public void SkipsAlreadyInstalledCompatibleDependencyByFileHash()
+    {
+        var resolver = new ModDependencyResolver();
+        var projects = CreateProjectStore(
+            CreateProject(
+                "B",
+                CreateFile("b-file", hash: "abc123def456")));
+
+        var installed = new InstalledModIdentity
+        {
+            FileHashes = ["ABC123DEF456"],
+        };
+
+        var result = resolver.Resolve(CreateRequest(projects, [installed], CreateDependency("B")));
+
+        Assert.AreEqual(0, result.ToInstall.Count);
+        Assert.AreEqual(1, result.Satisfied.Count);
+        Assert.AreEqual("B", result.Satisfied[0].ProjectId);
+        StringAssert.Contains(result.Satisfied[0].Reason, "Already installed");
+    }
+
+    [TestMethod]
+    public void TreatsInstalledIncompatibleHashAsMissing()
+    {
+        var resolver = new ModDependencyResolver();
+        var projects = CreateProjectStore(
+            CreateProject(
+                "B",
+                CreateFile("b-old-mc", gameVersions: ["1.19.2"], hash: "oldhash111"),
+                CreateFile("b-compat", gameVersions: ["1.20.1"], hash: "newcompat222")));
+
+        var installed = new InstalledModIdentity
+        {
+            FileHashes = ["oldhash111"],
+        };
+
+        var result = resolver.Resolve(CreateRequest(projects, [installed], CreateDependency("B")));
+
+        Assert.AreEqual(1, result.ToInstall.Count);
+        Assert.AreEqual("b-compat", result.ToInstall[0].File.Id);
+        Assert.AreEqual(0, result.Satisfied.Count);
+        Assert.AreEqual(0, result.Unresolved.Count);
+    }
+
+    [TestMethod]
+    public void SkipsAlreadyInstalledCompatibleOlderFileHash()
+    {
+        var resolver = new ModDependencyResolver();
+        var projects = CreateProjectStore(
+            CreateProject(
+                "B",
+                CreateFile("b-older-compat", version: "1.0.0", releaseDate: new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), hash: "oldercompat"),
+                CreateFile("b-latest-compat", version: "1.1.0", releaseDate: new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc), hash: "latestcompat")));
+
+        var installed = new InstalledModIdentity
+        {
+            FileHashes = ["oldercompat"],
+        };
+
+        var result = resolver.Resolve(CreateRequest(projects, [installed], CreateDependency("B")));
+
+        Assert.AreEqual(0, result.ToInstall.Count);
+        Assert.AreEqual(1, result.Satisfied.Count);
+        Assert.AreEqual("B", result.Satisfied[0].ProjectId);
+    }
+
     private static ModDependencyRequest CreateRequest(
         Dictionary<string, ModDependencyProject> projects,
         params ModDependencyReference[] requiredDependencies)
@@ -401,13 +468,15 @@ public class ModDependencyResolverTest
         List<string>? loaders = null,
         int releaseType = 1,
         DateTime? releaseDate = null,
-        List<ModDependencyReference>? requiredDependencies = null)
+        List<ModDependencyReference>? requiredDependencies = null,
+        string? hash = null)
     {
         return new ModDependencyFile
         {
             Id = id,
             DisplayName = displayName ?? id,
             Version = version,
+            Hash = hash,
             GameVersions = gameVersions ?? ["1.20.1"],
             Loaders = loaders ?? ["Fabric"],
             ReleaseType = releaseType,

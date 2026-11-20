@@ -3463,17 +3463,20 @@ public static class ModComp
             .Select(id => compProjectCache[id]).ToList();
 
         foreach (var file in currentFiles)
-        foreach (var dep in availableDeps)
+        lock (file)
         {
-            // 处理必要依赖
-            if (file.RawDependencies.Contains(dep.Id))
-                if (!file.Dependencies.Contains(dep.Id))
-                    file.Dependencies.Add(dep.Id);
+            foreach (var dep in availableDeps)
+            {
+                // 处理必要依赖
+                if (file.RawDependencies.Contains(dep.Id))
+                    if (!file.Dependencies.Contains(dep.Id))
+                        file.Dependencies.Add(dep.Id);
 
-            // 处理可选依赖
-            if (file.RawOptionalDependencies.Contains(dep.Id))
-                if (!file.OptionalDependencies.Contains(dep.Id))
-                    file.OptionalDependencies.Add(dep.Id);
+                // 处理可选依赖
+                if (file.RawOptionalDependencies.Contains(dep.Id))
+                    if (!file.OptionalDependencies.Contains(dep.Id))
+                        file.OptionalDependencies.Add(dep.Id);
+            }
         }
 
         return compFilesCache[projectId];
@@ -3539,7 +3542,8 @@ public static class ModComp
     /// <summary>
     /// 资源卡片的快速下载入口：按 <see cref="Config.Download.Comp.QuickDownloadBehavior"/> 指定的行为，
     /// 下载该资源最新（优先 Release、其次最新发布）的兼容版本到目标实例或文件夹。
-    /// 由 <see cref="MyCompItem"/> 上的快速下载按钮调用。快速下载不会自动安装前置。
+    /// 由 <see cref="MyCompItem"/> 上的快速下载按钮调用。当资源为模组且开启 <see cref="Config.Download.Comp.AutoInstallDependencies"/> 时，
+    /// 会自动检查缺失的必需前置并在确认后一并下载。
     /// </summary>
     public static void QuickDownload(CompProject project)
     {
@@ -3587,9 +3591,10 @@ public static class ModComp
                     {
                         var instances = _QuickDownloadPickInstances(project, files);
                         if (instances is null) return;
-                        var startedTargets = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                        var startedTargets = new ConcurrentDictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
+                        var showInstanceInDialog = instances.Count > 1;
                         foreach (var instance in instances)
-                            _QuickDownloadToInstance(project, files, instance, startedTargets);
+                            _QuickDownloadToInstance(project, files, instance, startedTargets, showInstanceInDialog);
                         break;
                     }
                     case 3: // 询问并下载到一个路径
@@ -3610,7 +3615,7 @@ public static class ModComp
 
     /// <summary>下载到指定实例的最新兼容版本。</summary>
     private static void _QuickDownloadToInstance(CompProject project, List<CompFile> files, McInstance? instance,
-        ISet<string>? startedTargets = null)
+        ConcurrentDictionary<string, byte>? startedTargets = null, bool showInstanceInDialog = false)
     {
         if (instance is null)
         {
@@ -3631,10 +3636,16 @@ public static class ModComp
         Directory.CreateDirectory(folder);
         var target = Path.Combine(folder, CompFileNameGet(project, file));
         //只下载一次，避免并发写同一文件
-        if (startedTargets is not null && !startedTargets.Add(target))
+        if (startedTargets is not null && !startedTargets.TryAdd(target, 0))
             return;
-        _StartQuickDownload(file, target);
-        HintService.Hint(Lang.Text("Download.Comp.QuickDownload.Hint.DownloadStarted", project.RawName), HintType.Success);
+        _StartQuickDownload(
+            file,
+            project,
+            target,
+            explicitInstance: instance,
+            knownInstances: [instance],
+            dialogContextSuffix: showInstanceInDialog ? instance.Name : null,
+            tryReservePath: startedTargets is null ? null : path => startedTargets.TryAdd(path, 0));
     }
 
     /// <summary>弹实例列表让用户选择，返回选中的实例（兼容者优先、当前选中实例居首）；取消或无兼容实例返回 null。</summary>
@@ -3686,16 +3697,31 @@ public static class ModComp
             HintService.Hint(Lang.Text("Download.Comp.QuickDownload.Hint.NoFile"), HintType.Info);
             return;
         }
-        var saveFolder = ModBase.RunInUiWait(() =>
-            SystemDialogs.SelectFolder(Lang.Text("Download.Comp.QuickDownload.Hint.SelectFolder")));
+        string? saveFolder = null;
+        var knownInstances = new List<McInstance>();
+        ModBase.RunInUiWait(() =>
+        {
+            saveFolder = SystemDialogs.SelectFolder(Lang.Text("Download.Comp.QuickDownload.Hint.SelectFolder"));
+            if (string.IsNullOrWhiteSpace(saveFolder)) return;
+            // 在 UI 线程快照实例列表，避免在后台线程遍历集合时发生并发修改
+            knownInstances = ModInstanceList.mcInstanceList.Values.SelectMany(list => list).ToList();
+            if (ModInstanceList.McMcInstanceSelected is { } selectedInstance)
+                knownInstances.Insert(0, selectedInstance);
+        });
         if (string.IsNullOrWhiteSpace(saveFolder)) return; // 取消
         var target = Path.Combine(saveFolder, CompFileNameGet(project, file));
-        _StartQuickDownload(file, target);
-        HintService.Hint(Lang.Text("Download.Comp.QuickDownload.Hint.DownloadStarted", project.RawName), HintType.Success);
+        _StartQuickDownload(file, project, target, explicitInstance: null, knownInstances: knownInstances);
     }
 
-    /// <summary>构造并启动单文件下载任务（与详情页 Save_Click 末段一致）。</summary>
-    private static void _StartQuickDownload(CompFile file, string target)
+    /// <summary>构造并启动快速下载任务；若为模组且开启自动安装前置，则在确认缺失前置后一并下载。</summary>
+    private static void _StartQuickDownload(
+        CompFile file,
+        CompProject project,
+        string target,
+        McInstance? explicitInstance,
+        IEnumerable<McInstance> knownInstances,
+        string? dialogContextSuffix = null,
+        Func<string, bool>? tryReservePath = null)
     {
         var desc = file.Type switch
         {
@@ -3708,34 +3734,81 @@ public static class ModComp
         };
         var loaderName = Lang.Text("Download.Comp.Detail.DownloadResource", desc,
             ModBase.GetFileNameWithoutExtentionFromPath(target));
-        var loaders = new List<ModLoader.LoaderBase>
+
+        bool hasDependencies;
+        lock (file)
         {
-            new LoaderDownload(Lang.Text("Download.Comp.Detail.DownloadFile"),
-                new List<DownloadFile>
-                {
-                    file.Type == CompType.Mod
-                        ? file.ToNetFile(target)
-                        : file.ToNetFile(target, DownloadReason.Standalone, null)
-                })
-            {
-                ProgressWeight = 6,
-                block = true
-            }
-        };
-        if (file.Type == CompType.World)
-        {
-            var extractDir = Path.GetDirectoryName(target);
-            loaders.Add(new ModLoader.LoaderTask<int, int>(
-                Lang.Text("Download.Comp.Detail.InstallWorld"),
-                _ => ModBase.ExtractFile(target, extractDir, Encoding.UTF8))
-            {
-                ProgressWeight = 0.1d,
-                block = true
-            });
-            loaders.Add(new ModLoader.LoaderTask<int, int>(
-                Lang.Text("Download.Comp.Detail.CleanCache"),
-                _ => System.IO.File.Delete(target)));
+            hasDependencies = file.Dependencies.Count > 0;
         }
+        var checkDependencies = file.Type == CompType.Mod
+                                && Config.Download.Comp.AutoInstallDependencies
+                                && hasDependencies;
+
+        List<ModLoader.LoaderBase> loaders;
+        if (checkDependencies)
+        {
+            var instanceSnapshot = knownInstances as IReadOnlyList<McInstance> ?? knownInstances.ToList();
+            var allowedLoaders = _ResolveLoaders(file, project);
+            loaders =
+            [
+                new ModLoader.LoaderTask<int, List<DownloadFile>>(
+                    Lang.Text("Update.Task.GetDownloadInfo"),
+                    task => task.output = ModCompDependency.PrepareResourceDownload(
+                        file,
+                        project,
+                        target,
+                        allowedLoaders,
+                        instanceSnapshot,
+                        task,
+                        explicitInstance,
+                        dialogContextSuffix,
+                        tryReservePath,
+                        _ => HintService.Hint(
+                            Lang.Text("Download.Comp.QuickDownload.Hint.DownloadStarted", project.RawName),
+                            HintType.Success)))
+                {
+                    ProgressWeight = 1,
+                    block = true
+                },
+                new LoaderDownload(Lang.Text("Download.Comp.Detail.DownloadFile"), [])
+                {
+                    ProgressWeight = 6,
+                    block = true
+                }
+            ];
+        }
+        else
+        {
+            loaders =
+            [
+                new LoaderDownload(Lang.Text("Download.Comp.Detail.DownloadFile"),
+                    new List<DownloadFile>
+                    {
+                        file.Type == CompType.Mod
+                            ? file.ToNetFile(target)
+                            : file.ToNetFile(target, DownloadReason.Standalone, null)
+                    })
+                {
+                    ProgressWeight = 6,
+                    block = true
+                }
+            ];
+            if (file.Type == CompType.World)
+            {
+                var extractDir = Path.GetDirectoryName(target);
+                loaders.Add(new ModLoader.LoaderTask<int, int>(
+                    Lang.Text("Download.Comp.Detail.InstallWorld"),
+                    _ => ModBase.ExtractFile(target, extractDir, Encoding.UTF8))
+                {
+                    ProgressWeight = 0.1d,
+                    block = true
+                });
+                loaders.Add(new ModLoader.LoaderTask<int, int>(
+                    Lang.Text("Download.Comp.Detail.CleanCache"),
+                    _ => System.IO.File.Delete(target)));
+            }
+        }
+
         var loader = new ModLoader.LoaderCombo<int>(loaderName, loaders)
         {
             OnStateChanged = ModDownloadLib.LoaderStateChangedHintOnly
@@ -3744,6 +3817,8 @@ public static class ModComp
         ModLoader.LoaderTaskbarAdd(loader);
         ModMain.frmMain.BtnExtraDownload.ShowRefresh();
         ModMain.frmMain.BtnExtraDownload.Ribble();
+        if (!checkDependencies)
+            HintService.Hint(Lang.Text("Download.Comp.QuickDownload.Hint.DownloadStarted", project.RawName), HintType.Success);
     }
 
     /// <summary>根据资源类型返回实例内的目标子文件夹（与 Save_Click 一致）。</summary>
