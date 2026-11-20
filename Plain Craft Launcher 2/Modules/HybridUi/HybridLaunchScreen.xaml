@@ -2,7 +2,7 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              MinWidth="500" MinHeight="340" FontFamily="Segoe UI, Microsoft YaHei UI"
-             Background="#111315" Visibility="Collapsed" UseLayoutRounding="True"
+             Background="Transparent" Visibility="Collapsed" UseLayoutRounding="True" SnapsToDevicePixels="True"
              Loaded="ViewLoaded" IsVisibleChanged="VisibilityChanged" Unloaded="ViewUnloaded">
     <UserControl.Resources>
         <ResourceDictionary>
@@ -10,32 +10,127 @@
                 <ResourceDictionary Source="HybridTheme.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <SolidColorBrush x:Key="Launch.Error" Color="#F08C83" />
+            <SolidColorBrush x:Key="Launch.GoldSoft" Color="#EFCF94" />
+            <SolidColorBrush x:Key="Launch.LineMuted" Color="#23262C" />
+            <!-- 氛围星晕刷（全窗一体柔金漫反射） -->
+            <RadialGradientBrush x:Key="Launch.AmbientGold" Center="0.84,0.25" GradientOrigin="0.84,0.25" RadiusX="0.54" RadiusY="0.62">
+                <GradientStop Color="#2EFFB942" Offset="0" />
+                <GradientStop Color="#12E0A24A" Offset="0.46" />
+                <GradientStop Color="#000D0F12" Offset="1" />
+            </RadialGradientBrush>
+            <RadialGradientBrush x:Key="Launch.AmbientError" Center="0.84,0.25" GradientOrigin="0.84,0.25" RadiusX="0.54" RadiusY="0.62">
+                <GradientStop Color="#2CF08C83" Offset="0" />
+                <GradientStop Color="#10D06A62" Offset="0.46" />
+                <GradientStop Color="#000D0F12" Offset="1" />
+            </RadialGradientBrush>
+            <!-- 确定进度流金刷 -->
+            <LinearGradientBrush x:Key="Launch.ProgressGold" StartPoint="0,0" EndPoint="1,0">
+                <GradientStop Color="#C48224" Offset="0" />
+                <GradientStop Color="#FFB942" Offset="0.72" />
+                <GradientStop Color="#FFE7B4" Offset="1" />
+            </LinearGradientBrush>
+            <LinearGradientBrush x:Key="Launch.ProgressError" StartPoint="0,0" EndPoint="1,0">
+                <GradientStop Color="#B85650" Offset="0" />
+                <GradientStop Color="#F08C83" Offset="1" />
+            </LinearGradientBrush>
+            <!-- 不确定进度流星光束刷 -->
+            <LinearGradientBrush x:Key="Launch.UnknownGold" StartPoint="0,0" EndPoint="1,0">
+                <GradientStop Color="#00FFB942" Offset="0" />
+                <GradientStop Color="#B8E0A24A" Offset="0.34" />
+                <GradientStop Color="#FFFFE6B0" Offset="0.54" />
+                <GradientStop Color="#B8E0A24A" Offset="0.74" />
+                <GradientStop Color="#00FFB942" Offset="1" />
+            </LinearGradientBrush>
+            <LinearGradientBrush x:Key="Launch.UnknownError" StartPoint="0,0" EndPoint="1,0">
+                <GradientStop Color="#00F08C83" Offset="0" />
+                <GradientStop Color="#CCF08C83" Offset="0.5" />
+                <GradientStop Color="#00F08C83" Offset="1" />
+            </LinearGradientBrush>
+            <!-- 阶段卡片渐变背景 -->
+            <LinearGradientBrush x:Key="Launch.StepActiveBg" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#241E14" Offset="0" />
+                <GradientStop Color="#17191D" Offset="1" />
+            </LinearGradientBrush>
+            <LinearGradientBrush x:Key="Launch.StepErrorBg" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#261818" Offset="0" />
+                <GradientStop Color="#17191D" Offset="1" />
+            </LinearGradientBrush>
+            <SolidColorBrush x:Key="Launch.StepDoneBg" Color="#14171B" />
+            <SolidColorBrush x:Key="Launch.StepIdleBg" Color="#111317" />
+            <LinearGradientBrush x:Key="Launch.BridgeActive" StartPoint="0,0" EndPoint="1,0">
+                <GradientStop Color="#594729" Offset="0" />
+                <GradientStop Color="#FFB942" Offset="1" />
+            </LinearGradientBrush>
+            <SolidColorBrush x:Key="Launch.BridgeIdle" Color="#282C33" />
+
+            <!-- 次级操作按钮（收起窗口） -->
             <Style x:Key="Launch.Action" TargetType="Button" BasedOn="{StaticResource Hybrid.QuietButton}">
                 <Setter Property="HorizontalContentAlignment" Value="Center" />
-                <Setter Property="Height" Value="36" />
-                <Setter Property="BorderBrush" Value="#35383C" />
+                <Setter Property="Height" Value="34" />
+                <Setter Property="Padding" Value="15,0" />
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="Foreground" Value="#D6DBE2" />
+                <Setter Property="Background" Value="#181B20" />
+                <Setter Property="BorderBrush" Value="#2D323A" />
                 <Setter Property="BorderThickness" Value="1" />
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="Button">
                             <Border x:Name="Plate" Background="{TemplateBinding Background}"
                                     BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
-                                    CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                    CornerRadius="8" Padding="{TemplateBinding Padding}">
                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Plate" Property="Background" Value="#30302B" />
-                                    <Setter Property="Foreground" Value="{StaticResource Hybrid.Text}" />
+                                    <Setter TargetName="Plate" Property="Background" Value="#23272F" />
+                                    <Setter TargetName="Plate" Property="BorderBrush" Value="#4A4132" />
+                                    <Setter Property="Foreground" Value="#F3F4F6" />
                                 </Trigger>
                                 <Trigger Property="IsPressed" Value="True">
-                                    <Setter TargetName="Plate" Property="Background" Value="#453821" />
+                                    <Setter TargetName="Plate" Property="Background" Value="#2C261D" />
+                                    <Setter TargetName="Plate" Property="BorderBrush" Value="#695434" />
                                 </Trigger>
                                 <Trigger Property="IsKeyboardFocused" Value="True">
                                     <Setter TargetName="Plate" Property="BorderBrush" Value="{StaticResource Hybrid.Accent}" />
                                 </Trigger>
                                 <Trigger Property="IsEnabled" Value="False">
-                                    <Setter Property="Opacity" Value="0.45" />
+                                    <Setter Property="Opacity" Value="0.4" />
+                                    <Setter Property="Cursor" Value="Arrow" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <!-- 克制暖金描边按钮（取消启动） -->
+            <Style x:Key="Launch.CancelAction" TargetType="Button" BasedOn="{StaticResource Launch.Action}">
+                <Setter Property="Foreground" Value="#EAB865" />
+                <Setter Property="Background" Value="#1E1A14" />
+                <Setter Property="BorderBrush" Value="#4C3D25" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Plate" Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="8" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Plate" Property="Background" Value="#2D2317" />
+                                    <Setter TargetName="Plate" Property="BorderBrush" Value="#7A5D31" />
+                                    <Setter Property="Foreground" Value="#FFD282" />
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Plate" Property="Background" Value="#3A2B18" />
+                                    <Setter TargetName="Plate" Property="BorderBrush" Value="#FFB942" />
+                                </Trigger>
+                                <Trigger Property="IsKeyboardFocused" Value="True">
+                                    <Setter TargetName="Plate" Property="BorderBrush" Value="{StaticResource Hybrid.Accent}" />
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.38" />
                                     <Setter Property="Cursor" Value="Arrow" />
                                 </Trigger>
                             </ControlTemplate.Triggers>
@@ -45,95 +140,314 @@
             </Style>
         </ResourceDictionary>
     </UserControl.Resources>
-    <!-- Fixed tracks preserve the two-stage hierarchy even at 500 × 340. No scrolling. -->
-    <Grid Margin="24,12,24,20">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*" MinHeight="92" />
-            <RowDefinition Height="60" />
-            <RowDefinition Height="112" />
-            <RowDefinition Height="44" />
-        </Grid.RowDefinitions>
-        <Grid>
-            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="152" /></Grid.ColumnDefinitions>
-            <StackPanel VerticalAlignment="Center" Margin="0,0,16,8">
-                <TextBlock Text="PCL-MOON  /  LAUNCH" Foreground="{StaticResource Hybrid.Accent}" FontSize="10" FontWeight="SemiBold" />
-                <TextBlock x:Name="LaunchTitle" Text="正在准备启动" Foreground="{StaticResource Hybrid.Text}"
-                           FontSize="24" FontWeight="SemiBold" Margin="0,8,0,8" TextTrimming="CharacterEllipsis" />
-                <TextBlock x:Name="VersionName" Text="等待选择游戏版本" Foreground="{StaticResource Hybrid.Muted}"
-                           FontSize="12" TextTrimming="CharacterEllipsis" />
-            </StackPanel>
-            <Viewbox Grid.Column="1" MaxHeight="136" Margin="0,0,0,8" Stretch="Uniform" IsHitTestVisible="False">
-                <Grid Width="152" Height="136">
-                    <Ellipse Width="126" Height="126" Stroke="#383329" StrokeThickness="1" />
-                    <Ellipse Width="100" Height="100" Stroke="#292D30" StrokeThickness="1" />
-                    <Ellipse Width="76" Height="76">
-                        <Ellipse.Fill><RadialGradientBrush><GradientStop Color="#3A2F1D" /><GradientStop Color="#111315" Offset="1" /></RadialGradientBrush></Ellipse.Fill>
-                    </Ellipse>
-                    <Grid x:Name="Orbit" Width="126" Height="126" RenderTransformOrigin="0.5,0.5">
-                        <Grid.RenderTransform><RotateTransform x:Name="OrbitRotation" Angle="32" /></Grid.RenderTransform>
-                        <Ellipse Width="6" Height="6" Fill="{StaticResource Hybrid.Accent}" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-2,0,0" />
-                    </Grid>
-                    <Path x:Name="Moon" Data="M 88,39 A 31,31 0 1 0 88,97 A 29,29 0 0 1 88,39 Z" Fill="#EFCF94" />
-                    <Path Data="M 123,26 L 123,32 M 120,29 L 126,29" Stroke="#8B7855" StrokeThickness="1" />
-                    <Ellipse Width="2" Height="2" Fill="#878C91" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="14,0,0,24" />
-                </Grid>
-            </Viewbox>
-        </Grid>
-        <Grid Grid.Row="1" Margin="0,0,0,8">
-            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="24" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-            <Border x:Name="LauncherStep" Background="#242117" BorderBrush="#80602C" BorderThickness="1" CornerRadius="8" Padding="12,0">
-                <Grid>
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                    <TextBlock x:Name="LauncherNumber" Text="01" FontSize="11" FontFamily="Consolas" Foreground="{StaticResource Hybrid.Accent}" VerticalAlignment="Center" />
-                    <TextBlock x:Name="LauncherLabel" Grid.Column="1" Text="启动器准备" FontSize="12" Foreground="{StaticResource Hybrid.Text}" VerticalAlignment="Center" />
-                    <TextBlock x:Name="LauncherState" Grid.Column="2" Text="进行中" FontSize="10" Foreground="{StaticResource Hybrid.Accent}" VerticalAlignment="Center" Margin="8,0,0,0" />
-                </Grid>
+
+    <Grid ClipToBounds="True">
+        <!-- 背景氛围层：右上星月暖金漫反射 + 左下极微冷炭平衡光 + 底部隐约远山剪影 -->
+        <Grid IsHitTestVisible="False">
+            <Rectangle x:Name="AmbientGlow" Fill="{StaticResource Launch.AmbientGold}" Opacity="0.88" />
+            <Rectangle>
+                <Rectangle.Fill>
+                    <RadialGradientBrush Center="0.12,0.92" GradientOrigin="0.12,0.92" RadiusX="0.52" RadiusY="0.56">
+                        <GradientStop Color="#16283938" Offset="0" />
+                        <GradientStop Color="#000D0F12" Offset="1" />
+                    </RadialGradientBrush>
+                </Rectangle.Fill>
+            </Rectangle>
+            <!-- 与主页面 HeroCard 同源的极简远山剪影，低透明度托底空间层次 -->
+            <Border VerticalAlignment="Bottom" Height="156" Margin="40,0,-30,-8" Opacity="0.11">
+                <Border.Background>
+                    <DrawingBrush Stretch="Fill">
+                        <DrawingBrush.Drawing>
+                            <GeometryDrawing Brush="#2C4541" Geometry="M0,170 L95,80 170,130 270,15 380,95 490,30 620,150 730,85 900,180 900,350 0,350 Z" />
+                        </DrawingBrush.Drawing>
+                    </DrawingBrush>
+                </Border.Background>
             </Border>
-            <Border Grid.Column="1" Height="1" Background="#35383C" Margin="6,0" />
-            <Border x:Name="GameStep" Grid.Column="2" Background="#181B1E" BorderBrush="#2A2D32" BorderThickness="1" CornerRadius="8" Padding="12,0">
-                <Grid>
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                    <TextBlock x:Name="GameNumber" Text="02" FontSize="11" FontFamily="Consolas" Foreground="{StaticResource Hybrid.Muted}" VerticalAlignment="Center" />
-                    <TextBlock x:Name="GameLabel" Grid.Column="1" Text="游戏加载" FontSize="12" Foreground="{StaticResource Hybrid.Muted}" VerticalAlignment="Center" />
-                    <TextBlock x:Name="GameState" Grid.Column="2" Text="待开始" FontSize="10" Foreground="{StaticResource Hybrid.Muted}" VerticalAlignment="Center" Margin="8,0,0,0" />
-                </Grid>
+            <Border VerticalAlignment="Bottom" Height="112" Margin="-20,0,-20,-10" Opacity="0.32">
+                <Border.Background>
+                    <DrawingBrush Stretch="Fill">
+                        <DrawingBrush.Drawing>
+                            <GeometryDrawing Brush="#07090C" Geometry="M0,190 L100,120 230,160 330,70 440,150 580,80 680,135 790,100 900,170 900,300 0,300 Z" />
+                        </DrawingBrush.Drawing>
+                    </DrawingBrush>
+                </Border.Background>
             </Border>
+            <!-- 顶缘动态流金光轨 -->
+            <Rectangle x:Name="TopBeam" Height="1.5" VerticalAlignment="Top" Opacity="0.9">
+                <Rectangle.Fill>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                        <LinearGradientBrush.RelativeTransform>
+                            <TranslateTransform x:Name="TopBeamShift" X="-1" />
+                        </LinearGradientBrush.RelativeTransform>
+                        <GradientStop Color="#00FFB942" Offset="0.06" />
+                        <GradientStop Color="#B8E0A24A" Offset="0.34" />
+                        <GradientStop Color="#FFFFE6B2" Offset="0.5" />
+                        <GradientStop Color="#B8E0A24A" Offset="0.66" />
+                        <GradientStop Color="#00FFB942" Offset="0.94" />
+                    </LinearGradientBrush>
+                </Rectangle.Fill>
+            </Rectangle>
         </Grid>
-        <Grid x:Name="StatusPanel" Grid.Row="2" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite">
-            <Grid.RenderTransform><TranslateTransform x:Name="StatusTranslation" /></Grid.RenderTransform>
-            <Grid.RowDefinitions><RowDefinition Height="28" /><RowDefinition Height="14" /><RowDefinition Height="8" /><RowDefinition Height="22" /><RowDefinition Height="24" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+
+        <!-- Fixed tracks preserve the two-stage hierarchy even at 500 × 340. No scrolling. -->
+        <Grid Margin="28,22,28,20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" MinHeight="104" />
+                <RowDefinition Height="56" />
+                <RowDefinition Height="118" />
+                <RowDefinition Height="46" />
+            </Grid.RowDefinitions>
+
+            <!-- 顶部主标与星月双轨星盘 -->
             <Grid>
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="72" /></Grid.ColumnDefinitions>
-                <TextBlock x:Name="StageName" Text="准备启动环境" Foreground="{StaticResource Hybrid.Text}" FontSize="14"
-                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,12,0" />
-                <TextBlock x:Name="Percentage" Grid.Column="1" Text="--" Foreground="{StaticResource Hybrid.Accent}" FontSize="22"
-                           FontFamily="Consolas" HorizontalAlignment="Right" VerticalAlignment="Center" />
-            </Grid>
-            <TextBlock x:Name="CountText" Grid.Row="1" Text="" Foreground="{StaticResource Hybrid.Muted}" FontSize="10"
-                       FontFamily="Consolas" HorizontalAlignment="Right" Margin="0,-2,0,0" />
-            <Border x:Name="ProgressTrack" Grid.Row="2" Height="4" Background="#2A2D32" CornerRadius="2" SizeChanged="ProgressSizeChanged">
-                <Grid>
-                    <Border x:Name="ProgressFill" Width="0" HorizontalAlignment="Left" Background="{StaticResource Hybrid.Accent}" CornerRadius="2" />
-                    <Border x:Name="UnknownFill" Width="80" HorizontalAlignment="Left" Background="{StaticResource Hybrid.Accent}" CornerRadius="2" Opacity="0.7">
-                        <Border.RenderTransform><TranslateTransform x:Name="UnknownTranslation" /></Border.RenderTransform>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="164" />
+                </Grid.ColumnDefinitions>
+                <StackPanel VerticalAlignment="Center" Margin="0,0,18,4">
+                    <TextBlock Text="P C L - M O O N   /   L A U N C H" Foreground="#CFA054" FontSize="10" FontWeight="SemiBold" />
+                    <TextBlock x:Name="LaunchTitle" Text="正在准备启动" Foreground="#F3F4F6"
+                               FontSize="26" FontWeight="SemiBold" Margin="0,6,0,10" TextTrimming="CharacterEllipsis" />
+                    <Border Background="#99171A20" BorderBrush="#282C34" BorderThickness="1" CornerRadius="12"
+                            Padding="10,4" HorizontalAlignment="Left">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Ellipse x:Name="VersionDot" Width="5.5" Height="5.5" Fill="{StaticResource Hybrid.Accent}"
+                                     VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <TextBlock x:Name="VersionName" Grid.Column="1" Text="等待选择游戏版本" Foreground="#B5BCC6"
+                                       FontSize="12" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                        </Grid>
                     </Border>
-                </Grid>
-            </Border>
-            <TextBlock x:Name="DetailText" Grid.Row="3" Text="正在检查运行环境与启动所需文件" Foreground="{StaticResource Hybrid.Muted}"
-                       FontSize="11" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-            <TextBlock x:Name="NoticeText" Grid.Row="4" Text="游戏进度将在启动后由加载模组提供" Foreground="{StaticResource Hybrid.Muted}"
-                       FontSize="11" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-        </Grid>
-        <Grid Grid.Row="3" VerticalAlignment="Bottom">
-            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-            <StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
-                <TextBlock x:Name="PhaseCaption" Text="启动器准备" FontSize="10" Foreground="{StaticResource Hybrid.Muted}" />
-                <TextBlock x:Name="Elapsed" Text="已用时 00:00" FontSize="10" FontFamily="Consolas" Foreground="{StaticResource Hybrid.Muted}" Margin="0,3,0,0" />
-            </StackPanel>
-            <Button Grid.Column="1" Content="收起窗口" Click="HomeClick" AutomationProperties.AutomationId="LaunchScreen.Home"
-                    Style="{StaticResource Launch.Action}" ToolTip="仅关闭此窗口，启动任务继续运行" Margin="0,0,8,0" />
-            <Button x:Name="CancelButton" Grid.Column="2" Content="取消启动" Click="CancelClick" AutomationProperties.AutomationId="LaunchScreen.Cancel"
-                    Style="{StaticResource Launch.Action}" Foreground="{StaticResource Hybrid.Accent}" Background="#302719" BorderBrush="#65502C" />
+                </StackPanel>
+
+                <!-- 精密星月双轨星盘 -->
+                <Viewbox Grid.Column="1" MaxHeight="134" Margin="0,-2,0,2" Stretch="Uniform" IsHitTestVisible="False">
+                    <Grid Width="156" Height="136">
+                        <!-- 外层呼吸月晕 -->
+                        <Ellipse x:Name="MoonHalo" Width="132" Height="132" Opacity="0.78" RenderTransformOrigin="0.5,0.5">
+                            <Ellipse.RenderTransform>
+                                <ScaleTransform x:Name="HaloScale" ScaleX="1" ScaleY="1" />
+                            </Ellipse.RenderTransform>
+                            <Ellipse.Fill>
+                                <RadialGradientBrush>
+                                    <GradientStop Color="#38FFB942" Offset="0" />
+                                    <GradientStop Color="#14E0A24A" Offset="0.48" />
+                                    <GradientStop Color="#000D0F12" Offset="1" />
+                                </RadialGradientBrush>
+                            </Ellipse.Fill>
+                        </Ellipse>
+
+                        <!-- 外轨道静环 -->
+                        <Ellipse Width="122" Height="122" Stroke="#3A3123" StrokeThickness="1" />
+
+                        <!-- 中轨道逆向虚线星环 -->
+                        <Grid x:Name="InnerOrbit" Width="94" Height="94" RenderTransformOrigin="0.5,0.5">
+                            <Grid.RenderTransform>
+                                <RotateTransform x:Name="InnerOrbitRotation" Angle="18" />
+                            </Grid.RenderTransform>
+                            <Ellipse Width="94" Height="94" Stroke="#2D323A" StrokeThickness="1" StrokeDashArray="3 5" />
+                            <Ellipse Width="3.5" Height="3.5" Fill="#9AA3B0" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,-1.5" />
+                        </Grid>
+
+                        <!-- 内层柔金月晕 -->
+                        <Ellipse x:Name="MoonGlow" Width="76" Height="76" Opacity="0.82">
+                            <Ellipse.Fill>
+                                <RadialGradientBrush>
+                                    <GradientStop Color="#4EFFB942" Offset="0" />
+                                    <GradientStop Color="#18E0A24A" Offset="0.52" />
+                                    <GradientStop Color="#000D0F12" Offset="1" />
+                                </RadialGradientBrush>
+                            </Ellipse.Fill>
+                        </Ellipse>
+
+                        <!-- 外轨道顺向流光弧 + 星月金星 -->
+                        <Grid x:Name="Orbit" Width="122" Height="122" RenderTransformOrigin="0.5,0.5">
+                            <Grid.RenderTransform>
+                                <RotateTransform x:Name="OrbitRotation" Angle="-24" />
+                            </Grid.RenderTransform>
+                            <Path Data="M 1,61 A 60,60 0 0 1 61,1" StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round">
+                                <Path.Stroke>
+                                    <LinearGradientBrush StartPoint="0,1" EndPoint="1,0">
+                                        <GradientStop Color="#00FFB942" Offset="0" />
+                                        <GradientStop Color="#77E0A24A" Offset="0.55" />
+                                        <GradientStop Color="#FFFFE2A8" Offset="1" />
+                                    </LinearGradientBrush>
+                                </Path.Stroke>
+                            </Path>
+                            <Grid Width="14" Height="14" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-6.5,0,0">
+                                <Ellipse Width="14" Height="14">
+                                    <Ellipse.Fill>
+                                        <RadialGradientBrush>
+                                            <GradientStop Color="#99FFB942" Offset="0" />
+                                            <GradientStop Color="#00FFB942" Offset="1" />
+                                        </RadialGradientBrush>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <Ellipse Width="5.5" Height="5.5" Fill="#FFE6B0" />
+                            </Grid>
+                        </Grid>
+
+                        <!-- 弯月与星芒（与 HybridSplashWindow 一致的品牌徽记） -->
+                        <Viewbox Width="118" Height="118">
+                            <Canvas Width="128" Height="128">
+                                <Path x:Name="Moon" Data="M 73,41 A 25,25 0 1 0 73,87 A 23.5,23.5 0 0 1 73,41 Z">
+                                    <Path.Fill>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                            <GradientStop Color="#FFF1CB" Offset="0" />
+                                            <GradientStop Color="#EFCF94" Offset="0.55" />
+                                            <GradientStop Color="#D4A356" Offset="1" />
+                                        </LinearGradientBrush>
+                                    </Path.Fill>
+                                </Path>
+                                <Path x:Name="StarSparkle" Data="M 82,37 L 83.6,42.4 L 89,44 L 83.6,45.6 L 82,51 L 80.4,45.6 L 75,44 L 80.4,42.4 Z"
+                                      Fill="#FFB942" RenderTransformOrigin="0.5,0.5">
+                                    <Path.RenderTransform>
+                                        <ScaleTransform x:Name="SparkleScale" CenterX="82" CenterY="44" ScaleX="1" ScaleY="1" />
+                                    </Path.RenderTransform>
+                                </Path>
+                                <Path Data="M 28,91 L 28,96 M 25.5,93.5 L 30.5,93.5" Stroke="#8B7855" StrokeThickness="1" />
+                                <Ellipse Canvas.Left="102" Canvas.Top="98" Width="2.5" Height="2.5" Fill="#8A929E" />
+                            </Canvas>
+                        </Viewbox>
+                    </Grid>
+                </Viewbox>
+            </Grid>
+
+            <!-- 两段式步骤胶囊 -->
+            <Grid Grid.Row="1" Margin="0,2,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="26" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border x:Name="LauncherStep" Background="{StaticResource Launch.StepActiveBg}" BorderBrush="#6E552C"
+                        BorderThickness="1" CornerRadius="10" Padding="12,0,14,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="26" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Border x:Name="LauncherBar" Width="2.5" Height="18" CornerRadius="1.5" Background="{StaticResource Hybrid.Accent}"
+                                VerticalAlignment="Center" Margin="0,0,10,0" />
+                        <TextBlock x:Name="LauncherNumber" Grid.Column="1" Text="01" FontSize="11" FontFamily="Consolas"
+                                   Foreground="{StaticResource Hybrid.Accent}" VerticalAlignment="Center" />
+                        <TextBlock x:Name="LauncherLabel" Grid.Column="2" Text="启动器准备" FontSize="12" FontWeight="Medium"
+                                   Foreground="{StaticResource Hybrid.Text}" VerticalAlignment="Center" />
+                        <TextBlock x:Name="LauncherState" Grid.Column="3" Text="进行中" FontSize="11"
+                                   Foreground="{StaticResource Hybrid.Accent}" VerticalAlignment="Center" Margin="8,0,0,0" />
+                    </Grid>
+                </Border>
+                <Border x:Name="StepBridge" Grid.Column="1" Height="1.5" Background="{StaticResource Launch.BridgeIdle}"
+                        CornerRadius="1" Margin="6,0" VerticalAlignment="Center" />
+                <Border x:Name="GameStep" Grid.Column="2" Background="{StaticResource Launch.StepIdleBg}" BorderBrush="{StaticResource Launch.LineMuted}"
+                        BorderThickness="1" CornerRadius="10" Padding="12,0,14,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="26" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Border x:Name="GameBar" Width="2.5" Height="18" CornerRadius="1.5" Background="#2D3138"
+                                VerticalAlignment="Center" Margin="0,0,10,0" />
+                        <TextBlock x:Name="GameNumber" Grid.Column="1" Text="02" FontSize="11" FontFamily="Consolas"
+                                   Foreground="{StaticResource Hybrid.Muted}" VerticalAlignment="Center" />
+                        <TextBlock x:Name="GameLabel" Grid.Column="2" Text="游戏加载" FontSize="12" FontWeight="Medium"
+                                   Foreground="{StaticResource Hybrid.Muted}" VerticalAlignment="Center" />
+                        <TextBlock x:Name="GameState" Grid.Column="3" Text="待开始" FontSize="11"
+                                   Foreground="{StaticResource Hybrid.Muted}" VerticalAlignment="Center" Margin="8,0,0,0" />
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- 状态与流金进度面板 -->
+            <Grid x:Name="StatusPanel" Grid.Row="2" Margin="0,4,0,0" AutomationProperties.LiveSetting="Polite">
+                <Grid.RenderTransform>
+                    <TranslateTransform x:Name="StatusTranslation" />
+                </Grid.RenderTransform>
+                <Border Background="#B814171B" BorderBrush="#23272E" BorderThickness="1" CornerRadius="10" Padding="16,12,16,12">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="26" />
+                            <RowDefinition Height="12" />
+                            <RowDefinition Height="10" />
+                            <RowDefinition Height="22" />
+                            <RowDefinition Height="20" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="78" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="StageName" Text="准备启动环境" Foreground="#F0F2F5" FontSize="14" FontWeight="Medium"
+                                       VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,12,0" />
+                            <TextBlock x:Name="Percentage" Grid.Column="1" Text="--" Foreground="{StaticResource Hybrid.Accent}"
+                                       FontSize="22" FontWeight="SemiBold" FontFamily="Consolas"
+                                       HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        </Grid>
+                        <TextBlock x:Name="CountText" Grid.Row="1" Text="" Foreground="#868E99" FontSize="10"
+                                   FontFamily="Consolas" HorizontalAlignment="Right" Margin="0,-2,0,0" />
+                        <Border x:Name="ProgressTrack" Grid.Row="2" Height="5" Background="#20232A" CornerRadius="2.5"
+                                VerticalAlignment="Center" ClipToBounds="True" SizeChanged="ProgressSizeChanged">
+                            <Grid>
+                                <Border x:Name="ProgressFill" Width="0" HorizontalAlignment="Left"
+                                        Background="{StaticResource Launch.ProgressGold}" CornerRadius="2.5" ClipToBounds="True">
+                                    <!-- 确定进度表面微光扫掠 -->
+                                    <Rectangle x:Name="ProgressShimmer" Opacity="0.55">
+                                        <Rectangle.Fill>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                <LinearGradientBrush.RelativeTransform>
+                                                    <TranslateTransform x:Name="ProgressShimmerShift" X="-1" />
+                                                </LinearGradientBrush.RelativeTransform>
+                                                <GradientStop Color="#00FFFFFF" Offset="0.2" />
+                                                <GradientStop Color="#99FFF4D6" Offset="0.5" />
+                                                <GradientStop Color="#00FFFFFF" Offset="0.8" />
+                                            </LinearGradientBrush>
+                                        </Rectangle.Fill>
+                                    </Rectangle>
+                                </Border>
+                                <Border x:Name="UnknownFill" Width="150" HorizontalAlignment="Left"
+                                        Background="{StaticResource Launch.UnknownGold}" CornerRadius="2.5">
+                                    <Border.RenderTransform>
+                                        <TranslateTransform x:Name="UnknownTranslation" />
+                                    </Border.RenderTransform>
+                                </Border>
+                            </Grid>
+                        </Border>
+                        <TextBlock x:Name="DetailText" Grid.Row="3" Text="正在检查运行环境与启动所需文件" Foreground="#A0A7B2"
+                                   FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,3,0,0" />
+                        <TextBlock x:Name="NoticeText" Grid.Row="4" Text="游戏进度将在启动后由加载模组提供" Foreground="#7E8590"
+                                   FontSize="11" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- 底部信息与克制操作栏 -->
+            <Grid Grid.Row="3" VerticalAlignment="Bottom">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel VerticalAlignment="Center" Margin="2,0,12,0">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Ellipse x:Name="PhaseDot" Width="5" Height="5" Fill="{StaticResource Hybrid.Accent}"
+                                 VerticalAlignment="Center" Margin="0,0,7,0" />
+                        <TextBlock x:Name="PhaseCaption" Text="01 / 启动器准备" FontSize="11" Foreground="#A4ABB6" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <TextBlock x:Name="Elapsed" Text="已用时 00:00" FontSize="11" FontFamily="Consolas" Foreground="#747B86" Margin="12,3,0,0" />
+                </StackPanel>
+                <Button Grid.Column="1" Content="收起窗口" Click="HomeClick" AutomationProperties.AutomationId="LaunchScreen.Home"
+                        Style="{StaticResource Launch.Action}" ToolTip="仅关闭此窗口，启动任务继续运行" Margin="0,0,8,0" />
+                <Button x:Name="CancelButton" Grid.Column="2" Content="取消启动" Click="CancelClick" AutomationProperties.AutomationId="LaunchScreen.Cancel"
+                        Style="{StaticResource Launch.CancelAction}" />
+            </Grid>
         </Grid>
     </Grid>
 </UserControl>

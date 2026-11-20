@@ -1983,8 +1983,9 @@ public static class ModDownload
     ///     对可能涉及 Mod 镜像源的请求进行处理，返回字符串或 JSON 对象。
     ///     调用 NetGetCodeByRequest，会进行重试。
     /// </summary>
-    public static T DlModRequest<T>(string url)
+    public static T DlModRequest<T>(string url, CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var urls = new List<KeyValuePair<string, int>>();
         var mcimUrl = DlSourceModGet(url);
         if ((mcimUrl ?? "") != (url ?? ""))
@@ -2023,11 +2024,11 @@ public static class ModDownload
                 {
                     Timeout = Source.Value * 1000,
                     UseBrowserUserAgent = true
-                });
+                }, cancellationToken);
                 if (typeof(T) == typeof(string)) return (T)(object)json;
                 return (T)(object)ModBase.GetJson(json);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
             {
                 // 镜像源可能随机爆炸，忽略就好（异常消息不含 URL，按请求的源判断）
                 if (!Source.Key.ContainsF("mcimirror")) exs += ex.Message + "\r\n";
@@ -2049,8 +2050,9 @@ public static class ModDownload
     ///     调用 NetRequest，会进行重试。
     /// </summary>
     public static T DlModRequest<T>(string url, string method, string data, string contentType,
-        bool allowMirror = false)
+        bool allowMirror = false, CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var urls = new List<KeyValuePair<string, int>>();
         var mcimUrl = DlSourceModGet(url);
         if ((mcimUrl ?? "") != (url ?? ""))
@@ -2091,11 +2093,11 @@ public static class ModDownload
                     Content = data, 
                     ContentType = contentType,
                     Timeout = Source.Value * 1000
-                });
+                }, cancellationToken);
                 if (typeof(T) == typeof(string)) return (T)(object)json; // 沟槽的，为什么不能写 T is string
                 return (T)(object)ModBase.GetJson(json);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
             {
                 if (!Source.Key.ContainsF("mcimirror")) exs += ex.Message + "\r\n";
             }

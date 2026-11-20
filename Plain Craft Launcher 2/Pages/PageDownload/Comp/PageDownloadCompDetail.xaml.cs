@@ -48,6 +48,11 @@ public partial class PageDownloadCompDetail
 
         // 决定按钮显示
         BtnIntroWeb.Text = _project.FromCurseForge ? "CurseForge" : "Modrinth";
+        BtnIntroWeb.Tag = _project.Website;
+        var otherSourceWebsite = _project.OtherSourceWebsite;
+        BtnIntroOtherWeb.Text = _project.FromCurseForge ? "Modrinth" : "CurseForge";
+        BtnIntroOtherWeb.Tag = otherSourceWebsite;
+        BtnIntroOtherWeb.Visibility = otherSourceWebsite is null ? Visibility.Collapsed : Visibility.Visible;
         BtnIntroWiki.Visibility = Lang.IsChineseMainland && _project.WikiId != 0
             ? Visibility.Visible
             : Visibility.Collapsed;
@@ -267,9 +272,10 @@ public partial class PageDownloadCompDetail
             _ => null
         };
         if (file is null) return;
-        if (file.Type == ModComp.CompType.Plugin || _project.Type == ModComp.CompType.Plugin)
+        var project = _project;
+        if (file.Type == ModComp.CompType.Plugin || project.Type == ModComp.CompType.Plugin)
         {
-            ServerPluginDownloads.Download(file, _project, ModMain.frmMain.pageCurrent.additional?.SavePath);
+            ServerPluginDownloads.Download(file, project, ModMain.frmMain.pageCurrent.additional?.SavePath);
             return;
         }
 
@@ -306,7 +312,7 @@ public partial class PageDownloadCompDetail
                     // 获取资源所需的加载器
                     if (file.ModLoaders.Any())
                         allowedLoaders = file.ModLoaders;
-                    else if (_project.ModLoaders.Any()) allowedLoaders = _project.ModLoaders;
+                    else if (project.ModLoaders.Any()) allowedLoaders = project.ModLoaders;
                     ModBase.Log(
                         $"[Comp] {desc}要求的加载器种类：{(allowedLoaders.Any() ? string.Join(" / ", allowedLoaders) : "无要求")}");
 
@@ -387,7 +393,7 @@ public partial class PageDownloadCompDetail
                 }
 
                 // 获取文件名并弹窗
-                var fileName = ModComp.CompFileNameGet(_project, file);
+                var fileName = ModComp.CompFileNameGet(project, file);
                 ModBase.RunInUi(() =>
                 {
                     var target = SystemDialogs.SelectSaveFile(Lang.Text("Download.Comp.Detail.SelectSaveLocation"),
@@ -411,150 +417,23 @@ public partial class PageDownloadCompDetail
                             cachedFolder.Add(file.Type, targetDir);
                     }
 
-                    if (file.Type == ModComp.CompType.Mod && Config.Download.Comp.AutoInstallDependencies &&
-                        file.Dependencies.Any())
-                    {
-                        try
-                        {
-                            McInstance? targetInstance = null;
-                            var knownInstances = new List<McInstance>();
-                            if (ModInstanceList.McMcInstanceSelected is not null)
-                            {
-                                knownInstances.Add(ModInstanceList.McMcInstanceSelected);
-                            }
-
-                            knownInstances.AddRange(ModInstanceList.mcInstanceList.Values.SelectMany(list => list)
-                                .Where(instance => instance is not null));
-                            targetInstance = knownInstances
-                                .Distinct()
-                                .FirstOrDefault(instance =>
-                                    targetDir.StartsWith(instance.PathIndie, StringComparison.OrdinalIgnoreCase));
-                            if (targetInstance is not null && !targetInstance.IsLoaded)
-                            {
-                                targetInstance.Load();
-                            }
-
-                            var mcVersion = targetInstance?.Info?.VanillaName
-                                            ?? file.GameVersions.FirstOrDefault(version => version.Contains("."))
-                                            ?? string.Empty;
-                            var targetLoaders = new List<ModComp.CompLoaderType>();
-                            if (targetInstance is not null)
-                            {
-                                if (targetInstance.Info.HasForge || targetInstance.Info.HasCleanroom)
-                                    targetLoaders.Add(ModComp.CompLoaderType.Forge);
-                                if (targetInstance.Info.HasFabric || targetInstance.Info.HasLegacyFabric)
-                                    targetLoaders.Add(ModComp.CompLoaderType.Fabric);
-                                if (targetInstance.Info.HasQuilt)
-                                    targetLoaders.Add(ModComp.CompLoaderType.Quilt);
-                                if (targetInstance.Info.HasNeoForge)
-                                    targetLoaders.Add(ModComp.CompLoaderType.NeoForge);
-                                if (targetInstance.Info.HasLiteLoader)
-                                    targetLoaders.Add(ModComp.CompLoaderType.LiteLoader);
-                            }
-
-                            if (!targetLoaders.Any())
-                            {
-                                targetLoaders = allowedLoaders.ToList();
-                            }
-
-                            ModBase.Log($"[CompDeps] 开始解析必需前置: {file.Dependencies.Count} 个依赖");
-                            var request = ModCompDependency.BuildRequest(file, _project, mcVersion, targetLoaders,
-                                targetDir);
-                            var resolver = new ModDependencyResolver();
-                            var result = resolver.Resolve(request);
-
-                            void DownloadDependencies()
-                            {    
-                                if (!result.ToInstall.Any())
-                                {
-                                    ModBase.Log("[CompDeps] 所有前置均无法解析，仅下载 Mod 本体");
-                                    return;
-                                }
-                                
-                                ModBase.Log($"[CompDeps] 准备下载: {result.ToInstall.Count} 个前置");
-                                var depDownloads = ModCompDependency.BuildDependencyDownloads(result, targetDir);
-                                foreach (var (depFilename, downloadFile) in depDownloads)
-                                {
-                                    var depLoaderName = Lang.Text("Download.Comp.Detail.DownloadResource", desc,
-                                        ModBase.GetFileNameWithoutExtentionFromPath(depFilename));
-                                    var depLoaders = new List<ModLoader.LoaderBase>
-                                    {
-                                        new LoaderDownload(Lang.Text("Download.Comp.Detail.DownloadFile"),
-                                            new List<DownloadFile> { downloadFile })
-                                        {
-                                            ProgressWeight = 6,
-                                            block = true
-                                        }
-                                    };
-
-                                    // 启动加载器
-                                    var depLoader = new ModLoader.LoaderCombo<int>(depLoaderName, depLoaders);
-                                    depLoader.OnStateChanged = ModDownloadLib.LoaderStateChangedHintOnly;
-                                    depLoader.Start(1);
-                                    ModLoader.LoaderTaskbarAdd(depLoader);
-                                }
-                            }
-                            
-                            if (result.Unresolved.Any() || result.ToInstall.Any())
-                            {
-                                var installChoice = ModCompDependency.ConfirmDependencyInstall(result);
-
-                                switch (installChoice)
-                                {
-                                    case ModComp.CompDepsInstallTypes.Unresolved:
-                                        ModBase.Log("[CompDeps] 发现无法解析的前置");
-                                        DownloadDependencies();
-                                        break;
-
-                                    case ModComp.CompDepsInstallTypes.WithDeps:
-                                        DownloadDependencies();
-                                        break;
-
-                                    case ModComp.CompDepsInstallTypes.WithoutDeps:
-                                        ModBase.Log("[CompDeps] 用户选择仅下载 Mod 本体，跳过前置下载");
-                                        break;
-
-                                    case ModComp.CompDepsInstallTypes.Cancel:
-                                        ModBase.Log("[CompDeps] 用户取消安装");
-                                        return;
-
-                                    default:
-                                        ModBase.Log($"[CompDeps] 未知返回值: {installChoice} ，终止下载");
-                                        return;
-                                }
-                            }
-                            else
-                            {
-                                ModBase.Log("[CompDeps] 已满足: 所有必需前置已安装");
-                            }
-                        }
-                        catch (Exception depEx)
-                        {
-                            ModBase.Log(depEx, "[CompDeps] 依赖解析失败，跳过前置安装");
-                            var message = ExceptionDetails.Compose(
-                                Lang.Text("Download.Comp.Dependency.ResolveFailed.Message"),
-                                depEx);
-                            ModMain.MyMsgBox(
-                                message,
-                                Lang.Text("Download.Comp.Dependency.ResolveFailed.Title"),
-                                Lang.Text("Download.Comp.Dependency.ResolveFailed.Continue"),
-                                isWarn: true,
-                                forceWait: true);
-                        }
-                    }
-
-                    // 构造下载任务
+                    // 在 UI 线程快照实例列表，耗时扫描和检索交给准备任务。
+                    var knownInstances = ModInstanceList.mcInstanceList.Values.SelectMany(list => list).ToList();
+                    if (ModInstanceList.McMcInstanceSelected is { } selectedInstance)
+                        knownInstances.Insert(0, selectedInstance);
                     var loaderName = Lang.Text("Download.Comp.Detail.DownloadResource", desc,
                         ModBase.GetFileNameWithoutExtentionFromPath(target));
                     var loaders = new List<ModLoader.LoaderBase>
                     {
-                        new LoaderDownload(Lang.Text("Download.Comp.Detail.DownloadFile"),
-                            new List<DownloadFile>
-                            {
-                                file.Type == ModComp.CompType.Mod
-                                    ? file.ToNetFile(target)
-                                    : file.ToNetFile(target, ModComp.DownloadReason.Standalone, null)
-                            })
+                        new ModLoader.LoaderTask<int, List<DownloadFile>>(
+                            Lang.Text("Update.Task.GetDownloadInfo"), task =>
+                                task.output = ModCompDependency.PrepareResourceDownload(file, project, target,
+                                    allowedLoaders, knownInstances, task))
+                        {
+                            ProgressWeight = 1,
+                            block = true
+                        },
+                        new LoaderDownload(Lang.Text("Download.Comp.Detail.DownloadFile"), [])
                         {
                             ProgressWeight = 6,
                             block = true
@@ -584,7 +463,8 @@ public partial class PageDownloadCompDetail
 
     private void BtnIntroWeb_Click(object sender, EventArgs e)
     {
-        ModBase.OpenWebsite(_project.Website);
+        if (sender is FrameworkElement { Tag: string website })
+            ModBase.OpenWebsite(website);
     }
 
     private void BtnIntroWiki_Click(object sender, EventArgs e)
@@ -661,6 +541,7 @@ public partial class PageDownloadCompDetail
         InitializeComponent();
         Load.StateChanged += Load_State;
         BtnIntroWeb.Click += BtnIntroWeb_Click;
+        BtnIntroOtherWeb.Click += BtnIntroWeb_Click;
         BtnIntroWiki.Click += BtnIntroWiki_Click;
         BtnIntroCopy.Click += BtnIntroCopy_Click;
         BtnFavorites.Click += BtnFavorites_Click;

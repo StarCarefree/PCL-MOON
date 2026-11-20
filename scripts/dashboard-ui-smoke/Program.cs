@@ -124,8 +124,10 @@ internal static partial class Program
         Check(File.Exists(Path.Combine(Paths.SharedData, "game-dashboard.json")), "Legacy layout must migrate to stable user data");
         var grid = Control<Grid>(page, "DashboardGrid");
         Render(page, 900, 820, "default.png");
-        Check(grid.Children.Count == 4, "Default must contain four widgets");
+        Check(grid.Children.Count == 3, "Default must contain three widgets");
         Check(grid.ColumnDefinitions.Count == 2, "Wide viewport must use two columns");
+        Check(layout.Widgets[2].Kind == "recent" && !layout.Widgets[2].Wide, "Recent widget must sit beside greeting by default");
+        Check(InsightText(grid).Contains("依据 latest.log 修改时间"), "Default layout must render recent widget beside greeting");
         Check(Control<Border>(page, "HeroCard").Parent is ContentControl, "Original hero must be hosted in a component");
         Click(page, "DashboardEdit_Click");
         Check(Field<bool>(page, "_dashboardEditing"), "Edit must create draft");
@@ -177,7 +179,7 @@ internal static partial class Program
         var restoredPage = new PageLaunchRight();
         Check(Field<GameDashboardLayout>(restoredPage, "_dashboard").Widgets.Count == layout.Widgets.Count, "New page must restore saved layout");
         Click(page, "DashboardCancel_Click");
-        Check(Field<GameDashboardLayout>(page, "_dashboard").Widgets.Count == 4, "Cancel must roll back added widgets");
+        Check(Field<GameDashboardLayout>(page, "_dashboard").Widgets.Count == 3, "Cancel must roll back added widgets");
         Click(page, "DashboardEdit_Click");
         layout = Field<GameDashboardLayout>(page, "_dashboard");
         layout.Widgets.Clear();

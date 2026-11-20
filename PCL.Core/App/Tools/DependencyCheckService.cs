@@ -1,4 +1,6 @@
+using System;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -6,6 +8,7 @@ using System.Threading.Tasks;
 using PCL.Core.App.IoC;
 using PCL.Core.App.Localization;
 using PCL.Core.UI;
+using PCL.Core.UI.Media;
 using PCL.Core.Utils;
 
 namespace PCL.Core.App.Tools;
@@ -23,8 +26,25 @@ public sealed partial class DependencyCheckService
             await _CheckAndAskAsync("Microsoft.D3DMappingLayers", "OpenGL 兼容包", "9nqpsl29bfff")
                 .ConfigureAwait(false);
 
-        await _CheckAndAskAsync("Microsoft.WebpImageExtension", "WebP 组件包", "9pg2dk419drg")
-            .ConfigureAwait(false);
+        if (!await Task.Run(_CanDecodeWebp).ConfigureAwait(false))
+            _AskToInstall("WebP 组件包", "9pg2dk419drg");
+    }
+
+    private static bool _CanDecodeWebp()
+    {
+        try
+        {
+            // 内嵌 1×1 红色 WebP，沿用实际图片加载的转换流程，确保像素能完整解码。
+            using var input = new MemoryStream(Convert.FromBase64String(
+                "UklGRhwAAABXRUJQVlA4TA8AAAAvAAAAAAcQ/Y/+ByKi/wEA"));
+            using var output = input.FromWebpToPng();
+            return output.Length > 0;
+        }
+        catch (Exception ex)
+        {
+            Context.Warn("WebP 实际解码检查失败", ex);
+            return false;
+        }
     }
 
     private static async Task _CheckAndAskAsync(string packageId, string packageName, string storeId)
@@ -32,11 +52,16 @@ public sealed partial class DependencyCheckService
         if (!await _CheckPackageAsync(packageId))
         {
             Context.Info($"检测到依赖缺失 (package-id = {packageId})");
-            var selection = MsgBoxWrapper.Show(
-                Lang.Text("Tools.Test.Dependency.MissingMessage", packageName),
-                buttons: [Lang.Text("Common.Action.Confirm"), Lang.Text("Tools.Test.Dependency.Later")]);
-            if (selection == 1) _OpenStoreWebPage(storeId);
+            _AskToInstall(packageName, storeId);
         }
+    }
+
+    private static void _AskToInstall(string packageName, string storeId)
+    {
+        var selection = MsgBoxWrapper.Show(
+            Lang.Text("Tools.Test.Dependency.MissingMessage", packageName),
+            buttons: [Lang.Text("Common.Action.Confirm"), Lang.Text("Tools.Test.Dependency.Later")]);
+        if (selection == 1) _OpenStoreWebPage(storeId);
     }
 
     // 精简系统常缺少微软商店，改为在浏览器中打开微软官网应用页面

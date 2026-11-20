@@ -61,7 +61,7 @@ internal static partial class Program
                 Check(window.Owner is null && window.ShowInTaskbar && !window.Topmost, "Must be an ownerless non-topmost independent window");
                 Check(window.IsVisible && Clock(view).IsEnabled, "Independent window must start its clock");
                 window.ApplyProgress(new(LaunchProgressPhase.Launcher, "补全游戏文件", "下载资源  ·  12 MiB/s", .42));
-                await Task.Delay(350); view.UpdateLayout();
+                await Task.Delay(650); view.UpdateLayout();
                 Check(window.Opacity > 0.98, "Entrance must finish fully opaque");
                 Check(Control<TextBlock>(view, "Percentage").Text == "42%", "Launcher progress missing");
                 Check(Control<TextBlock>(view, "LauncherState").Text == "进行中", "Launcher step missing");

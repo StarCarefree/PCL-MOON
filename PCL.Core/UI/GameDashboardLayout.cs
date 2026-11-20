@@ -46,8 +46,7 @@ public sealed class GameDashboardLayout
         [
             new() { Kind = "hero", Wide = true },
             new() { Kind = "greeting" },
-            new() { Kind = "recent" },
-            new() { Kind = "library", Wide = true }
+            new() { Kind = "recent" }
         ]
     };
 

@@ -3086,6 +3086,7 @@ PCL-MOON 会使用 LWJGL Unsafe Agent 修复这个问题，以解决可能存在
     <sys:String x:Key="Setup.Launch.Advanced.Renderer.Warning.Confirm">我知道我在做什么</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.Renderer.Warning.Message">修改此项会严重影响游戏的稳定性与性能。如果你不知道你在做什么，不要修改此选项！
 你确定要继续修改吗？</sys:String>
+    <sys:String x:Key="Setup.Launch.Acceleration.Title">Accélération du démarrage</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.Title">高级启动选项</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.UseJavaExe">使用 java.exe 而不是 javaw.exe</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.UseJavaExe.ToolTip">如果遇到游戏窗口长时间不出现等故障可尝试启用此项，PCL-MOON 将使用 java.exe 来运行游戏，这样会让游戏进程拥有标准输入/输出流，以尽可能避免打印日志时出现问题。
@@ -3292,6 +3293,7 @@ IPv6 优先：-Djava.net.preferIPv6Stack=true</sys:String>
 一般选择 仅在有重要通知时显示公告 就可以让你尽量不受打扰了。
 除非你在制作服务器整合包，或时常手动更新启动器，否则极度不推荐选择此项！</sys:String>
     <sys:String x:Key="Setup.Misc.System.Announcement.ImportantOnly">仅在有重要通知时显示公告</sys:String>
+    <sys:String x:Key="Setup.Misc.System.DisableAds">Désactiver les publicités</sys:String>
     <sys:String x:Key="Setup.Misc.System.DisableHardwareAcceleration">禁用硬件加速</sys:String>
     <sys:String x:Key="Setup.Misc.System.ExportSettings">导出设置</sys:String>
     <sys:String x:Key="Setup.Misc.System.ExportSettings.Filter">PCL-MOON 配置文件(*.json)|*.json</sys:String>

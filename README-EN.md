@@ -78,7 +78,7 @@ Portable package:
 .\scripts\Publish-Portable.ps1 -Architecture x64 -Configuration Release -FixedRuntimeDirectory <FixedVersion-root>
 ```
 
-Build `x64` and `arm64` separately. The catalog service lives in `pcl-moon-cloud/` and need Java 17 or later. See [pcl-moon-cloud/README.md](pcl-moon-cloud/README.md).
+Build `x64` and `arm64` separately. The catalog service lives in `pcl-moon-cloud/` and is built with Rust. See [pcl-moon-cloud/README.md](pcl-moon-cloud/README.md).
 
 ## Docs
 

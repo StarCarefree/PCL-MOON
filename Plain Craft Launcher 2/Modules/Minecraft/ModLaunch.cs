@@ -7,6 +7,7 @@ using System.Windows;
 using PCL.Core.App;
 using PCL.Core.App.Localization;
 using PCL.Core.Minecraft;
+using PCL.Core.Minecraft.Java;
 using PCL.Core.Minecraft.Launcher;
 using PCL.Core.Minecraft.Launch.Utils;
 using PCL.Core.Utils;
@@ -1130,7 +1131,6 @@ public static partial class ModLaunch
         }
 
         // 原版 26+：获取 Mojang 要求的 Java 版本
-        string recommendedComponent = null;
         var recommendedCode =
             LaunchingInstance.JsonObject?["javaVersion"]?["majorVersion"]?.ToObject<int>() ??
             LaunchingInstance.JsonVersion?["java_version"]?.ToObject<int>() ?? 0;
@@ -1138,11 +1138,6 @@ public static partial class ModLaunch
         {
             McLaunchLog("Mojang 要求至少使用 Java " + recommendedCode);
             minVer = new Version(recommendedCode, 0, 0, 0);
-            recommendedComponent =
-                LaunchingInstance.JsonObject?["javaVersion"]?["component"]?.ToString() ??
-                LaunchingInstance.JsonVersion?["java_component"]?.ToString();
-            if (string.IsNullOrEmpty(recommendedComponent))
-                recommendedComponent = null;
         }
 
         // OptiFine 检测
@@ -1319,13 +1314,14 @@ public static partial class ModLaunch
 
         lock (ModJava.javaLock)
         {
+            var javaSelection = new ModJava.LaunchJavaSelection();
             // 选择 Java
             McLaunchLog("Java 版本需求：最低 " + minVer + "，最高 " + maxVer +
                         (compatibleJavaMajorsSet is null
                             ? ""
                             : "，兼容主版本：" + string.Join(", ", compatibleJavaMajorsSet.OrderBy(major => major))));
             mcLaunchJavaSelected = ModJava.JavaSelect("$$", minVer, maxVer, LaunchingInstance,
-                false, compatibleJavaMajorsSet);
+                false, compatibleJavaMajorsSet, javaSelection);
             if (task.IsAborted)
                 return;
             if (mcLaunchJavaSelected is not null)
@@ -1356,9 +1352,9 @@ public static partial class ModLaunch
             {
                 javaCode = compatibleDownloadMajor.Value.ToString();
             }
-            else if (minVer >= new Version(1, 9))
+            else if (JavaManager.NormalizeVersion(minVer).Major >= 9)
             {
-                javaCode = minVer.Major.ToString();
+                javaCode = JavaManager.NormalizeVersion(minVer).Major.ToString();
             }
             else if (maxVer < new Version(1, 8))
             {
@@ -1397,7 +1393,8 @@ public static partial class ModLaunch
             var javaLoader = ModJava.GetJavaDownloadLoader();
             try
             {
-                javaLoader.Start(recommendedComponent ?? javaCode, true); // 在 Java 22+ 时优先使用 Mojang 提供的 Component 字段
+                javaLoader.Start(new JavaDownloadRequest(int.Parse(javaCode), !SystemInfo.Is32BitSystem,
+                    minVer, maxVer, compatibleJavaMajorsSet), true);
                 while (javaLoader.State == ModBase.LoadState.Loading && !task.IsAborted)
                 {
                     task.Progress = javaLoader.Progress;
@@ -1410,8 +1407,11 @@ public static partial class ModLaunch
             }
 
             // 检查下载结果
+            if (task.IsAborted) return;
+            if (javaLoader.State != ModBase.LoadState.Finished)
+                throw javaLoader.Error ?? new Exception(Lang.Text("Minecraft.Launch.Java.Download.AllFailed", javaCode));
             mcLaunchJavaSelected = ModJava.JavaSelect("$$", minVer, maxVer, LaunchingInstance,
-                false, compatibleJavaMajorsSet);
+                false, compatibleJavaMajorsSet, javaSelection);
             if (task.IsAborted)
                 return;
             if (mcLaunchJavaSelected is not null)

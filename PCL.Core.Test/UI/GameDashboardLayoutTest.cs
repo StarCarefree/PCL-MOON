@@ -29,18 +29,18 @@ public sealed class GameDashboardLayoutTest
     private string FilePath(string name = "layout.json") => Path.Combine(_root, name);
 
     [TestMethod]
-    public void CreateDefault_HasHeroGreetingRecentLibrary()
+    public void CreateDefault_HasHeroGreetingRecent()
     {
         var layout = GameDashboardLayout.CreateDefault();
         Assert.AreEqual(2, layout.Columns);
-        Assert.AreEqual(4, layout.Widgets.Count);
+        Assert.AreEqual(3, layout.Widgets.Count);
         Assert.AreEqual("hero", layout.Widgets[0].Kind);
         Assert.IsTrue(layout.Widgets[0].Wide);
         Assert.AreEqual("greeting", layout.Widgets[1].Kind);
+        Assert.IsFalse(layout.Widgets[1].Wide);
         Assert.AreEqual("recent", layout.Widgets[2].Kind);
-        Assert.AreEqual("library", layout.Widgets[3].Kind);
-        Assert.IsTrue(layout.Widgets[3].Wide);
-        Assert.AreEqual(4, layout.Widgets.Select(w => w.Id).Distinct(StringComparer.Ordinal).Count());
+        Assert.IsFalse(layout.Widgets[2].Wide);
+        Assert.AreEqual(3, layout.Widgets.Select(w => w.Id).Distinct(StringComparer.Ordinal).Count());
         foreach (var widget in layout.Widgets)
             Assert.AreEqual(32, widget.Id.Length);
     }
@@ -99,9 +99,9 @@ public sealed class GameDashboardLayoutTest
 
         Assert.AreEqual(2, original.Columns);
         Assert.AreEqual("keep", original.Widgets[0].Title);
-        Assert.AreEqual(4, original.Widgets.Count);
+        Assert.AreEqual(3, original.Widgets.Count);
         Assert.AreEqual("", clone.Widgets[1].Title);
-        Assert.AreEqual(5, clone.Widgets.Count);
+        Assert.AreEqual(4, clone.Widgets.Count);
     }
 
     [TestMethod]
@@ -228,14 +228,40 @@ public sealed class GameDashboardLayoutTest
         Assert.AreEqual(0, Directory.GetFiles(_root, "*.tmp").Length);
     }
 
+    [TestMethod]
+    public void Load_RecentAndLibraryRemainIndependentWhenConfigured()
+    {
+        var path = FilePath();
+        File.WriteAllText(path, """
+            {
+              "columns": 2,
+              "widgets": [
+                { "id": "h1", "kind": "hero", "wide": true },
+                { "id": "g1", "kind": "greeting", "wide": false },
+                { "id": "r1", "kind": "recent", "wide": false },
+                { "id": "l1", "kind": "library", "wide": true, "title": "常用游戏库" }
+              ]
+            }
+            """);
+
+        var loaded = GameDashboardLayout.Load(path);
+        CollectionAssert.AreEqual(
+            new[] { "hero", "greeting", "recent", "library" },
+            loaded.Widgets.Select(w => w.Kind).ToArray());
+        Assert.IsFalse(loaded.Widgets[2].Wide);
+        Assert.IsTrue(loaded.Widgets[3].Wide);
+        Assert.AreEqual("常用游戏库", loaded.Widgets[3].Title);
+    }
+
     private static void AssertDefault(GameDashboardLayout layout)
     {
         Assert.AreEqual(2, layout.Columns);
-        Assert.AreEqual(4, layout.Widgets.Count);
+        Assert.AreEqual(3, layout.Widgets.Count);
         CollectionAssert.AreEqual(
-            new[] { "hero", "greeting", "recent", "library" },
+            new[] { "hero", "greeting", "recent" },
             layout.Widgets.Select(w => w.Kind).ToArray());
         Assert.IsTrue(layout.Widgets[0].Wide);
-        Assert.IsTrue(layout.Widgets[3].Wide);
+        Assert.IsFalse(layout.Widgets[1].Wide);
+        Assert.IsFalse(layout.Widgets[2].Wide);
     }
 }

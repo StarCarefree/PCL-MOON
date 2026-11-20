@@ -1,0 +1,95 @@
+<UserControl x:Class="PCL.HybridWindowTransition"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             IsHitTestVisible="False"
+             Visibility="Collapsed"
+             ClipToBounds="True"
+             FontFamily="Segoe UI, Microsoft YaHei UI"
+             UseLayoutRounding="True"
+             SnapsToDevicePixels="True">
+    <Grid>
+        <!-- 深炭夜幕与中心柔金月晕 -->
+        <Grid x:Name="Veil" Opacity="0">
+            <Rectangle Fill="#0D0F12" />
+            <Rectangle>
+                <Rectangle.Fill>
+                    <RadialGradientBrush Center="0.5,0.48" GradientOrigin="0.5,0.48" RadiusX="0.46" RadiusY="0.54">
+                        <GradientStop Color="#28FFB942" Offset="0" />
+                        <GradientStop Color="#10E0A24A" Offset="0.38" />
+                        <GradientStop Color="#00111315" Offset="1" />
+                    </RadialGradientBrush>
+                </Rectangle.Fill>
+            </Rectangle>
+        </Grid>
+
+        <!-- 顶缘星月流金光轨 -->
+        <Border x:Name="TopBeam" Height="2" VerticalAlignment="Top" Opacity="0" RenderTransformOrigin="0.5,0.5">
+            <Border.RenderTransform>
+                <ScaleTransform x:Name="TopBeamScale" ScaleX="1" ScaleY="1" />
+            </Border.RenderTransform>
+            <Rectangle>
+                <Rectangle.Fill>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                        <LinearGradientBrush.RelativeTransform>
+                            <TranslateTransform x:Name="TopBeamShift" X="-1" />
+                        </LinearGradientBrush.RelativeTransform>
+                        <GradientStop Color="#00FFB942" Offset="0.08" />
+                        <GradientStop Color="#D8E0A24A" Offset="0.36" />
+                        <GradientStop Color="#FFFFE2A8" Offset="0.5" />
+                        <GradientStop Color="#D8E0A24A" Offset="0.64" />
+                        <GradientStop Color="#00FFB942" Offset="0.92" />
+                    </LinearGradientBrush>
+                </Rectangle.Fill>
+            </Rectangle>
+        </Border>
+
+        <!-- 星月轨道徽记与品牌字标 -->
+        <StackPanel x:Name="Emblem" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Opacity="0" RenderTransformOrigin="0.5,0.5">
+            <StackPanel.RenderTransform>
+                <TransformGroup>
+                    <ScaleTransform x:Name="EmblemScale" ScaleX="0.92" ScaleY="0.92" />
+                    <TranslateTransform x:Name="EmblemOffset" X="0" Y="6" />
+                </TransformGroup>
+            </StackPanel.RenderTransform>
+            <Grid Width="128" Height="128" HorizontalAlignment="Center">
+                <Ellipse Width="116" Height="116" Stroke="#3D3528" StrokeThickness="1" />
+                <Ellipse Width="88" Height="88" Stroke="#272B30" StrokeThickness="1" />
+                <Ellipse Width="82" Height="82">
+                    <Ellipse.Fill>
+                        <RadialGradientBrush>
+                            <GradientStop Color="#44FFB942" Offset="0" />
+                            <GradientStop Color="#16E0A24A" Offset="0.52" />
+                            <GradientStop Color="#00111315" Offset="1" />
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                </Ellipse>
+                <!-- 外轨道绕行金星 -->
+                <Grid Width="116" Height="116" RenderTransformOrigin="0.5,0.5">
+                    <Grid.RenderTransform>
+                        <RotateTransform x:Name="OrbitRotation" Angle="-24" />
+                    </Grid.RenderTransform>
+                    <Ellipse Width="5.5" Height="5.5" Fill="#FFB942" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-2.5,0,0" />
+                </Grid>
+                <!-- 弯月与四芒星 -->
+                <Path Data="M 73,41 A 25,25 0 1 0 73,87 A 23.5,23.5 0 0 1 73,41 Z" Fill="#EFCF94" />
+                <Path Data="M 82,37 L 83.6,42.4 L 89,44 L 83.6,45.6 L 82,51 L 80.4,45.6 L 75,44 L 80.4,42.4 Z" Fill="#FFB942" />
+                <Path Data="M 28,91 L 28,96 M 25.5,93.5 L 30.5,93.5" Stroke="#8B7855" StrokeThickness="1" />
+                <Ellipse Width="2.5" Height="2.5" Fill="#9299A3" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,22,26" />
+            </Grid>
+            <StackPanel HorizontalAlignment="Center" Margin="0,12,0,0">
+                <TextBlock Text="P C L - M O O N" Foreground="#ECEDEF" FontSize="12" FontWeight="SemiBold"
+                           HorizontalAlignment="Center" />
+                <Border Width="34" Height="1.5" Margin="0,7,0,0" CornerRadius="1" HorizontalAlignment="Center">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                            <GradientStop Color="#00FFB942" Offset="0" />
+                            <GradientStop Color="#FFFFB942" Offset="0.5" />
+                            <GradientStop Color="#00FFB942" Offset="1" />
+                        </LinearGradientBrush>
+                    </Border.Background>
+                </Border>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>

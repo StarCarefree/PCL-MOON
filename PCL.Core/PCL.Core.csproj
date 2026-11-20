@@ -96,6 +96,14 @@
         <Resource Include="UI\Assets\Shaders\*.ps" />
         <Resource Include="UI\Assets\IconPacks\**\*.svg" />
     </ItemGroup>
+    <!-- 原生加速库（仅非 ARM64 平台；ARM64 构建自动跳过并回退纯 C#） -->
+    <ItemGroup Condition="'$(Platform)' != 'ARM64' And '$(RuntimeIdentifier)' != 'win-arm64' And Exists('$(MSBuildThisFileDirectory)..\native\pcl-native\target\release\pcl_native.dll')">
+        <Content Include="$(MSBuildThisFileDirectory)..\native\pcl-native\target\release\pcl_native.dll">
+            <Link>pcl_native.dll</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </Content>
+    </ItemGroup>
     <!-- 密钥戳文件变化时强制重新执行 CoreCompile（密钥由生成器在编译时读取环境变量） -->
     <ItemGroup Condition="'$(PclSecretsStampFile)' != ''">
         <CustomAdditionalCompileInputs Include="$(PclSecretsStampFile)" />

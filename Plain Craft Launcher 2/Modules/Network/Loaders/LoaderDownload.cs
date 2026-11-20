@@ -69,9 +69,75 @@ public class LoaderDownload : ModLoader.LoaderBase
                 return;
             }
 
+            var remainingFiles = files.ToList();
+            if (remainingFiles.Count >= 8)
+            {
+                var batchCandidates = new List<(int Index, ModBase.FileChecker Checker, string LocalPath)>();
+                for (var i = 0; i < remainingFiles.Count; i++)
+                {
+                    var file = remainingFiles[i];
+                    if (file.Check is { canUseExistsFile: true, isJson: false, hash.Length: 40 } &&
+                        !string.IsNullOrWhiteSpace(file.LocalPath) && File.Exists(file.LocalPath))
+                    {
+                        batchCandidates.Add((i, file.Check, file.LocalPath));
+                    }
+                }
+
+                if (batchCandidates.Count >= 4)
+                {
+                    var pairs = new (ModBase.FileChecker Checker, string LocalPath)[batchCandidates.Count];
+                    for (var i = 0; i < batchCandidates.Count; i++)
+                        pairs[i] = (batchCandidates[i].Checker, batchCandidates[i].LocalPath);
+
+                    // 强制绕过启动缓存，保留原有手动补全/下载器的完整校验语义
+                    var checkErrors = ModBase.FileChecker.CheckBatch(pairs, useCache: false);
+                    var completedIndices = new HashSet<int>();
+                    for (var i = 0; i < batchCandidates.Count; i++)
+                    {
+                        if (cancellationToken.IsCancellationRequested || State >= ModBase.LoadState.Finished)
+                            break;
+                        if (checkErrors[i] is not null) continue;
+
+                        var idx = batchCandidates[i].Index;
+                        var file = remainingFiles[idx];
+                        file.RegisterLoader(this);
+                        if (State >= ModBase.LoadState.Finished)
+                            return;
+                        file.IsCopy = true;
+                        file.State = PCL.Network.NetState.Finished;
+                        try { file.TotalSize = new FileInfo(file.LocalPath).Length; }
+                        catch (IOException) { file.TotalSize = -1; }
+                        file.DownloadedBytes = file.TotalSize;
+                        file.Speed = 0;
+                        file.ActiveThreads = 0;
+                        OnFileFinish(file);
+                        completedIndices.Add(idx);
+                    }
+
+                    if (completedIndices.Count > 0)
+                    {
+                        var nextRemaining = new List<PCL.Network.DownloadFile>(remainingFiles.Count - completedIndices.Count);
+                        for (var i = 0; i < remainingFiles.Count; i++)
+                        {
+                            if (!completedIndices.Contains(i))
+                                nextRemaining.Add(remainingFiles[i]);
+                        }
+                        remainingFiles = nextRemaining;
+                    }
+                }
+            }
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                Abort();
+                return;
+            }
+            if (remainingFiles.Count == 0 || State >= ModBase.LoadState.Finished)
+                return;
+
             var exceptions = new ConcurrentQueue<Exception>();
             using var semaphore = new SemaphoreSlim(GetMaxParallelFiles());
-            var tasks = files.Select(async file =>
+            var tasks = remainingFiles.Select(async file =>
             {
                 var entered = false;
                 try

@@ -23,8 +23,7 @@ internal static class LaunchPrefetch
             }
             var prefetcher = new LaunchFilePrefetcher(budget, TimeSpan.FromSeconds(120), message => ModBase.Log(message));
             var mods = Path.Combine(instance.PathIndie, "mods");
-            if (Directory.Exists(mods))
-                prefetcher.Enqueue(Directory.EnumerateFiles(mods, "*.jar", SearchOption.TopDirectoryOnly));
+            prefetcher.EnqueueDirectory(mods, "*.jar");
             return prefetcher;
         }
         catch (Exception ex)

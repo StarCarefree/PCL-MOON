@@ -41,14 +41,29 @@ public partial class FormMain
         ModBase.RunInNewThread(() =>
         {
             var changelogFile = $"{ModBase.pathTemp}CEUpdateLog.md";
-            string changelog;
+            string? changelog = null;
             if (File.Exists(changelogFile))
-                changelog = UpdateHelper.CleanChangelog(ModBase.ReadFile(changelogFile));
-            else
-                changelog = Lang.Text("Main.UpdateLog.Empty");
-            if (ModMain.MyMsgBoxMarkdown(changelog,
-                    Lang.Text("Main.UpdateLog.Title", ModBase.versionBranchName, ModBase.versionBaseName), Lang.Text("Common.Action.Confirm"), Lang.Text("Main.UpdateLog.FullChangelog")) ==
-                2) ModBase.OpenWebsite(PclMoonRelease.Page);
+            {
+                var cached = UpdateHelper.CleanChangelog(ModBase.ReadFile(changelogFile));
+                if (UpdateHelper.MatchesVersion(cached, ModBase.versionBaseName))
+                    changelog = cached;
+            }
+            if (string.IsNullOrWhiteSpace(changelog))
+            {
+                var fetched = UpdateManager.TryFetchVersionChangelog(ModBase.versionBaseName);
+                if (!string.IsNullOrWhiteSpace(fetched))
+                {
+                    changelog = fetched;
+                    try { ModBase.WriteFile(changelogFile, fetched); } catch { }
+                }
+            }
+            var displayChangelog = string.IsNullOrWhiteSpace(changelog)
+                ? Lang.Text("Main.UpdateLog.Empty")
+                : UpdateHelper.StripSummaryMetadata(changelog);
+            if (ModMain.MyMsgBoxMarkdown(displayChangelog,
+                    Lang.Text("Main.UpdateLog.Title", ModBase.versionBranchName, ModBase.versionBaseName),
+                    Lang.Text("Common.Action.Confirm"), Lang.Text("Main.UpdateLog.FullChangelog")) == 2)
+                ModBase.OpenWebsite(PclMoonRelease.TagPage(ModBase.versionBaseName));
         }, "UpdateLog Output");
     }
 
@@ -102,7 +117,7 @@ public partial class FormMain
         HintWrapper.OnShow += HintService.HintWrapper_OnShow;
         // 加载 UI
         InitializeComponent();
-        Opacity = 0d;
+        PrepareWindowStartup();
         try
         {
             var work = SystemParameters.WorkArea;
@@ -110,8 +125,8 @@ public partial class FormMain
             var savedHeight = States.UI.WindowHeight;
             if (States.UI.HybridLayoutRevision < 1)
             {
-                if (savedWidth < 1664) savedWidth = Math.Max(1664, savedWidth * 1.3);
-                if (savedHeight < 1014) savedHeight = Math.Max(1014, savedHeight * 1.3);
+                if (savedWidth < 1213) savedWidth = Math.Max(1213, savedWidth * 1.3);
+                if (savedHeight < 805) savedHeight = Math.Max(805, savedHeight * 1.3);
                 States.UI.HybridLayoutRevision = 1;
             }
             // Fit high-DPI and smaller displays without losing the user's subsequent resize preference.
@@ -215,7 +230,7 @@ public partial class FormMain
         // #End If
         Topmost = false;
         if (ModMain.frmStart is not null)
-            ModMain.frmStart.Close(new TimeSpan(0, 0, 0, 0, (int)Math.Round(120d / ModAnimation.aniSpeed)));
+            ModMain.frmStart.Close(new TimeSpan(0, 0, 0, 0, ScaleMotionMs(80, GetWindowMotionSpeed())));
         // 更改窗口
         // Top = (GetWPFSize(My.Computer.Screen.WorkingArea.Height) - Height) / 2
         // Left = (GetWPFSize(My.Computer.Screen.WorkingArea.Width) - Width) / 2
@@ -225,27 +240,7 @@ public partial class FormMain
         var hwndSource = (HwndSource)PresentationSource.FromVisual(this);
         hwndSource.AddHook(WndProc);
 
-        ModAnimation.AniStart(new[]
-        {
-            ModAnimation.AaCode(() => ModAnimation.AniControlEnabled -= 1, 50),
-            ModAnimation.AaOpacity(this, Config.Preference.Theme.WindowOpacity / 1000d + 0.4d, 140, 0),
-            ModAnimation.AaDouble(i => TransformPos.Y += (double)i, -TransformPos.Y, 240,
-                0, new ModAnimation.AniEaseOutBack(ModAnimation.AniEasePower.Weak)),
-            ModAnimation.AaDouble(i => TransformRotate.Angle += (double)i,
-                -TransformRotate.Angle, 200, 0, new ModAnimation.AniEaseOutBack(ModAnimation.AniEasePower.Weak)),
-            ModAnimation.AaCode(() =>
-            {
-                RenderTransform = null;
-                isWindowLoadFinished = true;
-                ModBase.Log(
-                    $"[System] DPI：{ModBase.dpi}，系统版本：{Environment.OSVersion.VersionString}，PCL 位置：{Basics.ExecutablePath}");
-                if (WebUiController.RequestedByArguments(Basics.CommandLineArguments))
-                    _ = ShowWebUiAsync();
-#if DEBUG
-                if (Basics.CommandLineArguments.Contains("--hybrid-smoke")) _ = StartHybridSmokeAsync();
-#endif
-            }, after: true)
-        }, "Form Show");
+        PlayWindowStartupAnimation();
         // Timer 启动
         ModAnimation.AniStart();
         ModMain.TimerMainStart();
@@ -532,6 +527,7 @@ public partial class FormMain
     /// <param name="isUpdating">是否正在更新重启</param>
     public void EndProgram(bool sendWarning, bool isUpdating = false)
     {
+        if (_isClosing) return;
         if (!ServerUi.CanExit()) return;
         // 发出警告
         if (sendWarning && ModNet.HasDownloadingTask())
@@ -551,48 +547,14 @@ public partial class FormMain
         // 关闭
         ModBase.RunInUiWait(() =>
         {
+            if (_isClosing) return;
+            _isClosing = true;
             // 清理视频背景
             VideoBack.Stop();
             VideoBack.Source = null;
             VideoBack.Close();
             IsHitTestVisible = false;
-            if (RenderTransform is null)
-            {
-                var transformPos = new TranslateTransform(0d, 0d);
-                var transformRotate = new RotateTransform(0d);
-                var transformScale = new ScaleTransform(1d, 1d);
-                transformScale.CenterX = Width / 2d;
-                transformScale.CenterY = Height / 2d;
-                RenderTransform = new TransformGroup
-                    { Children = new TransformCollection([transformRotate, transformPos, transformScale]) };
-                ModAnimation.AniStart(new[]
-                {
-                    ModAnimation.AaOpacity(this, -Opacity, 140, 40,
-                        new ModAnimation.AniEaseOutFluent(ModAnimation.AniEasePower.Weak)),
-                    ModAnimation.AaDouble(i =>
-                    {
-                        transformScale.ScaleX += (double)i;
-                        transformScale.ScaleY += (double)i;
-                    }, 0.88d - transformScale.ScaleX, 180),
-                    ModAnimation.AaDouble(i => transformPos.Y += (double)i,
-                        20d - transformPos.Y, 180, 0,
-                        new ModAnimation.AniEaseOutFluent(ModAnimation.AniEasePower.Weak)),
-                    ModAnimation.AaDouble(i => transformRotate.Angle += (double)i,
-                        0.6d - transformRotate.Angle, 180, 0,
-                        new ModAnimation.AniEaseInoutFluent(ModAnimation.AniEasePower.Weak)),
-                    ModAnimation.AaCode(() =>
-                    {
-                        IsHitTestVisible = false;
-                        Visibility = Visibility.Collapsed;
-                        ShowInTaskbar = false;
-                    }, 210),
-                    ModAnimation.AaCode(() => EndProgramForce(force: false, isUpdating: isUpdating), 230)
-                }, "Form Close");
-            }
-            else
-            {
-                EndProgramForce(force: false, isUpdating: isUpdating);
-            }
+            PlayWindowShutdownAnimation(isUpdating);
 
             ModBase.Log("[System] 收到关闭指令");
         });
@@ -605,6 +567,7 @@ public partial class FormMain
     {
         // On Error Resume Next
         ModBase.isProgramEnded = true;
+        HybridSplashHost.CloseImmediately();
         ModAnimation.AniControlEnabled += 1;
         if (UpdateManager.isUpdateWaitingRestart && !isUpdating)
             UpdateManager.UpdateRestart(false, false);
@@ -1384,7 +1347,11 @@ public partial class FormMain
 
     #endregion
 
-    public Task ShowWebUiAsync() => _webUi.AttachAsync(this);
+    public Task ShowWebUiAsync()
+    {
+        ExitSubPageIfNeeded();
+        return _webUi.AttachAsync(this);
+    }
 
     #region 切换页面
 

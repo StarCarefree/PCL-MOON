@@ -45,4 +45,45 @@ public sealed class UpdateChangelogTest
         Assert.AreEqual(string.Empty, UpdateHelper.CleanChangelog(null));
         Assert.AreEqual(string.Empty, UpdateHelper.CleanChangelog(string.Empty));
     }
+
+    [TestMethod]
+    public void ExtractsExplicitSummaryTag()
+    {
+        const string commented = "<!-- <summary>重绘无边框星轨启动窗口。\n支持快捷下载检测前置。</summary> -->\n\n## 2.17.0\n\n### 新增与优化\n\n- **启动窗口**：升级视觉效果。";
+        const string bare = "<summary>一行摘要内容</summary>\n\n## 2.17.0\n\n- 优化。";
+
+        Assert.AreEqual("重绘无边框星轨启动窗口。 支持快捷下载检测前置。", UpdateHelper.ExtractSummary(commented));
+        Assert.AreEqual("一行摘要内容", UpdateHelper.ExtractSummary(bare));
+    }
+
+    [TestMethod]
+    public void ExtractsFallbackSummaryFromMarkdownWithoutTag()
+    {
+        var markdown = "## 2.17.0\n\n### 新增与优化\n\n- **独立游戏启动窗口重绘**：改为无边框星轨主题设计。\n- **启动闪屏**：新增 [独立加载动画](https://example.com) 体验。\n- **原生性能加速**：内置 `pcl_native` 提升速度。\n- **第 4 条内容**：不应继续包含。\n\n下载 `pcl-moon-win-x64.exe`。安装包说明。\n\nSHA-256: `" + Hash + "`";
+
+        var summary = UpdateHelper.ExtractSummary(markdown);
+
+        Assert.AreEqual(
+            "• 独立游戏启动窗口重绘：改为无边框星轨主题设计。\n• 启动闪屏：新增 独立加载动画 体验。\n• 原生性能加速：内置 pcl_native 提升速度。",
+            summary);
+    }
+
+    [TestMethod]
+    public void StripsSummaryMetadataForMarkdownDisplay()
+    {
+        var raw = "<!-- <summary>简短摘要</summary> -->\n\n\n## 2.17.0\n\n<summary>残留标签</summary>\n\n### 新增与优化\n\n- 改进内容\n\n下载 `pcl-moon-win-x64.exe`。说明。\n\nSHA-256: `" + Hash + "`";
+
+        Assert.AreEqual("## 2.17.0\n\n### 新增与优化\n\n- 改进内容", UpdateHelper.StripSummaryMetadata(raw));
+    }
+
+    [TestMethod]
+    public void MatchesVersionRecognizesMatchingAndMismatchedChangelogs()
+    {
+        Assert.IsTrue(UpdateHelper.MatchesVersion("## 2.17.0\n\n- 内容", "2.17.0"));
+        Assert.IsTrue(UpdateHelper.MatchesVersion("<!-- <summary>摘要</summary> -->\n\n## 2.17.0\n\n- 内容", "2.17.0"));
+        Assert.IsTrue(UpdateHelper.MatchesVersion("## v2.17.0 更新一览(2026-11-20)\n\n- 内容", "2.17.0"));
+        Assert.IsFalse(UpdateHelper.MatchesVersion("## 2.16.1\n\n- 旧内容", "2.17.0"));
+        Assert.IsFalse(UpdateHelper.MatchesVersion("没有标题的文本 2.17.0", "2.17.0"));
+        Assert.IsFalse(UpdateHelper.MatchesVersion(null, "2.17.0"));
+    }
 }

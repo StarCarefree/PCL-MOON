@@ -1,0 +1,40 @@
+[package]
+name = "pcl-moon-cloud"
+version = "1.0.0"
+edition = "2024"
+publish = false
+description = "Standalone Rust PCL-MOON Cloud pack catalog server with embedded admin console"
+
+[lib]
+name = "pcl_moon_cloud"
+path = "src/lib.rs"
+
+[[bin]]
+name = "pcl-moon-cloud"
+path = "src/main.rs"
+
+[dependencies]
+axum = "0.8"
+bytes = "1"
+flate2 = "1"
+http-body-util = "0.1"
+hyper = { version = "1", features = ["http1", "server"] }
+hyper-util = { version = "0.1", features = ["http1", "server", "server-graceful", "service", "tokio"] }
+regex = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+subtle = "2"
+tokio = { version = "1", features = ["macros", "net", "rt-multi-thread", "signal", "sync", "time", "io-util"] }
+url = "2"
+
+[dev-dependencies]
+reqwest = { version = "0.12", default-features = false }
+tempfile = "3"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+
+[workspace]

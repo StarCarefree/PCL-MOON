@@ -4,15 +4,13 @@ using PCL.Core.App;
 using PCL.Core.IO;
 using PCL.Core.Minecraft;
 using PCL.Core.Minecraft.Java.UserPreference;
-using PCL.Network;
-using PCL.Network.Loaders;
 using PCL.Core.App.Localization;
 using PCL.Core.Utils.OS;
 using PCL.Core.Utils;
 
 namespace PCL;
 
-public static class ModJava
+public static partial class ModJava
 {
     public static int javaListCacheVersion = 7;
 
@@ -26,6 +24,12 @@ public static class ModJava
     /// </summary>
     public static JavaManager Javas => JavaService.JavaManager;
 
+    public sealed class LaunchJavaSelection
+    {
+        // 仅在本次启动中保留选择，供下载后的重选复用。
+        public bool UseRecommended { get; set; }
+    }
+
     /// <summary>
     ///     根据要求返回最适合的 Java，若找不到则返回 Nothing。
     ///     最小与最大版本在与输入相同时也会通过。
@@ -33,25 +37,65 @@ public static class ModJava
     /// </summary>
     public static JavaEntry JavaSelect(string cancelException, Version minVersion = null, Version maxVersion = null,
         McInstance relatedInstance = null, bool enforceVersionRange = false,
-        IReadOnlySet<int> compatibleMajors = null)
+        IReadOnlySet<int> compatibleMajors = null, LaunchJavaSelection launchSelection = null)
     {
         ModBase.Log(
             $"[Java] 要求选择合适 Java，要求最低版本 {(minVersion is not null ? minVersion.ToString() : "未指定")}，要求选择的最高版本 {(maxVersion is not null ? maxVersion.ToString() : "未指定")}，关联实例 {(relatedInstance is not null ? relatedInstance.Name : "未指定")}");
 
-        // 版本范围验证函数（安全处理 null 边界）
-        bool IsVersionSuitable(Version ver)
+        var reqMin = minVersion ?? new Version(1, 0, 0);
+        var reqMax = maxVersion ?? new Version(999, 999, 999);
+
+        bool AcceptSelectedJava(JavaEntry candidate, string warningKey)
         {
-            return (minVersion is null || ver >= minVersion) && (maxVersion is null || ver <= maxVersion);
+            var version = candidate.Installation.Version;
+            var suitable = JavaManager.IsVersionSuitable(version, reqMin, reqMax) &&
+                           (compatibleMajors is null ||
+                            compatibleMajors.Contains(JavaManager.NormalizeVersion(version).Major));
+            if (suitable) return true;
+            if (enforceVersionRange)
+            {
+                ModBase.Log($"[Java] 指定的 Java 不满足强制范围要求，继续搜索: {candidate}");
+                return false;
+            }
+            if (launchSelection is not null && relatedInstance?.PathInstance is not null &&
+                Config.Instance.IgnoreJavaCompatibility[relatedInstance.PathInstance])
+            {
+                ModBase.Log($"[Java] 已忽略兼容性警告，使用指定的 Java: {candidate}");
+                return true;
+            }
+
+            var warning = _GetJavaRangeWarning(warningKey, version, minVersion, maxVersion);
+            if (compatibleMajors is not null)
+                warning += "\n" + Lang.Text("Minecraft.Launch.Java.Compatibility.AllowedMajors",
+                    string.Join(", ", compatibleMajors.OrderBy(major => major)));
+            if (launchSelection is null)
+            {
+                HintService.Hint(warning);
+                return true;
+            }
+
+            var choice = ModMain.MyMsgBox(
+                warning + "\n\n" + Lang.Text("Minecraft.Launch.Java.Compatibility.SwitchMessage"),
+                Lang.Text("Minecraft.Launch.Java.Compatibility.Title"),
+                Lang.Text("Minecraft.Launch.Java.Compatibility.UseRecommended"),
+                Lang.Text("Minecraft.Launch.Java.Compatibility.KeepSelected"),
+                Lang.Text("Minecraft.Launch.Java.Compatibility.CancelLaunch"),
+                isWarn: true);
+            switch (choice)
+            {
+                case 1:
+                    launchSelection.UseRecommended = true;
+                    ModBase.Log("[Java] 玩家选择仅本次启动使用推荐 Java");
+                    return false;
+                case 2:
+                    ModBase.Log($"[Java] 玩家选择继续使用不兼容的 Java: {candidate}");
+                    return true;
+                default:
+                    throw new Exception(cancelException);
+            }
         }
 
-        // compatibleJavaMajors 集合成员资格：按规范化后的主版本判断（兼容 Java 8 的 1.8.x 形式）
-        bool IsAllowedMajor(JavaEntry entry)
-        {
-            return compatibleMajors is null ||
-                   compatibleMajors.Contains(JavaManager.NormalizeVersion(entry.Installation.Version).Major);
-        }
-
-        // 自动搜索结果按兼容主版本集合过滤，接受集合未声明的主版本（例如 [8, 17] 的 9 - 16）
+        // 自动搜索结果按兼容主版本集合过滤，排除集合未声明的主版本。
         JavaEntry[] FilterByCompatibleMajors(JavaEntry[] entries)
         {
             return compatibleMajors is null
@@ -63,7 +107,7 @@ public static class ModJava
         }
 
         // ===== 优先级 1：实例专属 Java 偏好 =====
-        if (relatedInstance is not null && relatedInstance.PathInstance is not null)
+        if (launchSelection?.UseRecommended != true && relatedInstance?.PathInstance is not null)
         {
             var rawPreference = Config.Instance.SelectedJava[relatedInstance.PathInstance];
 
@@ -82,12 +126,9 @@ public static class ModJava
 
                             if (candidate is not null && candidate.IsEnabled)
                             {
-                                if (!IsVersionSuitable(candidate.Installation.Version) || !IsAllowedMajor(candidate))
-                                    HintService.Hint(_GetJavaRangeWarning(
-                                        "Minecraft.Launch.Java.Compatibility.InstanceSelectedOutOfRange",
-                                        candidate.Installation.Version,
-                                        minVersion,
-                                        maxVersion));
+                                if (!AcceptSelectedJava(candidate,
+                                        "Minecraft.Launch.Java.Compatibility.InstanceSelectedOutOfRange"))
+                                    break;
                                 ModBase.Log($"[Java] 返回实例 '{relatedInstance.Name}' 指定的 Java: {candidate}");
                                 return candidate;
                             }
@@ -108,13 +149,9 @@ public static class ModJava
                                 var candidate = Javas.Get(absPath);
                                 if (candidate is not null && candidate.IsEnabled)
                                 {
-                                    if (!IsVersionSuitable(candidate.Installation.Version) || !IsAllowedMajor(candidate))
-                                        HintService.Hint(_GetJavaRangeWarning(
-                                                "Minecraft.Launch.Java.Compatibility.RelativePathSelectedOutOfRange",
-                                                candidate.Installation.Version,
-                                                minVersion,
-                                                maxVersion),
-                                            HintType.Error);
+                                    if (!AcceptSelectedJava(candidate,
+                                            "Minecraft.Launch.Java.Compatibility.RelativePathSelectedOutOfRange"))
+                                        break;
                                     ModBase.Log(
                                         $"[Java] 返回实例 '{relatedInstance.Name}' 相对路径指定的 Java ({relPref.RelativePath}): {candidate}");
                                     return candidate;
@@ -151,7 +188,7 @@ public static class ModJava
         }
 
         // ===== 优先级 2：全局指定的 Java =====
-        var globalJavaPath = Config.Launch.SelectedJava;
+        var globalJavaPath = launchSelection?.UseRecommended == true ? null : Config.Launch.SelectedJava;
         if (!string.IsNullOrWhiteSpace(globalJavaPath))
         {
             globalJavaPath = globalJavaPath.Trim();
@@ -159,19 +196,9 @@ public static class ModJava
 
             if (candidate is not null && candidate.IsEnabled)
             {
-                var versionSuitable = IsVersionSuitable(candidate.Installation.Version) && IsAllowedMajor(candidate);
-                if (enforceVersionRange && !versionSuitable)
+                if (AcceptSelectedJava(candidate,
+                        "Minecraft.Launch.Java.Compatibility.GlobalSelectedOutOfRange"))
                 {
-                    ModBase.Log($"[Java] 全局指定的 Java 版本不满足强制范围要求，忽略并继续自动搜索: {candidate}");
-                }
-                else
-                {
-                    if (!versionSuitable)
-                        HintService.Hint(_GetJavaRangeWarning(
-                            "Minecraft.Launch.Java.Compatibility.GlobalSelectedOutOfRange",
-                            candidate.Installation.Version,
-                            minVersion,
-                            maxVersion));
                     ModBase.Log($"[Java] 返回全局指定的 Java: {candidate}");
                     return candidate;
                 }
@@ -189,9 +216,6 @@ public static class ModJava
         // ===== 优先级 3：自动搜索合适版本 =====
         ModBase.Log("[Java] 开始自动搜索符合版本要求的 Java 运行时");
         Javas.CheckAllAvailability();
-
-        var reqMin = minVersion ?? new Version(1, 0, 0);
-        var reqMax = maxVersion ?? new Version(999, 999, 999);
 
         var candidates = FilterByCompatibleMajors(
             Javas.SelectSuitableJavaAsync(reqMin, reqMax).GetAwaiter().GetResult());
@@ -375,133 +399,6 @@ public static class ModJava
             Lang.Text("Minecraft.Launch.Java.NotFound.Title"));
 
         return false;
-    }
-
-    /// <summary>
-    ///     获取下载 Java 的加载器。需要开启 IsForceRestart 以正常刷新 Java 列表。
-    /// </summary>
-    public static ModLoader.LoaderCombo<string> GetJavaDownloadLoader()
-    {
-        var javaDownloadLoader = new LoaderDownload(
-            Lang.Text("Minecraft.Launch.Java.Task.DownloadFiles"),
-            [])
-        {
-            ProgressWeight = 10d
-        };
-
-        var loader = new ModLoader.LoaderCombo<string>(
-            Lang.Text("Minecraft.Launch.Java.Task.Download"),
-            [
-                new ModLoader.LoaderTask<string, List<DownloadFile>>(
-                    Lang.Text("Minecraft.Launch.Java.Task.GetDownloadInfo"),
-                    JavaFileList)
-                {
-                    ProgressWeight = 2d
-                },
-                javaDownloadLoader
-            ]);
-
-        javaDownloadLoader.OnStateChangedThread += (_, newState, _) =>
-        {
-            switch (newState)
-            {
-                case ModBase.LoadState.Failed or ModBase.LoadState.Aborted
-                    when lastJavaBaseDir is not null:
-                    ModBase.Log(
-                        $"[Java] 由于下载未完成，清理未下载完成的 Java 文件：{lastJavaBaseDir}",
-                        ModBase.LogLevel.Debug);
-
-                    ModBase.DeleteDirectory(lastJavaBaseDir);
-                    break;
-                case ModBase.LoadState.Finished:
-                    Javas.ScanJavaAsync().GetAwaiter().GetResult();
-                    lastJavaBaseDir = null;
-                    break;
-            }
-        };
-
-        javaDownloadLoader.hasOnStateChangedThread = true;
-        return loader;
-    }
-
-    private static string lastJavaBaseDir; // 用于在下载中断或失败时删除未完成下载的 Java 文件夹，防止残留只下了一半但 -version 能跑的 Java
-
-    private static readonly HashSet<string> ignoreHash = new[]
-    {
-        "12976a6c2b227cbac58969c1455444596c894656", "c80e4bab46e34d02826eab226a4441d0970f2aba",
-        "84d2102ad171863db04e7ee22a259d1f6c5de4a5"
-    }.ToHashSet();
-
-    private static void JavaFileList(ModLoader.LoaderTask<string, List<DownloadFile>> loader)
-    {
-        ModBase.Log("[Java] 开始获取 Java 下载信息");
-        var indexFileStr = ModNet.NetGetCodeByLoader(
-            ModDownload.DlVersionListOrder(
-                new[]
-                {
-                    "https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json"
-                },
-                new[]
-                {
-                    "https://bmclapi2.bangbang93.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json"
-                }), isJson: true);
-        // 查找要下载的目标 Java
-        string? targetName = null;
-        JsonNode? targetValue = null;
-        var components =
-            (JsonObject)((JsonObject)ModBase.GetJson(indexFileStr))[$"windows-x{(SystemInfo.Is32BitSystem ? "86" : "64")}"];
-        if (components.ContainsKey(loader.input)) // 精确匹配
-        {
-            targetName = loader.input;
-            targetValue = components[loader.input];
-        }
-        else // 模糊匹配
-        {
-            var match = components.FirstOrDefault(c =>
-                c.Value?.AsArray().FirstOrDefault()?["version"]?["name"]?.ToString().StartsWithF(loader.input) ?? false);
-            targetName = match.Key;
-            targetValue = match.Value;
-            if (targetName is null)
-                throw new Exception($"未能找到所需的 Java {loader.input}");
-        }
-
-        var targetComponent = targetValue?.AsArray().FirstOrDefault();
-        if (targetComponent is null)
-            throw new Exception($"Mojang 未提供所需的 Java {loader.input}");
-        // 获取文件列表
-        var address = (string)targetComponent["manifest"]["url"];
-        ModLaunch.McLaunchLog($"准备下载 Java {targetComponent["version"]["name"]}（{targetName}）：{address}");
-        var listFileStr = (JsonObject)Requester.FetchJson(
-            ModDownload.DlSourceOrder(new[] { address },
-                new[] { address.Replace("piston-meta.mojang.com", "bmclapi2.bangbang93.com") }).First(), RequestParam.WithRetry);
-        lastJavaBaseDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            ".minecraft", "runtime", targetName);
-        var results = new List<DownloadFile>(listFileStr["files"].AsObject().Count);
-        foreach (var File in listFileStr["files"].AsObject())
-        {
-            if (File.Value?.AsObject()?["downloads"]?["raw"] is null)
-                continue;
-
-            var info = File.Value["downloads"]["raw"].AsObject();
-            var checkHash = info["sha1"];
-            if (ignoreHash.Contains((string)checkHash))
-                continue; // 跳过 3 个无意义大量重复文件（#3827）
-
-            var checker = new ModBase.FileChecker(actualSize: (long)info["size"], hash: (string)info["sha1"]);
-            var filePath = Path.GetFullPath(Path.Combine(lastJavaBaseDir, File.Key));
-            if (!Files.IsPathWithinDirectory(filePath, lastJavaBaseDir))
-                throw new Exception($"{filePath} 不在 {lastJavaBaseDir} 中");
-
-            if (checker.Check(filePath) is null)
-                continue; // 跳过已存在的文件
-            var url = (string)info["url"];
-            results.Add(new DownloadFile(
-                ModDownload.DlSourceOrder(new[] { url },
-                    new[] { url.Replace("piston-data.mojang.com", "bmclapi2.bangbang93.com") }), filePath, checker));
-        }
-
-        loader.output = results;
-        ModBase.Log($"[Java] 需要下载 {results.Count} 个文件，目标文件夹：{lastJavaBaseDir}");
     }
 
     #endregion

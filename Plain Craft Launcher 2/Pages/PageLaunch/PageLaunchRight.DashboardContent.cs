@@ -143,7 +143,9 @@ public partial class PageLaunchRight
                 var recent = _dashboardRecent.Where(item => current.Contains(item.Instance.PathInstance)).ToArray();
                 foreach (var item in recent) panel.Children.Add(DashboardInstanceButton(item.Instance, item.Time.ToString("MM.dd HH:mm") + " · 日志更新"));
                 if (recent.Length == 0) panel.Children.Add(DashboardText(_dashboardRecentLoading ? "正在读取游戏记录…" : "还没有找到游戏日志。启动并游玩后，最近版本会出现在这里。", 12, true));
-                panel.Children.Add(DashboardText("依据 latest.log 修改时间；共享游戏目录的版本合并显示。", 10, true));
+                var hint = DashboardText("依据 latest.log 修改时间；共享游戏目录的版本合并显示。", 10, true);
+                hint.Margin = new Thickness(0, 2, 0, 0);
+                panel.Children.Add(hint);
                 break;
             case "library":
                 var versions = DashboardInstances().OrderByDescending(instance => States.Instance.Starred[instance.PathInstance]).ThenBy(instance => instance.Name, StringComparer.CurrentCultureIgnoreCase).ToArray();
@@ -162,6 +164,7 @@ public partial class PageLaunchRight
                 browse.Padding = new Thickness(8, 0, 8, 0);
                 browse.Background = Brushes.Transparent;
                 browse.BorderBrush = Brushes.Transparent;
+                browse.IsEnabled = !_dashboardEditing;
                 panel.Children.Add(browse);
                 break;
         }

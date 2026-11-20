@@ -310,4 +310,90 @@ public class HashCacheLookupTest
             new HashCache(Path.Combine(_directory, "hashes.db"), databaseTimeoutSeconds: timeout));
     }
 
+    [TestMethod]
+    public async Task GetCachedSha1Batch_ReturnsValidHitsPendingWritesAndRespectsLockTimeout()
+    {
+        var file2 = Path.Combine(_directory, "lib2.jar");
+        var file3 = Path.Combine(_directory, "pending.jar");
+        var missing = Path.Combine(_directory, "missing.jar");
+        File.WriteAllBytes(file2, new byte[2048]);
+        File.WriteAllBytes(file3, new byte[1024]);
+
+        var sha1 = await _cache.GetSHA1Async(_file);
+        var sha2 = await _cache.GetSHA1Async(file2);
+        var sha3 = SHA1Provider.Instance.ComputeHash(new byte[1024]).ToHexString();
+
+        // file2 修改内容且修改时间不同，应失效
+        File.WriteAllBytes(file2, new byte[1024]);
+        File.SetLastWriteTimeUtc(file2, File.GetLastWriteTimeUtc(file2).AddMinutes(2));
+
+        // 测试批量读取 + 待刷新队列合并
+        var batchCache = new HashCache(Path.Combine(_directory, "hashes.db"), batchWrites: true, databaseTimeoutSeconds: 1);
+        batchCache.QueueComputedHash(file3, SHA1Provider.Instance, sha3, 1024, File.GetLastWriteTimeUtc(file3));
+
+        var map = batchCache.GetCachedSha1Batch(new[] { _file, file2, file3, missing, _file });
+        Assert.AreEqual(2, map.Count);
+        Assert.AreEqual(sha1, map[Path.GetFullPath(_file)]);
+        Assert.AreEqual(sha3, map[Path.GetFullPath(file3)]);
+        Assert.IsFalse(map.ContainsKey(Path.GetFullPath(file2)));
+        Assert.IsFalse(string.Equals(sha2, sha3, StringComparison.OrdinalIgnoreCase) && map.ContainsKey(Path.GetFullPath(file2)));
+
+        // 验证独占锁短超时会抛出 SqliteException 以便熔断回退
+        var dbPath = Path.Combine(_directory, "hashes.db");
+        using var blocker = new SqliteConnection($"Data Source={dbPath};Pooling=False");
+        blocker.Open();
+        SqliteConnection.ClearAllPools();
+        using var cmd = blocker.CreateCommand();
+        cmd.CommandTimeout = 1;
+        cmd.CommandText = "PRAGMA journal_mode=DELETE; BEGIN EXCLUSIVE;";
+        cmd.ExecuteNonQuery();
+        try
+        {
+            var err = Assert.Throws<SqliteException>(() => _cache.GetCachedSha1Batch(new[] { _file }));
+            Assert.AreEqual(5, err.SqliteErrorCode);
+        }
+        finally
+        {
+            cmd.CommandText = "ROLLBACK;";
+            cmd.ExecuteNonQuery();
+        }
+    }
+
+    [TestMethod]
+    public void GetCachedSha1Batch_ChunksQueriesOverFiveHundredItemsWithDuplicates()
+    {
+        var dbPath = Path.Combine(_directory, "hashes.db");
+        var batchCache = new HashCache(dbPath, batchWrites: true);
+        var paths = new string[520];
+        var metas = new (string FullPath, long Size, DateTime LastWriteUtc)[530];
+        var expectedHashes = new string[520];
+
+        for (var i = 0; i < paths.Length; i++)
+        {
+            var p = Path.Combine(_directory, $"chunk-{i}.jar");
+            var payload = BitConverter.GetBytes(i);
+            File.WriteAllBytes(p, payload);
+            var full = Path.GetFullPath(p);
+            paths[i] = full;
+            var sha = SHA1Provider.Instance.ComputeHash(payload).ToHexString();
+            expectedHashes[i] = sha;
+            var info = new FileInfo(full);
+            batchCache.QueueComputedHash(full, SHA1Provider.Instance, sha, info.Length, info.LastWriteTimeUtc);
+            metas[i] = (full, info.Length, info.LastWriteTimeUtc);
+        }
+        batchCache.FlushPendingWrites();
+
+        // 追加 10 条重复路径以测试去重与跨 500 分块读取
+        for (var i = 0; i < 10; i++)
+            metas[520 + i] = metas[i];
+
+        var readerCache = new HashCache(dbPath);
+        var mapByMeta = readerCache.GetCachedSha1Batch(metas);
+        Assert.AreEqual(paths.Length, mapByMeta.Count);
+        for (var i = 0; i < paths.Length; i++)
+            Assert.AreEqual(expectedHashes[i], mapByMeta[paths[i]]);
+
+        var mapByPaths = readerCache.GetCachedSha1Batch(paths.Concat(paths.Take(5)).ToArray());
+        Assert.AreEqual(paths.Length, mapByPaths.Count);
+    }
 }

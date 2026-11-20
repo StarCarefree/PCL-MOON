@@ -174,7 +174,7 @@ internal sealed class LauncherLibrary : IDisposable
                 ["progress"] = ModLaunch.isLaunching ? ModLaunch.mcLaunchLoader.Progress : _installer is not null ? .25 + .75 * _installer.Progress
                     : _downloadTask is not null ? .25 * _downloadTask.Progress : _progress,
                 ["scope"] = _taskScope, ["error"] = _error },
-            ["config"] = new JsonObject { ["catalogUrl"] = _settings.CatalogUrl,
+            ["config"] = new JsonObject { ["disableAds"] = Config.System.DisableAds, ["catalogUrl"] = _settings.CatalogUrl,
                 ["catalogUrls"] = new JsonArray(_settings.CatalogUrls!.Select(url => (JsonNode?)JsonValue.Create(url)).ToArray()),
                 ["catalogSource"] = _catalogSource, ["quarkServiceUrl"] = _settings.QuarkServiceUrl,
                 ["catalogDefaultActive"] = _settings.CatalogUrls!.Length == 0,

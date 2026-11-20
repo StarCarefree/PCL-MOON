@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System.Buffers;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -26,6 +27,7 @@ using PCL.Core.Logging;
 using PCL.Core.Utils;
 using PCL.Core.Utils.Codecs;
 using PCL.Core.Utils.Hash;
+using PCL.Core.Utils.Native;
 using PCL.Core.Utils.OS;
 using Brush = System.Windows.Media.Brush;
 using Color = System.Windows.Media.Color;
@@ -1059,7 +1061,7 @@ public static class ModBase
         try
         {
             // 获取 MD5
-            using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 262144, FileOptions.SequentialScan))
             {
                 return (string)GetHexString(MD5Provider.Instance.ComputeHash(fs));
             }
@@ -1092,7 +1094,7 @@ public static class ModBase
             // '检测该文件是否在下载中，若在下载则放弃检测
             // If IgnoreOnDownloading AndAlso NetManage.Files.ContainsKey(FilePath) AndAlso NetManage.Files(FilePath).State <= NetState.Merge Then Return ""
             // 获取 SHA512
-            using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 262144, FileOptions.SequentialScan))
             {
                 return (string)GetHexString(SHA512Provider.Instance.ComputeHash(fs));
             }
@@ -1125,7 +1127,7 @@ public static class ModBase
             // '检测该文件是否在下载中，若在下载则放弃检测
             // If IgnoreOnDownloading AndAlso NetManage.Files.ContainsKey(FilePath) AndAlso NetManage.Files(FilePath).State <= NetState.Merge Then Return ""
             // 获取 SHA256
-            using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 262144, FileOptions.SequentialScan))
             {
                 return (string)GetHexString(SHA256Provider.Instance.ComputeHash(fs));
             }
@@ -1150,13 +1152,16 @@ public static class ModBase
     /// </summary>
     public static string GetFileSHA1(string filePath)
     {
+        if (PclNativeInterop.TrySha1File(filePath, out var nativeSha1, out _))
+            return nativeSha1;
+
         var retry = false;
         Re: ;
 
         try
         {
             // 获取 SHA1
-            using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 262144, FileOptions.SequentialScan))
             {
                 return (string)GetHexString(SHA1Provider.Instance.ComputeHash(fs));
             }
@@ -1314,15 +1319,184 @@ public static class ModBase
             return hash;
         }
 
-        private string CheckCore(string localPath, bool useCache)
+        internal static string[] CheckBatch(IReadOnlyList<(FileChecker Checker, string LocalPath)> items, bool useCache)
+        {
+            var results = new string[items.Count];
+            if (items.Count == 0) return results;
+
+            // 全流程对每个待检文件仅执行一次 FileInfo stat
+            var itemMetas = new (string? FullPath, bool Exists, long Size, DateTime LastWriteUtc)[items.Count];
+            void CollectMeta(int i)
+            {
+                var (checker, localPath) = items[i];
+                if (checker is null || checker.isJson || checker.hash is not { Length: 40 } || string.IsNullOrWhiteSpace(localPath))
+                    return;
+                try
+                {
+                    var fullPath = Path.GetFullPath(localPath);
+                    var info = new FileInfo(fullPath);
+                    itemMetas[i] = info.Exists
+                        ? (fullPath, true, info.Length, info.LastWriteTimeUtc)
+                        : (fullPath, false, 0L, default);
+                }
+                catch
+                {
+                    // 非法路径等保持 null，交由 CheckCore 生成原有错误文案
+                }
+            }
+
+            if (items.Count > 8)
+                Parallel.For(0, items.Count, new ParallelOptions { MaxDegreeOfParallelism = Math.Clamp(Environment.ProcessorCount, 1, 8) }, CollectMeta);
+            else
+                for (var i = 0; i < items.Count; i++) CollectMeta(i);
+
+            var uniqueSeen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var uniqueMetas = new List<(string FullPath, long Size, DateTime LastWriteUtc)>(items.Count);
+            for (var i = 0; i < itemMetas.Length; i++)
+            {
+                var meta = itemMetas[i];
+                if (meta.Exists && meta.FullPath is { } fp && uniqueSeen.Add(fp))
+                    uniqueMetas.Add((fp, meta.Size, meta.LastWriteUtc));
+            }
+
+            Dictionary<string, string>? sha1Map = null;
+            if (uniqueMetas.Count > 0)
+            {
+                sha1Map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                HashCache? readyCache = null;
+
+                if (useCache && Volatile.Read(ref LaunchHashesDisabled) == 0)
+                {
+                    var loading = LaunchHashes.Value;
+                    if (loading.IsFaulted || loading.IsCanceled)
+                    {
+                        _ = loading.Exception;
+                        DisableLaunchHashes();
+                    }
+                    else if (loading.IsCompletedSuccessfully)
+                    {
+                        readyCache = loading.Result;
+                        try
+                        {
+                            sha1Map = readyCache.GetCachedSha1Batch(uniqueMetas);
+                        }
+                        catch (Exception ex)
+                        {
+                            if (ex is Microsoft.Data.Sqlite.SqliteException)
+                            {
+                                DisableLaunchHashes();
+                                readyCache = null;
+                            }
+                            Log(ex, "启动哈希批量查询不可用，回退完整校验", LogLevel.Debug);
+                            sha1Map.Clear();
+                        }
+                    }
+                }
+
+                if (PclNativeInterop.IsAvailable && sha1Map.Count < uniqueMetas.Count)
+                {
+                    var uncached = new List<(string FullPath, long Size, DateTime LastWriteUtc)>(uniqueMetas.Count - sha1Map.Count);
+                    foreach (var meta in uniqueMetas)
+                    {
+                        if (!sha1Map.ContainsKey(meta.FullPath))
+                            uncached.Add(meta);
+                    }
+
+                    if (uncached.Count > 0)
+                    {
+                        var nativePaths = new string[uncached.Count];
+                        for (var i = 0; i < uncached.Count; i++) nativePaths[i] = uncached[i].FullPath;
+                        var nativeResults = new PclSha1FileResult[uncached.Count];
+                        var maxThreads = (uint)Math.Clamp(Environment.ProcessorCount, 1, 12);
+
+                        if (PclNativeInterop.TryBatchSha1Files(nativePaths, nativeResults, maxThreads))
+                        {
+                            var queueCache = useCache && Volatile.Read(ref LaunchHashesDisabled) == 0;
+                            for (var i = 0; i < uncached.Count; i++)
+                            {
+                                if (nativeResults[i].Status != PclNativeInterop.PclOk) continue;
+                                var item = uncached[i];
+                                var hex = PclNativeInterop.FormatSha1Hex(in nativeResults[i]);
+                                sha1Map[item.FullPath] = hex;
+
+                                if (queueCache)
+                                {
+                                    if (readyCache is not null)
+                                    {
+                                        readyCache.QueueComputedHash(item.FullPath, SHA1Provider.Instance, hex, item.Size, item.LastWriteUtc);
+                                    }
+                                    else
+                                    {
+                                        var postInfo = new FileInfo(item.FullPath);
+                                        if (!LaunchHashes.Value.IsFaulted && Volatile.Read(ref LaunchHashesDisabled) == 0 &&
+                                            postInfo.Exists && postInfo.Length == item.Size && postInfo.LastWriteTimeUtc == item.LastWriteUtc)
+                                        {
+                                            PendingLaunchHashes.Enqueue((item.FullPath, SHA1Provider.Instance, hex, item.Size, item.LastWriteUtc));
+                                        }
+                                        if (LaunchHashes.Value.IsFaulted || LaunchHashes.Value.IsCanceled || Volatile.Read(ref LaunchHashesDisabled) != 0)
+                                        {
+                                            DisableLaunchHashes();
+                                            queueCache = false;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            List<int>? fallbackIndices = null;
+            for (var i = 0; i < items.Count; i++)
+            {
+                var meta = itemMetas[i];
+                if (meta.Exists && meta.FullPath is { } fp && sha1Map is not null && sha1Map.TryGetValue(fp, out var preSha1))
+                {
+                    results[i] = items[i].Checker.CheckCore(items[i].LocalPath, useCache, preSha1, meta.Size);
+                }
+                else
+                {
+                    fallbackIndices ??= new List<int>();
+                    fallbackIndices.Add(i);
+                }
+            }
+
+            if (fallbackIndices is not null)
+            {
+                if (fallbackIndices.Count > 4)
+                {
+                    Parallel.ForEach(fallbackIndices, new ParallelOptions { MaxDegreeOfParallelism = Math.Clamp(Environment.ProcessorCount, 1, 8) }, idx =>
+                    {
+                        results[idx] = items[idx].Checker.CheckCore(items[idx].LocalPath, useCache);
+                    });
+                }
+                else
+                {
+                    foreach (var idx in fallbackIndices)
+                        results[idx] = items[idx].Checker.CheckCore(items[idx].LocalPath, useCache);
+                }
+            }
+
+            return results;
+        }
+
+        private string CheckCore(string localPath, bool useCache, string? precomputedSha1 = null, long? precomputedFileSize = null)
         {
             try
             {
                 Log($"[Checker] 开始校验文件 {localPath}", LogLevel.Developer);
-                var info = new FileInfo(localPath);
-                if (!info.Exists)
-                    return "文件不存在：" + localPath;
-                var fileSize = info.Length;
+                long fileSize;
+                if (precomputedFileSize is { } knownSize)
+                {
+                    fileSize = knownSize;
+                }
+                else
+                {
+                    var info = new FileInfo(localPath);
+                    if (!info.Exists)
+                        return "文件不存在：" + localPath;
+                    fileSize = info.Length;
+                }
                 var errorMessage = new List<string>();
                 var allowIgnore = false; // 允许相信哈希正确但是大小不正确
                 if (!string.IsNullOrEmpty(hash))
@@ -1341,7 +1515,9 @@ public static class ModBase
                     }
                     else // SHA1 (40)
                     {
-                        var computedHash = VerificationHash(localPath, SHA1Provider.Instance, () => GetFileSHA1(localPath), useCache);
+                        var computedHash = !string.IsNullOrEmpty(precomputedSha1)
+                            ? precomputedSha1
+                            : VerificationHash(localPath, SHA1Provider.Instance, () => GetFileSHA1(localPath), useCache);
                         if ((hash.ToLowerInvariant() ?? "") != (computedHash ?? ""))
                             errorMessage.Add("文件 SHA1 应为 " + hash + "，实际为 " + computedHash);
                     }
@@ -2230,6 +2406,114 @@ public static class ModBase
     /// </summary>
     public const int MaxLocalSearchDepth = 25;
 
+    internal static int NativeSearchCacheMinEntries = 64;
+
+    /// <summary>
+    ///     为给定条目创建常驻搜索索引，适合在用户输入过程中高频反复检索。
+    /// </summary>
+    public static CompiledSearchIndex<T> CreateSearchIndex<T>(IReadOnlyList<SearchEntry<T>> entries)
+    {
+        ArgumentNullException.ThrowIfNull(entries);
+        return new CompiledSearchIndex<T>(entries);
+    }
+
+    public sealed class CompiledSearchIndex<T> : IDisposable
+    {
+        private readonly List<SearchEntry<T>> _entries;
+        private NativeSearchIndex? _nativeIndex;
+        private bool _disposed;
+
+        internal CompiledSearchIndex(IReadOnlyList<SearchEntry<T>> entries)
+        {
+            _entries = entries is List<SearchEntry<T>> list ? [.. list] : [.. entries];
+            if (_entries.Count > 0 && PclNativeInterop.IsAvailable &&
+                TryFlattenModBaseEntries(
+                    _entries,
+                    normalizeAliasesInPlace: false,
+                    out var entrySourceCounts,
+                    out var sourceCount,
+                    out var sourceAliasCounts,
+                    out var weights,
+                    out var aliasCount,
+                    out var aliases,
+                    out _))
+            {
+                try
+                {
+                    _nativeIndex = NativeSearchHelper.TryBuildFromFlat(
+                        _entries.Count,
+                        entrySourceCounts,
+                        sourceCount,
+                        sourceAliasCounts,
+                        weights,
+                        aliasCount,
+                        aliases);
+                }
+                finally
+                {
+                    ArrayPool<int>.Shared.Return(entrySourceCounts);
+                    ArrayPool<int>.Shared.Return(sourceAliasCounts);
+                    ArrayPool<double>.Shared.Return(weights);
+                    ArrayPool<string>.Shared.Return(aliases, clearArray: true);
+                }
+            }
+        }
+
+        public int Count => _entries.Count;
+        public bool IsNativeBacked => _nativeIndex is not null && PclNativeInterop.IsAvailable;
+
+        public List<SearchEntry<T>> Search(string query, int maxBlurCount = 5, double minBlurSimilarity = 0.1d)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            if (_entries.Count == 0) return [];
+
+            var queryParts = query.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (queryParts.Length == 0)
+                return [.. _entries];
+
+            if (_nativeIndex is not null &&
+                double.IsFinite(minBlurSimilarity) &&
+                _nativeIndex.TryQueryPooled(
+                    PclNativeInterop.SearchModeModBase,
+                    query.AsSpan(),
+                    maxBlurCount,
+                    minBlurSimilarity,
+                    out var rented,
+                    out var count) &&
+                rented is not null)
+            {
+                try
+                {
+                    var results = new List<SearchEntry<T>>(count);
+                    for (var i = 0; i < count; i++)
+                    {
+                        var item = rented[i];
+                        var entry = _entries[(int)item.EntryIndex];
+                        entry.similarity = item.Similarity;
+                        entry.absoluteRight = item.AbsoluteRight != 0;
+                        results.Add(entry);
+                    }
+                    return results;
+                }
+                finally
+                {
+                    if (rented.Length > 0)
+                        ArrayPool<PclSearchResult>.Shared.Return(rented);
+                }
+            }
+
+            return SearchManaged(_entries, query, maxBlurCount, minBlurSimilarity);
+        }
+
+        public void Dispose()
+        {
+            if (_disposed) return;
+            _disposed = true;
+            _nativeIndex?.Dispose();
+            _nativeIndex = null;
+        }
+    }
+
     /// <summary>
     ///     进行多段文本加权搜索，获取相似度较高的数项结果。
     /// </summary>
@@ -2238,11 +2522,32 @@ public static class ModBase
     public static List<SearchEntry<T>> Search<T>(List<SearchEntry<T>> entries, string query, int maxBlurCount = 5,
         double minBlurSimilarity = 0.1d)
     {
-        var resultList = new List<SearchEntry<T>>();
-
-        if (entries is null || !entries.Any()) return resultList;
+        if (entries is null || entries.Count == 0) return new List<SearchEntry<T>>();
 
         // Preprocess query into parts
+        var queryParts = query.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        if (queryParts.Length == 0)
+        {
+            return new List<SearchEntry<T>>(entries);
+        }
+
+        if (entries.Count >= NativeSearchCacheMinEntries &&
+            PclNativeInterop.IsAvailable &&
+            double.IsFinite(minBlurSimilarity) &&
+            TrySearchNative(entries, query, maxBlurCount, minBlurSimilarity, out var nativeResults))
+        {
+            return nativeResults;
+        }
+
+        return SearchManaged(entries, query, maxBlurCount, minBlurSimilarity);
+    }
+
+    private static List<SearchEntry<T>> SearchManaged<T>(List<SearchEntry<T>> entries, string query, int maxBlurCount,
+        double minBlurSimilarity)
+    {
+        var resultList = new List<SearchEntry<T>>();
+        if (entries is null || !entries.Any()) return resultList;
+
         var queryParts = query.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
         if (queryParts.Length == 0)
         {
@@ -2307,6 +2612,208 @@ public static class ModBase
             }
 
         return resultList;
+    }
+
+    private static string _NormalizeAliasInPlace(string value)
+    {
+        for (var i = 0; i < value.Length; i++)
+        {
+            var ch = value[i];
+            if (ch == ' ' || (ch >= 'A' && ch <= 'Z') || (ch >= 0x80 && char.IsUpper(ch)))
+            {
+                return value.Replace(" ", "").ToLower();
+            }
+        }
+        return value;
+    }
+
+    private static bool TryFlattenModBaseEntries<T>(
+        IReadOnlyList<SearchEntry<T>> entries,
+        bool normalizeAliasesInPlace,
+        out int[] entrySourceCounts,
+        out int sourceCount,
+        out int[] sourceAliasCounts,
+        out double[] weights,
+        out int aliasCount,
+        out string[] aliases,
+        out ulong fingerprint)
+    {
+        var entryCount = entries.Count;
+        sourceCount = 0;
+        aliasCount = 0;
+        for (var i = 0; i < entryCount; i++)
+        {
+            var sources = entries[i].searchSource;
+            if (sources is null)
+            {
+                entrySourceCounts = [];
+                sourceAliasCounts = [];
+                weights = [];
+                aliases = [];
+                fingerprint = 0;
+                return false;
+            }
+
+            var entryWeight = 0.0;
+            for (var s = 0; s < sources.Count; s++)
+            {
+                var src = sources[s];
+                if (src?.aliases is null || !double.IsFinite(src.weight) || src.weight < 0.0)
+                {
+                    entrySourceCounts = [];
+                    sourceAliasCounts = [];
+                    weights = [];
+                    aliases = [];
+                    fingerprint = 0;
+                    return false;
+                }
+                entryWeight += src.weight;
+                aliasCount += src.aliases.Length;
+            }
+            if (entryWeight == 0.0)
+            {
+                entrySourceCounts = [];
+                sourceAliasCounts = [];
+                weights = [];
+                aliases = [];
+                fingerprint = 0;
+                return false;
+            }
+            sourceCount += sources.Count;
+        }
+
+        entrySourceCounts = ArrayPool<int>.Shared.Rent(Math.Max(1, entryCount));
+        sourceAliasCounts = ArrayPool<int>.Shared.Rent(Math.Max(1, sourceCount));
+        weights = ArrayPool<double>.Shared.Rent(Math.Max(1, sourceCount));
+        aliases = ArrayPool<string>.Shared.Rent(Math.Max(1, aliasCount));
+
+        ulong fp = 14695981039346656037UL;
+        fp = NativeSearchHelper.MixFingerprint(fp, (ulong)entryCount);
+        fp = NativeSearchHelper.MixFingerprint(fp, (ulong)sourceCount);
+        fp = NativeSearchHelper.MixFingerprint(fp, (ulong)aliasCount);
+
+        var sIdx = 0;
+        var aIdx = 0;
+        for (var e = 0; e < entryCount; e++)
+        {
+            var sources = entries[e].searchSource;
+            entrySourceCounts[e] = sources.Count;
+            fp = NativeSearchHelper.MixFingerprint(fp, (ulong)sources.Count);
+
+            for (var s = 0; s < sources.Count; s++)
+            {
+                var src = sources[s];
+                var arr = src.aliases;
+                sourceAliasCounts[sIdx] = arr.Length;
+                weights[sIdx] = src.weight;
+                fp = NativeSearchHelper.MixFingerprint(fp, (ulong)arr.Length);
+                fp = NativeSearchHelper.MixFingerprint(fp, (ulong)BitConverter.DoubleToInt64Bits(src.weight));
+
+                for (var a = 0; a < arr.Length; a++)
+                {
+                    var raw = arr[a];
+                    if (raw is null)
+                    {
+                        ArrayPool<int>.Shared.Return(entrySourceCounts);
+                        ArrayPool<int>.Shared.Return(sourceAliasCounts);
+                        ArrayPool<double>.Shared.Return(weights);
+                        ArrayPool<string>.Shared.Return(aliases, clearArray: true);
+                        fingerprint = 0;
+                        return false;
+                    }
+                    var norm = _NormalizeAliasInPlace(raw);
+                    if (normalizeAliasesInPlace && !ReferenceEquals(norm, raw))
+                    {
+                        arr[a] = norm;
+                    }
+                    aliases[aIdx++] = norm;
+                    fp = NativeSearchHelper.MixFingerprint(fp, (ulong)norm.GetHashCode(StringComparison.Ordinal));
+                }
+
+                sIdx++;
+            }
+        }
+
+        fingerprint = fp;
+        return true;
+    }
+
+    private static bool TrySearchNative<T>(
+        List<SearchEntry<T>> entries,
+        string query,
+        int maxBlurCount,
+        double minBlurSimilarity,
+        out List<SearchEntry<T>> results)
+    {
+        results = new List<SearchEntry<T>>();
+        if (!TryFlattenModBaseEntries(
+                entries,
+                normalizeAliasesInPlace: true,
+                out var entrySourceCounts,
+                out var sourceCount,
+                out var sourceAliasCounts,
+                out var weights,
+                out var aliasCount,
+                out var aliases,
+                out var fingerprint))
+        {
+            return false;
+        }
+
+        try
+        {
+            if (!NativeSearchHelper.TryQueryWithLruCache(
+                    PclNativeInterop.SearchModeModBase,
+                    query.AsSpan(),
+                    maxBlurCount,
+                    minBlurSimilarity,
+                    entries.Count,
+                    entrySourceCounts,
+                    sourceCount,
+                    sourceAliasCounts,
+                    weights,
+                    aliasCount,
+                    aliases,
+                    fingerprint,
+                    allowCache: true,
+                    out var rented,
+                    out var resultCount) || rented is null)
+            {
+                return false;
+            }
+
+            try
+            {
+                for (var i = 0; i < entries.Count; i++)
+                {
+                    entries[i].similarity = 0.0;
+                    entries[i].absoluteRight = false;
+                }
+
+                results = new List<SearchEntry<T>>(resultCount);
+                for (var i = 0; i < resultCount; i++)
+                {
+                    var item = rented[i];
+                    var entry = entries[(int)item.EntryIndex];
+                    entry.similarity = item.Similarity;
+                    entry.absoluteRight = item.AbsoluteRight != 0;
+                    results.Add(entry);
+                }
+                return true;
+            }
+            finally
+            {
+                if (rented.Length > 0)
+                    ArrayPool<PclSearchResult>.Shared.Return(rented);
+            }
+        }
+        finally
+        {
+            ArrayPool<int>.Shared.Return(entrySourceCounts);
+            ArrayPool<int>.Shared.Return(sourceAliasCounts);
+            ArrayPool<double>.Shared.Return(weights);
+            ArrayPool<string>.Shared.Return(aliases, clearArray: true);
+        }
     }
 
     #endregion

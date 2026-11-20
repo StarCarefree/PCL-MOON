@@ -1,0 +1,21 @@
+[package]
+name = "pcl-native"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+
+[lib]
+name = "pcl_native"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+bzip2 = "0.5"
+rayon = "1.11"
+sha1 = "0.10"
+zip = { version = "2", default-features = false, features = ["deflate"] }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = "symbols"

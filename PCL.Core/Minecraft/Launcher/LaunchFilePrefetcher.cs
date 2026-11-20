@@ -22,6 +22,7 @@ public sealed partial class LaunchFilePrefetcher : IDisposable
     private readonly TimeSpan _maxDuration;
     private readonly Action<string>? _log;
     private readonly ConcurrentQueue<string> _pending = new();
+    private readonly ConcurrentQueue<(string Directory, string SearchPattern)> _pendingDirs = new();
     private readonly HashSet<string> _seen = new(StringComparer.OrdinalIgnoreCase);
     private readonly object _gate = new();
     private readonly CancellationTokenSource _cancel = new();
@@ -84,13 +85,32 @@ public sealed partial class LaunchFilePrefetcher : IDisposable
                 added = true;
             }
             if (!added) return;
-            if (_worker is null)
-            {
-                _worker = new Thread(Run) { IsBackground = true, Priority = ThreadPriority.BelowNormal, Name = "PCL-MOON launch file prefetch" };
-                _worker.Start();
-            }
+            EnsureWorkerStartedLocked();
             Monitor.PulseAll(_gate);
         }
+    }
+
+    /// <summary>
+    /// 登记待后台枚举并预读的目录（不阻塞调用线程）；仅收匹配到的已存在 .jar 文件。
+    /// </summary>
+    public void EnqueueDirectory(string directoryPath, string searchPattern = "*.jar")
+    {
+        if (string.IsNullOrWhiteSpace(directoryPath)) return;
+        var pattern = string.IsNullOrWhiteSpace(searchPattern) ? "*.jar" : searchPattern;
+        lock (_gate)
+        {
+            if (_disposed) return;
+            _pendingDirs.Enqueue((directoryPath, pattern));
+            EnsureWorkerStartedLocked();
+            Monitor.PulseAll(_gate);
+        }
+    }
+
+    private void EnsureWorkerStartedLocked()
+    {
+        if (_worker is not null) return;
+        _worker = new Thread(Run) { IsBackground = true, Priority = ThreadPriority.BelowNormal, Name = "PCL-MOON launch file prefetch" };
+        _worker.Start();
     }
 
     private enum StopReason { Done, Cancelled, TimedOut, BudgetExhausted }
@@ -105,21 +125,29 @@ public sealed partial class LaunchFilePrefetcher : IDisposable
             while (true)
             {
                 string? path = null;
+                (string Directory, string SearchPattern)? pendingDir = null;
                 lock (_gate)
                 {
-                    while (_pending.IsEmpty && !_cancel.IsCancellationRequested)
+                    while (_pending.IsEmpty && _pendingDirs.IsEmpty && !_cancel.IsCancellationRequested)
                     {
                         var remaining = deadline - Environment.TickCount64;
                         if (remaining <= 0) { reason = StopReason.TimedOut; return; }
                         Monitor.Wait(_gate, (int)Math.Min(remaining, int.MaxValue));
                     }
                     if (_cancel.IsCancellationRequested) { reason = StopReason.Cancelled; return; }
-                    _pending.TryDequeue(out path);
+                    if (!_pending.TryDequeue(out path) && _pendingDirs.TryDequeue(out var dirItem))
+                        pendingDir = dirItem;
                 }
-                if (path is null) continue;
                 if (_cancel.IsCancellationRequested) { reason = StopReason.Cancelled; return; }
                 if (Environment.TickCount64 >= deadline) { reason = StopReason.TimedOut; return; }
                 if (Interlocked.Read(ref _bytesRead) >= _byteBudget) { reason = StopReason.BudgetExhausted; return; }
+
+                if (pendingDir is { } dirReq)
+                {
+                    ExpandPendingDirectory(dirReq.Directory, dirReq.SearchPattern);
+                    continue;
+                }
+                if (path is null) continue;
                 _inFlight = true;
                 try
                 {
@@ -134,7 +162,7 @@ public sealed partial class LaunchFilePrefetcher : IDisposable
         finally
         {
             // 队列已空且无读到一半的文件时，Dispose 只是收尾，不算中断工作
-            if (reason == StopReason.Cancelled && !_inFlight && _pending.IsEmpty) reason = StopReason.Done;
+            if (reason == StopReason.Cancelled && !_inFlight && _pending.IsEmpty && _pendingDirs.IsEmpty) reason = StopReason.Done;
             var reasonText = reason switch
             {
                 StopReason.Cancelled => "取消",
@@ -144,6 +172,36 @@ public sealed partial class LaunchFilePrefetcher : IDisposable
             };
             _log?.Invoke($"[Prefetch] 预读 {_filesRead} 个文件，{BytesRead / 1048576.0:F1} MB，跳过 {_filesSkipped} 个，用时 {Environment.TickCount64 - started} ms（{reasonText}）");
             _completion.TrySetResult();
+        }
+    }
+
+    private void ExpandPendingDirectory(string directoryPath, string searchPattern)
+    {
+        try
+        {
+            if (!Directory.Exists(directoryPath)) return;
+            var discovered = new List<string>();
+            foreach (var file in Directory.EnumerateFiles(directoryPath, searchPattern, SearchOption.TopDirectoryOnly))
+            {
+                if (_cancel.IsCancellationRequested) return;
+                if (!file.EndsWith(".jar", StringComparison.OrdinalIgnoreCase)) continue;
+                discovered.Add(file);
+            }
+            if (discovered.Count == 0) return;
+
+            lock (_gate)
+            {
+                if (_disposed || _cancel.IsCancellationRequested) return;
+                foreach (var file in discovered)
+                {
+                    if (_seen.Add(file))
+                        _pending.Enqueue(file);
+                }
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            // 目录枚举异常不影响后续队列或游戏启动
         }
     }
 

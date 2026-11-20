@@ -66,12 +66,9 @@ public partial class Application
                 new FrameworkPropertyMetadata(100));
             Tooltip.Enable();
 
-            // 设置初始窗口
+            // 设置初始窗口（使用独立 STA 线程的星遥星月加载闪屏替代旧版静态图标）
             if (Config.Preference.ShowStartupLogo)
-            {
-                ModMain.frmStart = new SplashScreen(@"Images\icon.ico");
-                ModMain.frmStart.Show(false, true);
-            }
+                HybridSplashHost.Show();
 
             // 设置初始化
             _ = Config.Debug.Enabled;
@@ -103,6 +100,7 @@ public partial class Application
         }
         catch (Exception ex)
         {
+            HybridSplashHost.CloseImmediately();
             var filePath = Basics.ExecutablePath;
             var summary = Lang.Text("Application.InitializationError.Path",
                 string.IsNullOrEmpty(filePath)

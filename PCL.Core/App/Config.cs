@@ -29,6 +29,11 @@ public static partial class Config
         [ConfigItem<bool>("SystemTelemetry", false)] public partial bool Telemetry { get; set; }
 
         /// <summary>
+        /// 禁用广告。
+        /// </summary>
+        [ConfigItem<bool>("SystemDisableAds", false)] public partial bool DisableAds { get; set; }
+
+        /// <summary>
         /// 实时日志最大行数。
         /// </summary>
         [ConfigItem<int>("SystemMaxLog", 13)] public partial int MaxGameLog { get; set; }

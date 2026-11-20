@@ -12,6 +12,8 @@ using PCL.Core.App.Configuration.Storage;
 using PCL.Core.App.Localization;
 using PCL.Core.IO.Net.Http;
 using PCL.Core.Minecraft;
+using PCL.Core.Minecraft.Java;
+using PCL.Core.Utils.OS;
 using PCL.Core.UI;
 using PCL.Core.Utils;
 using PCL.Network;
@@ -726,7 +728,7 @@ public static class ModDownloadLib
                 var javaLoader = ModJava.GetJavaDownloadLoader();
                 try
                 {
-                    javaLoader.Start(downloadJavaMajor, true);
+                    javaLoader.Start(new JavaDownloadRequest(downloadJavaMajor, !SystemInfo.Is32BitSystem, javaVersion), true);
                     while (javaLoader.State == ModBase.LoadState.Loading && !task.IsAborted)
                         Thread.Sleep(10);
                 }
@@ -736,6 +738,9 @@ public static class ModDownloadLib
                 }
 
                 // 检查下载结果
+                if (task.IsAborted) return;
+                if (javaLoader.State != ModBase.LoadState.Finished)
+                    throw javaLoader.Error ?? new Exception(Lang.Text("Minecraft.Download.Error.JavaNotFoundInstallCanceled"));
                 java = ModJava.JavaSelect(Lang.Text("Minecraft.Download.Error.InstallationCanceled"),
                         javaVersion, enforceVersionRange: true);
                 if (task.IsAborted)
@@ -1712,7 +1717,7 @@ public static class ModDownloadLib
                 var javaLoader = ModJava.GetJavaDownloadLoader();
                 try
                 {
-                    javaLoader.Start(17, true);
+                    javaLoader.Start(new JavaDownloadRequest(17, !SystemInfo.Is32BitSystem, new Version(1, 8, 0, 60)), true);
                     while (javaLoader.State == ModBase.LoadState.Loading && !task.IsAborted)
                         Thread.Sleep(10);
                 }
@@ -1722,6 +1727,9 @@ public static class ModDownloadLib
                 }
 
                 // 检查下载结果
+                if (task.IsAborted) return;
+                if (javaLoader.State != ModBase.LoadState.Finished)
+                    throw javaLoader.Error ?? new Exception(Lang.Text("Minecraft.Download.Error.JavaNotFoundInstallCanceled"));
                 java = ModJava.JavaSelect(Lang.Text("Minecraft.Download.Error.InstallationCanceled"),
                     new Version(1, 8, 0, 60));
                 if (task.IsAborted)

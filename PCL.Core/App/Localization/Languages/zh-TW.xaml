@@ -2755,7 +2755,7 @@ PCL-MOON 的問題請向 PCL-MOON 回饋，不要提交到原版 PCL 或上游 P
 
     <!-- Setup.About -->
 
-    <sys:String x:Key="Setup.About.Community.Info">PCL-MOON 的開發團隊！</sys:String>
+    <sys:String x:Key="Setup.About.Community.Info">PCL-CE 的開發團隊！</sys:String>
     <sys:String x:Key="Setup.About.Moon.Info">PCL-MOON 的開發團隊！</sys:String>
     <sys:String x:Key="Setup.About.Community.Name">PCL Community</sys:String>
     <sys:String x:Key="Setup.About.Contributors.Title">貢獻者們</sys:String>
@@ -2813,8 +2813,7 @@ PCL-MOON 的問題請向 PCL-MOON 回饋，不要提交到原版 PCL 或上游 P
     <!-- Setup.About.Legal -->
 
     <sys:String x:Key="Setup.About.Legal.CommunitySource">PCL-MOON 開放原始碼</sys:String>
-    <sys:String x:Key="Setup.About.Legal.CopyrightText">Copyright © 2026 PCL Community &amp; 龙腾猫跃.
-非 MINECRAFT 官方產品。未經 MOJANG 或 MICROSOFT 批准，也不與 MOJANG 或 MICROSOFT 關聯。</sys:String>
+    <sys:String x:Key="Setup.About.Legal.CopyrightText">Copyright © 2026 StarCarefree &amp; PCL Community &amp; 龙腾猫跃.&#xD;非 MINECRAFT 官方產品。未經 MOJANG 或 MICROSOFT 批准，也不與 MOJANG 或 MICROSOFT 關聯。</sys:String>
     <sys:String x:Key="Setup.About.Legal.OtherInfo">其他資訊</sys:String>
     <sys:String x:Key="Setup.About.Legal.PrivacyNotice">隱私說明</sys:String>
     <sys:String x:Key="Setup.About.Legal.PrivacyText">本軟體的 User Agent 中包含啟動器的版本號，以統計各版本的使用者數量。
@@ -3033,16 +3032,6 @@ PCL-MOON 可嘗試升級這些版本的 Authlib 支援庫以解決問題。
     <sys:String x:Key="Setup.Launch.DownloadCache.ChangeTitle">選擇本機下載快取目錄</sys:String>
     <sys:String x:Key="Setup.Launch.DownloadCache.Changed">下載快取目錄已切換。舊目錄裡的檔案沒有移動，也沒有刪除。</sys:String>
 
-    <sys:String x:Key="Setup.Launch.Advanced.FrameGeneration">實驗性遊戲畫面插幀（2×，目標 60 FPS）</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.FrameGeneration.ToolTip">下次啟動生效。以通用 OpenGL 3.2 雙向區塊比對產生中間影格，無 NVIDIA 專屬相依。目標呈現 60 FPS、實際算繪約 30 FPS，會增加延遲及顯卡負擔，HUD 也參與插值。建議遊戲影格上限不低於 60；過慢、失焦或超出預算時跳過。無法消除 GC/主執行緒停頓。不支援 Vulkan；1.16.5–26.3 尚未逐版本及顯卡實測。</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.FrameDiagnostics">記錄遊戲長影格診斷（定位瞬間 0 FPS）</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.FrameDiagnostics.ToolTip">下次啟動生效，可獨立於插幀啟用。偵測超過 250ms 的呈現間隔，在啟動日誌輸出 [PCL FrameTime]、GC 時間變化與算繪執行緒堆疊。僅取樣，不自動修改 JVM 或遊戲設定；載入與切換視窗亦可能產生長間隔。</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.FrameSettingsButton">在遊戲視窗顯示插幀設定齒輪</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.FrameSettingsButton.ToolTip">下次啟動生效。遊戲視窗右上角顯示齒輪，可即時開關插幀、長影格診斷與調整目標 FPS，僅作用於本次遊戲。先按 Esc 釋放滑鼠再點擊。切換其他應用時隱藏，隨遊戲視窗移動與關閉；獨佔全螢幕可能遮住疊加層，建議視窗或無邊框模式。顯示按鈕不會自動開啟插幀。</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.FramePacing">啟用獨立限幀與實例設定支援</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.FramePacing.ToolTip">下次啟動載入影格節奏元件，即使未開啟插幀。預設不限幀；在遊戲齒輪或實例設定中指定 1–999 FPS，0 為關閉。精確模式會額外佔用 CPU。此選項控制獨立載入；元件因插幀或齒輪已載入時，仍可使用限幀。不會修改遊戲設定或啟用 Linux 執行緒配額。</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.SuperResolution">實驗性內部超分（降低世界算繪解析度）</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.SuperResolution.ToolTip">預設關閉，下次啟動生效。降低世界算繪解析度後由 GPU 重建到視窗大小，HUD 與滑鼠座標保持原生。目前僅 1.21.11 原生配接器、OpenGL 3.3 有首個實作；顯示卡是否真正支援要在執行時檢查，未知版本或後端保持原生。勾選不代表目前已生效。遊戲內齒輪與實例設定可即時切換比例與銳化。</sys:String>
     <!-- Setup.Launch.Advanced -->
 
     <sys:String x:Key="Setup.Launch.Advanced.DisableCrashAnalysis">停用自動崩潰分析</sys:String>
@@ -3057,9 +3046,19 @@ PCL-MOON 可嘗試升級這些版本的 Authlib 支援庫以解決問題。
     <sys:String x:Key="Setup.Launch.Advanced.DisableLF">停用 LegacyFix</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.DisableLF.ToolTip">PCL-MOON 會在啟動 1.5.x 及以下版本時使用 LegacyFix 來改善舊版本遊戲體驗和修復相容性問題。</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.LockMemory">鎖定記憶體分配（-Xms = -Xmx）</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.LockMemory.ToolTip">啟用後，啟動器會額外追加 -Xms 參數並令其等於最大堆 -Xmx，從而固定堆大小。這會隱式停用堆記憶體歸還（Uncommit），減少作業系統取消對映/重新分配記憶體頁帶來的延遲抖動，也有利於 ZGC 的回收預測。代價是遊戲全程會佔用接近最大分配的記憶體。</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.AppCds">啟用 AppCDS 應用類別資料共享加速啟動</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.AppCds.ToolTip">實驗性啟動加速（Java 19–25，64 位元）。自動追加 -XX:+AutoCreateSharedArchive 與實例獨立歸檔，首次正常結束後產生共享歸檔，後續啟動可加速類別載入。若目前啟動包含 Java Agent（如外置登入、啟動加速 Agent）、外置參數檔、非 ASCII 路徑或已手動設定 CDS 參數，將自動略過以確保相容性。</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.LockMemory.ToolTip">啟用後，啟動器會額外追加 -Xms 參數並令其等於最大堆 -Xmx，從而固定堆大小。這會隱式停用堆記憶體歸還（Uncommit），減少作業系統取消對映/重新分配記憶體頁帶來的延遲抖動，也有利於 ZGC 的回收預測。代價是遊戲全程會佔用接近最大分配的記憶體。</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.FrameGeneration">實驗性遊戲畫面插幀（2×，目標 60 FPS）</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.FrameGeneration.ToolTip">下次啟動生效。以通用 OpenGL 3.2 雙向區塊比對產生中間影格，無 NVIDIA 專屬相依。目標呈現 60 FPS、實際算繪約 30 FPS，會增加延遲及顯卡負擔，HUD 也參與插值。建議遊戲影格上限不低於 60；過慢、失焦或超出預算時跳過。無法消除 GC/主執行緒停頓。不支援 Vulkan；1.16.5–26.3 尚未逐版本及顯卡實測。</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.FrameDiagnostics">記錄遊戲長影格診斷（定位瞬間 0 FPS）</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.FrameDiagnostics.ToolTip">下次啟動生效，可獨立於插幀啟用。偵測超過 250ms 的呈現間隔，在啟動日誌輸出 [PCL FrameTime]、GC 時間變化與算繪執行緒堆疊。僅取樣，不自動修改 JVM 或遊戲設定；載入與切換視窗亦可能產生長間隔。</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.FrameSettingsButton">在遊戲視窗顯示插幀設定齒輪</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.FrameSettingsButton.ToolTip">下次啟動生效。遊戲視窗右上角顯示齒輪，可即時開關插幀、長影格診斷與調整目標 FPS，僅作用於本次遊戲。先按 Esc 釋放滑鼠再點擊。切換其他應用時隱藏，隨遊戲視窗移動與關閉；獨佔全螢幕可能遮住疊加層，建議視窗或無邊框模式。顯示按鈕不會自動開啟插幀。</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.FramePacing">啟用獨立限幀與實例設定支援</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.FramePacing.ToolTip">下次啟動載入影格節奏元件，即使未開啟插幀。預設不限幀；在遊戲齒輪或實例設定中指定 1–999 FPS，0 為關閉。精確模式會額外佔用 CPU。此選項控制獨立載入；元件因插幀或齒輪已載入時，仍可使用限幀。不會修改遊戲設定或啟用 Linux 執行緒配額。</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.SuperResolution">實驗性內部超分（降低世界算繪解析度）</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.SuperResolution.ToolTip">預設關閉，下次啟動生效。降低世界算繪解析度後由 GPU 重建到視窗大小，HUD 與滑鼠座標保持原生。目前僅 1.21.11 原生配接器、OpenGL 3.3 有首個實作；顯示卡是否真正支援要在執行時檢查，未知版本或後端保持原生。勾選不代表目前已生效。遊戲內齒輪與實例設定可即時切換比例與銳化。</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.DisableLwjglUnsafeAgent">停用 LWJGL Unsafe Agent</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.DisableLwjglUnsafeAgent.ToolTip">Minecraft 26.1 使用了 LWJGL 3.4.1，LWJGL 3.4.1 使用了 FFM API 以在 JDK 25+ 上存取原生記憶體。由於 JDK 最佳化能力限制，某些情況下這會產生嚴重的效能問題。
 PCL-MOON 會使用 LWJGL Unsafe Agent 修復這個問題，以解決可能存在的效能問題。
@@ -3114,6 +3113,7 @@ PCL-MOON 會使用 LWJGL Unsafe Agent 修復這個問題，以解決可能存在
     <sys:String x:Key="Setup.Launch.Advanced.Renderer.Warning.Confirm">我知道我在做什麼</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.Renderer.Warning.Message">修改此項會嚴重影響遊戲的穩定性與效能。如果你不知道你在做什麼，不要修改此選項！
 你確認要繼續修改嗎？</sys:String>
+    <sys:String x:Key="Setup.Launch.Acceleration.Title">啟動加速</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.Title">高階啟動選項</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.UseJavaExe">使用 java.exe 而不是 javaw.exe</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.UseJavaExe.ToolTip">如果遇到遊戲視窗長時間不出現等故障可嘗試啟用此項，PCL-MOON 將使用 java.exe 來執行遊戲，這樣會讓遊戲程式擁有標準輸入/輸出流，以盡可能避免列印日誌時出現問題。
@@ -3320,6 +3320,7 @@ IPv6 優先：-Djava.net.preferIPv6Stack=true</sys:String>
 一般建議選擇「僅在有重要通知時顯示公告」，這樣可在不造成干擾的情況下獲得關鍵資訊。
 除非您正在製作伺服器模組包，或經常手動更新啟動器，否則強烈不建議選擇此選項！</sys:String>
     <sys:String x:Key="Setup.Misc.System.Announcement.ImportantOnly">僅在有重要通知時顯示公告</sys:String>
+    <sys:String x:Key="Setup.Misc.System.DisableAds">停用廣告</sys:String>
     <sys:String x:Key="Setup.Misc.System.DisableHardwareAcceleration">停用硬體加速</sys:String>
     <sys:String x:Key="Setup.Misc.System.ExportSettings">匯出設定</sys:String>
     <sys:String x:Key="Setup.Misc.System.ExportSettings.Filter">PCL-MOON 設定檔(*.json)|*.json</sys:String>

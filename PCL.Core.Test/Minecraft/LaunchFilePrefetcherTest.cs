@@ -121,4 +121,35 @@ public sealed class LaunchFilePrefetcherTest
         prefetcher.Dispose();
         await prefetcher.Completion.WaitAsync(TimeSpan.FromSeconds(10));
     }
+
+    [TestMethod]
+    public async Task EnqueueDirectoryReadsDistinctJarsHandlesMissingAndRespectsBudget()
+    {
+        var dir = NewDir();
+        try
+        {
+            var jar1 = Path.Combine(dir, "mod1.jar");
+            var jar2 = Path.Combine(dir, "mod2.jar");
+            var txt = Path.Combine(dir, "ignore.txt");
+            File.WriteAllBytes(jar1, new byte[512 * 1024]);
+            File.WriteAllBytes(jar2, new byte[512 * 1024 + 9]);
+            File.WriteAllBytes(txt, new byte[4096]);
+
+            using var prefetcher = new LaunchFilePrefetcher(64L * 1024 * 1024, TimeSpan.FromSeconds(5), null);
+            prefetcher.EnqueueDirectory(Path.Combine(dir, "does-not-exist"));
+            prefetcher.Enqueue(new[] { jar1 });
+            prefetcher.EnqueueDirectory(dir, "*.jar");
+
+            var deadline = DateTime.UtcNow.AddSeconds(10);
+            while (prefetcher.FilesRead < 2 && DateTime.UtcNow < deadline)
+                await Task.Delay(20);
+
+            Assert.AreEqual(2, prefetcher.FilesRead);
+            Assert.AreEqual(512 * 1024 + 512 * 1024 + 9, prefetcher.BytesRead);
+
+            prefetcher.Dispose();
+            await prefetcher.Completion.WaitAsync(TimeSpan.FromSeconds(10));
+        }
+        finally { Directory.Delete(dir, true); }
+    }
 }

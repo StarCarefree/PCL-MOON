@@ -18,7 +18,11 @@ public static class PclMoonRelease
     public const string Page = "https://github.com/StarCarefree/PCL-MOON/releases";
     public const string LatestPage = Page + "/latest";
 
-    public static string TagPage(string versionBaseName) => Page + "/v" + versionBaseName;
+    public static string TagPage(string versionBaseName)
+    {
+        var normalized = (versionBaseName ?? "").Trim().TrimStart('v', 'V');
+        return string.IsNullOrEmpty(normalized) ? Page : $"{Page}/tag/v{normalized}";
+    }
 }
 
 public class UpdatesGitHubReleaseModel : IUpdateSource
@@ -26,7 +30,10 @@ public class UpdatesGitHubReleaseModel : IUpdateSource
     private const string ApiUrl =
         "https://api.github.com/repos/" + PclMoonRelease.Owner + "/" + PclMoonRelease.Repo + "/releases?per_page=30";
 
-    private List<GitHubRelease> _cache;
+    private static readonly long CacheTtlMs = (long)TimeSpan.FromMinutes(2).TotalMilliseconds;
+
+    private volatile List<GitHubRelease>? _cache;
+    private long _cacheTicks;
 
     public string SourceName { get; set; } = "GitHub";
 
@@ -34,8 +41,11 @@ public class UpdatesGitHubReleaseModel : IUpdateSource
 
     public bool RefreshCache()
     {
-        _cache = FetchReleases();
-        return _cache.Count > 0;
+        var fresh = FetchReleases();
+        if (fresh.Count == 0) return false;
+        _cache = fresh;
+        Volatile.Write(ref _cacheTicks, Environment.TickCount64);
+        return true;
     }
 
     public VersionDataModel GetLatestVersion(UpdateChannel channel, UpdateArch arch)
@@ -72,10 +82,35 @@ public class UpdatesGitHubReleaseModel : IUpdateSource
         return loaders;
     }
 
+    /// <summary>
+    /// 根据指定版本号查询对应 GitHub Release 的清理后更新日志；未命中时刷新一次缓存再查。
+    /// </summary>
+    public string? TryGetChangelogForVersion(string versionName)
+    {
+        var target = VersionFromTag(versionName);
+        if (string.IsNullOrEmpty(target)) return null;
+
+        var hit = EnsureCache().FirstOrDefault(r =>
+            string.Equals(VersionFromTag(r.Tag), target, StringComparison.OrdinalIgnoreCase));
+        if (hit is null && RefreshCache())
+        {
+            hit = (_cache ?? []).FirstOrDefault(r =>
+                string.Equals(VersionFromTag(r.Tag), target, StringComparison.OrdinalIgnoreCase));
+        }
+        if (hit is null) return null;
+
+        var cleaned = UpdateHelper.CleanChangelog(hit.Body);
+        return string.IsNullOrWhiteSpace(cleaned) ? null : cleaned;
+    }
+
     private List<GitHubRelease> EnsureCache()
     {
-        if (_cache is null)
+        var cached = _cache;
+        if (cached is not { Count: > 0 } ||
+            Environment.TickCount64 - Volatile.Read(ref _cacheTicks) >= CacheTtlMs)
+        {
             RefreshCache();
+        }
         return _cache ?? [];
     }
 

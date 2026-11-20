@@ -1,11 +1,7 @@
 using System;
 using System.Diagnostics;
-using System.IO;
-using System.Security.Cryptography;
 using System.Threading;
-using System.Windows;
 using System.Windows.Threading;
-using PCL.Core.App;
 using PCL.Core.Minecraft.Launcher;
 
 namespace PCL;
@@ -14,7 +10,6 @@ namespace PCL;
 internal sealed class LaunchProgressPresentation : IDisposable
 {
     internal LaunchProgressState State { get; } = new();
-    private readonly MlsProgressChannel _channel;
     private readonly string _name;
     private readonly HybridLaunchWindow _window;
     private readonly DispatcherTimer _timer;
@@ -23,13 +18,14 @@ internal sealed class LaunchProgressPresentation : IDisposable
     private bool _closed;
     private int _disposed;
     private DateTime? _gameStartedUtc;
-    private bool _bridgePrepared;
+    private string? _gameDirectory;
+    private bool _inProcessProgressEnabled;
+    private ModLoadingProgressDriver? _progressDriver;
 
     internal LaunchProgressPresentation(string name, Action cancel)
     {
         _cancel = cancel;
         _name = name;
-        _channel = new MlsProgressChannel(Paths.Temp);
         _window = new HybridLaunchWindow(); // Intentionally not owned by the launcher window.
         _timer = new DispatcherTimer(DispatcherPriority.Background, _window.Dispatcher) { Interval = TimeSpan.FromMilliseconds(150) };
         _timer.Tick += Tick;
@@ -42,14 +38,9 @@ internal sealed class LaunchProgressPresentation : IDisposable
     private void CancelRequested(object? sender, EventArgs e) => _cancel();
     private void Tick(object? sender, EventArgs e) => Paint();
 
-    // Only the session's launch worker reads the file; the dispatcher only paints immutable snapshots.
-    internal void Poll()
-    {
-        if (Volatile.Read(ref _disposed) != 0 || _gameStartedUtc is null) return;
-        _channel.Poll(State);
-        if (State.TelemetryConnected && !State.ModLoadingComplete && !State.IsTerminal &&
-            DateTime.UtcNow - _channel.LastSignalUtc > TimeSpan.FromSeconds(20)) State.SignalLost();
-    }
+    // 保留空方法以兼容 ModLaunch 会话轮询调用；实际进度由启动器进程内驱动直接推送。
+    internal void Poll() { }
+
     private void Paint()
     {
         if (_closed) return;
@@ -66,43 +57,37 @@ internal sealed class LaunchProgressPresentation : IDisposable
             State.GameStarted("此实例没有 Fabric/Quilt 模组清单，将按游戏窗口状态交接");
             return;
         }
-        try
-        {
-            var uri = new Uri("pack://application:,,,/Plain Craft Launcher 2;component/Resources/pcl-moon-mls-bridge.jar");
-            using var resource = Application.GetResourceStream(uri)?.Stream ?? throw new IOException("Loading progress bridge is missing");
-            using var data = new MemoryStream(); resource.CopyTo(data);
-            var bytes = data.ToArray();
-            var digest = SHA256.HashData(bytes);
-            var hash = Convert.ToHexString(digest);
-            var cache = Path.Combine(Paths.SharedLocalData, "LoadingBridge"); Directory.CreateDirectory(cache);
-            var jar = Path.Combine(cache, hash + ".jar");
-            if (!File.Exists(jar) || !SHA256.HashData(File.ReadAllBytes(jar)).AsSpan().SequenceEqual(digest))
-            {
-                var pending = jar + "." + Guid.NewGuid().ToString("N") + ".tmp";
-                File.WriteAllBytes(pending, bytes); File.Move(pending, jar, true);
-            }
-            _channel.Configure(info, jar, _name);
-            _bridgePrepared = true;
-        }
-        catch (Exception ex)
-        {
-            ModBase.Log(ex, "无法启用模组加载进度，保留原游戏启动流程", ModBase.LogLevel.Debug);
-            State.GameStarted("无法启用进度桥接，将等待游戏窗口");
-        }
+        _gameDirectory = info.WorkingDirectory;
+        _inProcessProgressEnabled = true;
     }
 
     internal void GameStarted()
     {
         _gameStartedUtc = DateTime.UtcNow;
         State.GameStarted();
+        if (!_inProcessProgressEnabled || Volatile.Read(ref _disposed) != 0) return;
+
+        var driver = new ModLoadingProgressDriver(State, _gameDirectory ?? string.Empty, _name);
+        if (Interlocked.CompareExchange(ref _progressDriver, driver, null) is null)
+        {
+            if (Volatile.Read(ref _disposed) != 0)
+                Interlocked.Exchange(ref _progressDriver, null)?.Dispose();
+            else
+                _ = driver.Start();
+        }
+        else
+        {
+            driver.Dispose();
+        }
     }
-    internal bool WaitForTelemetryHandshake => _bridgePrepared && _gameStartedUtc is { } start && !State.TelemetryConnected && DateTime.UtcNow - start < TimeSpan.FromSeconds(4);
-    internal void WindowAppeared() { Poll(); State.WindowAppeared(); }
+
+    internal bool WaitForTelemetryHandshake => _inProcessProgressEnabled && _gameStartedUtc is { } start && !State.TelemetryConnected && DateTime.UtcNow - start < TimeSpan.FromSeconds(4);
+    internal void WindowAppeared() => State.WindowAppeared();
 
     public void Dispose()
     {
         if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
-        _channel.Dispose();
+        Interlocked.Exchange(ref _progressDriver, null)?.Dispose();
         if (_window.Dispatcher.HasShutdownStarted) return;
         _window.Dispatcher.BeginInvoke(() =>
         {

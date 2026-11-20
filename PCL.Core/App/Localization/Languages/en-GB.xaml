@@ -2758,7 +2758,7 @@ Press 'F11' again to exit the hidden instance viewing mode.</sys:String>
 
     <!-- Setup.About -->
 
-    <sys:String x:Key="Setup.About.Community.Info">The development team of PCL-MOON!</sys:String>
+    <sys:String x:Key="Setup.About.Community.Info">The development team of PCL-CE!</sys:String>
     <sys:String x:Key="Setup.About.Moon.Info">The development team of PCL-MOON!</sys:String>
     <sys:String x:Key="Setup.About.Community.Name">PCL Community</sys:String>
     <sys:String x:Key="Setup.About.Contributors.Title">Contributors</sys:String>
@@ -2816,8 +2816,7 @@ Other than this, this software will not upload any other information to the deve
     <!-- Setup.About.Legal -->
 
     <sys:String x:Key="Setup.About.Legal.CommunitySource">PCL-MOON source code</sys:String>
-    <sys:String x:Key="Setup.About.Legal.CopyrightText">Copyright © PCL Community &amp; LTCat (龙腾猫跃) 2026.
-NOT AN OFFICIAL MINECRAFT PRODUCT. NOT APPROVED BY OR ASSOCIATED WITH MOJANG OR MICROSOFT.</sys:String>
+    <sys:String x:Key="Setup.About.Legal.CopyrightText">Copyright © 2026 StarCarefree &amp; PCL Community &amp; LTCat (龙腾猫跃).&#xD;NOT AN OFFICIAL MINECRAFT PRODUCT. NOT APPROVED BY OR ASSOCIATED WITH MOJANG OR MICROSOFT.</sys:String>
     <sys:String x:Key="Setup.About.Legal.OtherInfo">Other information</sys:String>
     <sys:String x:Key="Setup.About.Legal.PrivacyNotice">Privacy statement</sys:String>
     <sys:String x:Key="Setup.About.Legal.PrivacyText">The User Agent of this software includes the launcher version number to count the number of users on each version.
@@ -3039,16 +3038,6 @@ Location: {5}</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.DisableJlw">Disable Java Launch Wrapper</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.DisableJlw.Arm64Notice">Do not wrap with Java Wrapper when launching the game.
 Java Wrapper has been forcibly disabled because the system is ARM64 architecture.</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.FrameGeneration">Experimental game frame generation (2×, target 60 FPS)</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.FrameGeneration.ToolTip">Applies next launch. Vendor-neutral OpenGL 3.2 bidirectional block matching; no NVIDIA-specific dependency. Targets 60 presented / about 30 rendered FPS, with added latency and GPU cost; HUD is interpolated too. Set the game FPS cap to at least 60. Skips slow, unfocused or over-budget frames. Cannot eliminate GC/main-thread stalls. Vulkan is unsupported; the 1.16.5–26.3 version and GPU matrix is not yet verified.</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.FrameDiagnostics">Record game long-frame diagnostics (investigate 0 FPS stalls)</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.FrameDiagnostics.ToolTip">Applies next launch; works independently of frame generation. Logs [PCL FrameTime], GC time changes and the render-thread stack for presentation gaps over 250ms. Sampling only: does not change JVM/game settings. Loading and focus changes may also cause long gaps.</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.FrameSettingsButton">Show frame-generation settings gear on the game window</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.FrameSettingsButton.ToolTip">Applies next launch. A top-right gear opens live frame-generation, diagnostics and target-FPS controls for this game session only. Press Esc to release the mouse before clicking. Follows the game window, hides when another app is active and closes with the game. Exclusive fullscreen may cover the overlay; use windowed or borderless mode. Showing the button does not enable frame generation.</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.FramePacing">Enable standalone frame pacing and instance profiles</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.FramePacing.ToolTip">Loads the pacing agent next launch even without frame generation. Limiting defaults off; select 1–999 FPS in the game gear or instance profile, or 0 to disable. Precise mode uses more CPU. This controls standalone loading; pacing remains available when the agent is loaded for generation or the gear. Does not modify game options or enable Linux thread quotas.</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.SuperResolution">Experimental internal super resolution (lower world render resolution)</sys:String>
-    <sys:String x:Key="Setup.Launch.Advanced.SuperResolution.ToolTip">Off by default; applies next launch. Renders the world at a lower resolution and reconstructs it on the GPU while native HUD and mouse coordinates stay unchanged. The first supported path is the 1.21.11 native adapter on OpenGL 3.3; GPU support is checked at runtime, and unknown versions or backends stay native. Enabling this does not mean it is currently active. Scale and sharpening can be changed live from the in-game gear or instance profile.</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.DisableJlw.Arm64ToolTip">Do not use Java Wrapper when launching the game.
 Java Wrapper is disabled because this system uses ARM64 architecture.</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.DisableJlw.ToolTip">PCL-MOON uses Java Launch Wrapper to fix issues where older Java versions cannot launch from paths containing Chinese characters.
@@ -3059,6 +3048,16 @@ If it is blocked by anti-cheat or causes other issues, you can disable it.</sys:
     <sys:String x:Key="Setup.Launch.Advanced.LockMemory.ToolTip">When enabled, the launcher additionally appends -Xms equal to the maximum heap (-Xmx), fixing the heap size. This implicitly disables heap memory uncommit, reducing latency jitter caused by the OS unmapping and remapping memory pages, and helps ZGC's collection prediction. The trade-off is that the game holds close to the maximum allocated memory for its entire runtime.</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.AppCds">Enable AppCDS (Application Class-Data Sharing) startup acceleration</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.AppCds.ToolTip">Experimental startup optimisation (64-bit Java 19–25). Appends -XX:+AutoCreateSharedArchive with a per-instance archive so subsequent launches can memory-map pre-parsed class metadata. Automatically skipped for compatibility if any Java Agent (e.g. authlib-injector or startup agent), argument file, non-ASCII path, or manual CDS/AOT flags are present.</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.FrameGeneration">Experimental game frame generation (2×, target 60 FPS)</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.FrameGeneration.ToolTip">Applies next launch. Vendor-neutral OpenGL 3.2 bidirectional block matching; no NVIDIA-specific dependency. Targets 60 presented / about 30 rendered FPS, with added latency and GPU cost; HUD is interpolated too. Set the game FPS cap to at least 60. Skips slow, unfocused or over-budget frames. Cannot eliminate GC/main-thread stalls. Vulkan is unsupported; the 1.16.5–26.3 version and GPU matrix is not yet verified.</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.FrameDiagnostics">Record game long-frame diagnostics (investigate 0 FPS stalls)</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.FrameDiagnostics.ToolTip">Applies next launch; works independently of frame generation. Logs [PCL FrameTime], GC time changes and the render-thread stack for presentation gaps over 250ms. Sampling only: does not change JVM/game settings. Loading and focus changes may also cause long gaps.</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.FrameSettingsButton">Show frame-generation settings gear on the game window</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.FrameSettingsButton.ToolTip">Applies next launch. A top-right gear opens live frame-generation, diagnostics and target-FPS controls for this game session only. Press Esc to release the mouse before clicking. Follows the game window, hides when another app is active and closes with the game. Exclusive fullscreen may cover the overlay; use windowed or borderless mode. Showing the button does not enable frame generation.</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.FramePacing">Enable standalone frame pacing and instance profiles</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.FramePacing.ToolTip">Loads the pacing agent next launch even without frame generation. Limiting defaults off; select 1–999 FPS in the game gear or instance profile, or 0 to disable. Precise mode uses more CPU. This controls standalone loading; pacing remains available when the agent is loaded for generation or the gear. Does not modify game options or enable Linux thread quotas.</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.SuperResolution">Experimental internal super resolution (lower world render resolution)</sys:String>
+    <sys:String x:Key="Setup.Launch.Advanced.SuperResolution.ToolTip">Off by default; applies next launch. Renders the world at a lower resolution and reconstructs it on the GPU while native HUD and mouse coordinates stay unchanged. The first supported path is the 1.21.11 native adapter on OpenGL 3.3; GPU support is checked at runtime, and unknown versions or backends stay native. Enabling this does not mean it is currently active. Scale and sharpening can be changed live from the in-game gear or instance profile.</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.DisableLwjglUnsafeAgent">Disable LWJGL Unsafe Agent</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.DisableLwjglUnsafeAgent.ToolTip">Minecraft 26.1 uses LWJGL 3.4.1, which uses the FFM API to access native memory on JDK 25+. Due to JDK optimisation limitations, this may cause severe performance issues in some cases.
 PCL-MOON uses LWJGL Unsafe Agent to fix this issue and avoid possible performance problems.
@@ -3113,6 +3112,7 @@ When the command is executed, the working directory is the current .minecraft fo
     <sys:String x:Key="Setup.Launch.Advanced.Renderer.Warning.Confirm">I know what I am doing</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.Renderer.Warning.Message">Changing this setting will seriously affect game stability and performance. If you do not know what you are doing, do not change this option!
 Are you sure you want to continue?</sys:String>
+    <sys:String x:Key="Setup.Launch.Acceleration.Title">Startup acceleration</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.Title">Advanced launch options</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.UseJavaExe">Use java.exe instead of javaw.exe</sys:String>
     <sys:String x:Key="Setup.Launch.Advanced.UseJavaExe.ToolTip">If the game window does not appear for a long time, try enabling this option. PCL-MOON will use java.exe to run the game, giving the game process standard input/output streams to avoid possible issues when logs are printed.
@@ -3318,6 +3318,7 @@ For example, if a critical bug is found in a certain game version, you may miss 
 In general, choosing 'Show announcements only when important' should keep you mostly undisturbed.
 Unless you are creating a server modpack or frequently update the launcher manually, this option is strongly discouraged!</sys:String>
     <sys:String x:Key="Setup.Misc.System.Announcement.ImportantOnly">Show announcements only when important</sys:String>
+    <sys:String x:Key="Setup.Misc.System.DisableAds">Disable ads</sys:String>
     <sys:String x:Key="Setup.Misc.System.DisableHardwareAcceleration">Disable hardware acceleration</sys:String>
     <sys:String x:Key="Setup.Misc.System.ExportSettings">Export settings</sys:String>
     <sys:String x:Key="Setup.Misc.System.ExportSettings.Filter">PCL-MOON config file (*.json)|*.json</sys:String>
