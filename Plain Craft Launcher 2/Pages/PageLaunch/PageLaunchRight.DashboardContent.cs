@@ -15,7 +15,6 @@ public partial class PageLaunchRight
     private bool _dashboardRecentLoading;
     private DateTime _dashboardRecentChecked;
     private string _dashboardRecentFolder = "";
-    private readonly Dictionary<string, bool> _dashboardLibraryRecentTab = new();
 
     private McInstance[] DashboardInstances()
     {
@@ -59,7 +58,7 @@ public partial class PageLaunchRight
 
     private async void RefreshDashboardRecent()
     {
-        if (_dashboardRecentLoading || _dashboard is null || !_dashboard.Widgets.Any(widget => widget.Kind == "library")) return;
+        if (_dashboardRecentLoading || _dashboard is null || !_dashboard.Widgets.Any(widget => widget.Kind == "recent")) return;
         var folder = ModFolder.mcFolderSelected ?? "";
         if (folder == _dashboardRecentFolder && DateTime.UtcNow - _dashboardRecentChecked < TimeSpan.FromSeconds(30)) return;
         _dashboardRecentFolder = folder;
@@ -77,12 +76,8 @@ public partial class PageLaunchRight
             if (folder != (ModFolder.mcFolderSelected ?? "")) return;
             _dashboardRecent = recent;
             if (_dashboardEditing || _dashboard is null) return;
-            foreach (var widget in _dashboard.Widgets.Where(widget => widget.Kind == "library"))
-            {
-                if (!_dashboardContents.TryGetValue(widget.Id, out var content)) continue;
-                if (content.Content is FrameworkElement { Tag: Action refresh }) refresh();
-                else content.Content = CreateDashboardContent(widget);
-            }
+            foreach (var widget in _dashboard.Widgets.Where(widget => widget.Kind == "recent"))
+                if (_dashboardContents.TryGetValue(widget.Id, out var content)) content.Content = CreateDashboardContent(widget);
         }
         catch (Exception ex) { ModBase.Log(ex, "读取最近游玩组件失败", ModBase.LogLevel.Debug); }
         finally { _dashboardRecentLoading = false; }
@@ -144,85 +139,35 @@ public partial class PageLaunchRight
                 else panel.Children.Add(DashboardInstanceButton(target, "选择此版本  ↗"));
                 break;
             case "recent":
-            case "library":
-                return CreateDashboardLibrary(widget);
-        }
-        return panel;
-    }
-
-    private FrameworkElement CreateDashboardLibrary(GameDashboardWidget widget)
-    {
-        var panel = new StackPanel { MinHeight = 100 };
-        var tabs = new WrapPanel { Margin = new Thickness(0, 0, 0, 8) };
-        var body = new StackPanel();
-        Button allTab = null!, recentTab = null!;
-        void StyleTab(Button button, bool active)
-        {
-            button.Foreground = DashboardBrush(active ? "Hybrid.Accent" : "Hybrid.Muted");
-            button.Background = active ? new SolidColorBrush(Color.FromRgb(0x2D, 0x28, 0x20)) : Brushes.Transparent;
-            button.BorderBrush = active ? new SolidColorBrush(Color.FromRgb(0x51, 0x45, 0x33)) : DashboardBrush("Hybrid.Line");
-        }
-        void Refresh()
-        {
-            var showRecent = _dashboardLibraryRecentTab.GetValueOrDefault(widget.Id);
-            StyleTab(allTab, !showRecent);
-            StyleTab(recentTab, showRecent);
-            body.Children.Clear();
-            if (showRecent)
-            {
                 var current = DashboardInstances().Select(instance => instance.PathInstance).ToHashSet(StringComparer.OrdinalIgnoreCase);
                 var recent = _dashboardRecent.Where(item => current.Contains(item.Instance.PathInstance)).ToArray();
-                foreach (var item in recent) body.Children.Add(DashboardInstanceButton(item.Instance, item.Time.ToString("MM.dd HH:mm") + " · 日志更新"));
-                if (recent.Length == 0) body.Children.Add(DashboardText(_dashboardRecentLoading ? "正在读取游戏记录…" : "还没有找到游戏日志。启动并游玩后，最近版本会出现在这里。", 12, true));
+                foreach (var item in recent) panel.Children.Add(DashboardInstanceButton(item.Instance, item.Time.ToString("MM.dd HH:mm") + " · 日志更新"));
+                if (recent.Length == 0) panel.Children.Add(DashboardText(_dashboardRecentLoading ? "正在读取游戏记录…" : "还没有找到游戏日志。启动并游玩后，最近版本会出现在这里。", 12, true));
                 var hint = DashboardText("依据 latest.log 修改时间；共享游戏目录的版本合并显示。", 10, true);
                 hint.Margin = new Thickness(0, 2, 0, 0);
-                body.Children.Add(hint);
-            }
-            else
-            {
+                panel.Children.Add(hint);
+                break;
+            case "library":
                 var versions = DashboardInstances().OrderByDescending(instance => States.Instance.Starred[instance.PathInstance]).ThenBy(instance => instance.Name, StringComparer.CurrentCultureIgnoreCase).ToArray();
-                foreach (var instance in versions.Take(widget.Wide ? 6 : 4))
+                foreach (var instance in versions.Take(6))
                 {
                     var starred = States.Instance.Starred[instance.PathInstance];
                     var versionLine = HybridSidebar.VersionLine(instance);
-                    body.Children.Add(DashboardInstanceButton(instance, (starred ? "★ 收藏  ·  " : "") + (string.IsNullOrEmpty(versionLine) ? "选择版本" : versionLine)));
+                    panel.Children.Add(DashboardInstanceButton(instance, (starred ? "★ 收藏  ·  " : "") + (string.IsNullOrEmpty(versionLine) ? "选择版本" : versionLine)));
                 }
-                if (versions.Length == 0) body.Children.Add(DashboardText("这里还没有游戏。安装一个版本，开始你的第一次冒险。", 12, true));
+                if (versions.Length == 0) panel.Children.Add(DashboardText("这里还没有游戏。安装一个版本，开始你的第一次冒险。", 13, true));
                 var browse = DashboardButton(versions.Length == 0 ? "安装游戏  ↗" : $"管理全部 {versions.Length} 个版本  ↗", () => DashboardNavigate(versions.Length == 0 ? "download" : "versions"));
                 browse.Foreground = DashboardBrush("Hybrid.Accent");
                 browse.HorizontalAlignment = HorizontalAlignment.Left;
-                browse.Margin = new Thickness(0, 2, 0, 0);
-                browse.Height = 30;
+                browse.Margin = new Thickness(0, 4, 0, 0);
+                browse.Height = 32;
                 browse.Padding = new Thickness(8, 0, 8, 0);
                 browse.Background = Brushes.Transparent;
                 browse.BorderBrush = Brushes.Transparent;
                 browse.IsEnabled = !_dashboardEditing;
-                body.Children.Add(browse);
-            }
+                panel.Children.Add(browse);
+                break;
         }
-        Button MakeTab(string label, string tag, bool recent)
-        {
-            var button = DashboardButton(label, () =>
-            {
-                _dashboardLibraryRecentTab[widget.Id] = recent;
-                if (recent) RefreshDashboardRecent();
-                Refresh();
-            });
-            button.Tag = tag;
-            button.Height = 28;
-            button.Padding = new Thickness(10, 0, 10, 0);
-            button.Margin = new Thickness(0, 0, 6, 0);
-            button.IsEnabled = !_dashboardEditing;
-            return button;
-        }
-        allTab = MakeTab("全部版本", "Library.Tab.All", false);
-        recentTab = MakeTab("最近游玩", "Library.Tab.Recent", true);
-        tabs.Children.Add(allTab);
-        tabs.Children.Add(recentTab);
-        panel.Children.Add(tabs);
-        panel.Children.Add(body);
-        panel.Tag = (Action)Refresh;
-        Refresh();
         return panel;
     }
 

@@ -24,7 +24,8 @@ public partial class PageLaunchRight
     private static readonly (string Kind, string Title, string Icon, string Group, string Description)[] DashboardCatalog =
     [
         ("hero", "当前游戏", "◈", "游戏与收藏", "展示当前版本、加载器和游戏状态。"),
-        ("library", "我的游戏库", "▦", "游戏与收藏", "查看已安装版本与最近游玩，收藏的版本优先显示。"),
+        ("recent", "最近游玩", "↶", "游戏与收藏", "按游戏日志更新时间列出最近玩过的版本。"),
+        ("library", "我的游戏库", "▦", "游戏与收藏", "查看已安装版本，收藏的版本优先显示。"),
         ("shortcut", "版本快捷入口", "↗", "游戏与收藏", "固定一个版本，点击选择后从右侧启动。"),
         ("favorites", "收藏游戏", "★", "游戏与收藏", "集中查看已收藏的本地版本，快速切换游戏。"),
         ("worlds", "单人世界", "◇", "游戏与收藏", "查看当前版本的世界与最近保存时间，打开存档目录。"),

@@ -126,13 +126,8 @@ internal static partial class Program
         Render(page, 900, 820, "default.png");
         Check(grid.Children.Count == 3, "Default must contain three widgets");
         Check(grid.ColumnDefinitions.Count == 2, "Wide viewport must use two columns");
-        Check(layout.Widgets[2].Kind == "library" && !layout.Widgets[2].Wide, "Merged library must sit beside greeting by default");
-        Tap(InsightButton(page, "Library.Tab.Recent"));
-        page.UpdateLayout();
-        Check(InsightText(grid).Contains("依据 latest.log 修改时间"), "Library recent tab must show recent log hint");
-        Tap(InsightButton(page, "Library.Tab.All"));
-        page.UpdateLayout();
-        Check(InsightText(grid).Contains("安装游戏"), "Library all tab must restore version list");
+        Check(layout.Widgets[2].Kind == "recent" && !layout.Widgets[2].Wide, "Recent widget must sit beside greeting by default");
+        Check(InsightText(grid).Contains("依据 latest.log 修改时间"), "Default layout must render recent widget beside greeting");
         Check(Control<Border>(page, "HeroCard").Parent is ContentControl, "Original hero must be hosted in a component");
         Click(page, "DashboardEdit_Click");
         Check(Field<bool>(page, "_dashboardEditing"), "Edit must create draft");
