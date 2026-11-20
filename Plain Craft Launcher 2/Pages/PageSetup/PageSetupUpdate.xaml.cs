@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
 using PCL.Core.App;
+using PCL.Core.App.Essentials;
 using PCL.Core.Utils;
 using PCL.Core.App.Localization;
 using PCL.Core.Utils.OS;
@@ -44,13 +45,26 @@ public partial class PageSetupUpdate
 
         TextCurrentVersion.Text = "PCL-MOON " + VersionNameFormat(ModBase.versionBaseName);
         ModAnimation.AniControlEnabled -= 1;
-        CheckUpdate();
+        CheckUpdate(true);
     }
 
-    private async Task<UpdateStatus> IsLatestAsync()
+    private async Task<UpdateStatus> IsLatestAsync(bool forceRefresh = false)
     {
         try
         {
+            if (forceRefresh)
+            {
+                var refreshed = await Task.Run(() => UpdateManager.remoteServer.RefreshCache());
+                if (!refreshed)
+                {
+                    ModBase.Log(
+                        "[Update] 强制刷新版本列表失败",
+                        ModBase.LogLevel.Hint,
+                        userSummary: Lang.Text("Setup.Update.Error.NetworkFailed"));
+                    return UpdateStatus.Error;
+                }
+            }
+
             // 修复：使用 dynamic 绕过命名空间重名导致的编译期类型冲突，
             // 或者你可以尝试替换为 PCL.Core.App.SemVer.Parse(ModBase.versionBaseName)
             if (await UpdateManager.remoteServer.IsLatestAsync(
@@ -77,14 +91,14 @@ public partial class PageSetupUpdate
         }
     }
 
-    public async void CheckUpdate()
+    public async void CheckUpdate(bool forceRefresh = false)
     {
         ModBase.Log("[Update] 开始检查更新");
         CardUpdate.Visibility = Visibility.Collapsed;
         CardCheck.Visibility = Visibility.Visible;
         TextCurrentDesc.Text = Lang.Text("Setup.Update.Checking");
         BtnCheckAgain.IsEnabled = false;
-        switch (await IsLatestAsync())
+        switch (await IsLatestAsync(forceRefresh))
         {
             case UpdateStatus.Available:
             {
@@ -97,11 +111,10 @@ public partial class PageSetupUpdate
                     // 版本详情可能同步下载 SHA256 文件，不能在界面线程读取。
                     updateInfo = await Task.Run(() => UpdateManager.remoteServer.GetLatestVersion(channel, arch));
                     TextUpdateName.Text = "PCL-MOON " + VersionNameFormat(updateInfo.VersionName);
-                    var summary = updateInfo.Changelog.Between("<summary>", "</summary>");
-                    if (!updateInfo.Changelog.Contains("<summary>") || string.IsNullOrWhiteSpace(summary.Trim()))
-                        TextChangelog.Text = Lang.Text("Setup.Update.Changelog.Empty");
-                    else
-                        TextChangelog.Text = summary;
+                    var summary = UpdateHelper.ExtractSummary(updateInfo.Changelog);
+                    TextChangelog.Text = string.IsNullOrWhiteSpace(summary)
+                        ? Lang.Text("Setup.Update.Changelog.Empty")
+                        : summary;
                 }
                 catch (Exception ex)
                 {
@@ -171,7 +184,11 @@ public partial class PageSetupUpdate
 
     private void BtnUpdate_Click(object sender, MouseButtonEventArgs e)
     {
-        if (UpdateManager.isUpdateWaitingRestart) UpdateManager.UpdateRestart(true);
+        if (UpdateManager.isUpdateWaitingRestart)
+        {
+            UpdateManager.UpdateRestart(true);
+            return;
+        }
         // 开始更新流程
         UpdateManager.UpdateStart(UpdateEnums.UpdateType.UpdateNow);
     }
@@ -181,7 +198,9 @@ public partial class PageSetupUpdate
         if (updateInfo is null)
             ModMain.MyMsgBox(Lang.Text("Setup.Update.Changelog.Unavailable"), Lang.Text("Setup.Update.Changelog.Title"));
         else
-            ModMain.MyMsgBoxMarkdown(updateInfo.Changelog, Lang.Text("Setup.Update.Changelog.Title"));
+            ModMain.MyMsgBoxMarkdown(
+                UpdateHelper.StripSummaryMetadata(updateInfo.Changelog),
+                Lang.Text("Setup.Update.Changelog.Title"));
     }
 
     private void ComboSystemUpdateMode_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -210,7 +229,7 @@ public partial class PageSetupUpdate
                         Lang.Text("Common.Action.Cancel"), isWarn: true) == 2)
                     isCancelled = true;
                 else
-                    CheckUpdate();
+                    CheckUpdate(true);
                 break;
             }
             case 2:
@@ -233,7 +252,7 @@ public partial class PageSetupUpdate
     
                 if (ret == confirmText)
                 {
-                    CheckUpdate();
+                    CheckUpdate(true);
                 }
                 else
                 {
@@ -283,7 +302,7 @@ public partial class PageSetupUpdate
 
     private void BtnCheckAgain_OnClick(object sender, MouseButtonEventArgs e)
     {
-        CheckUpdate();
+        CheckUpdate(true);
     }
 
     private enum UpdateStatus

@@ -41,14 +41,29 @@ public partial class FormMain
         ModBase.RunInNewThread(() =>
         {
             var changelogFile = $"{ModBase.pathTemp}CEUpdateLog.md";
-            string changelog;
+            string? changelog = null;
             if (File.Exists(changelogFile))
-                changelog = UpdateHelper.CleanChangelog(ModBase.ReadFile(changelogFile));
-            else
-                changelog = Lang.Text("Main.UpdateLog.Empty");
-            if (ModMain.MyMsgBoxMarkdown(changelog,
-                    Lang.Text("Main.UpdateLog.Title", ModBase.versionBranchName, ModBase.versionBaseName), Lang.Text("Common.Action.Confirm"), Lang.Text("Main.UpdateLog.FullChangelog")) ==
-                2) ModBase.OpenWebsite(PclMoonRelease.Page);
+            {
+                var cached = UpdateHelper.CleanChangelog(ModBase.ReadFile(changelogFile));
+                if (UpdateHelper.MatchesVersion(cached, ModBase.versionBaseName))
+                    changelog = cached;
+            }
+            if (string.IsNullOrWhiteSpace(changelog))
+            {
+                var fetched = UpdateManager.TryFetchVersionChangelog(ModBase.versionBaseName);
+                if (!string.IsNullOrWhiteSpace(fetched))
+                {
+                    changelog = fetched;
+                    try { ModBase.WriteFile(changelogFile, fetched); } catch { }
+                }
+            }
+            var displayChangelog = string.IsNullOrWhiteSpace(changelog)
+                ? Lang.Text("Main.UpdateLog.Empty")
+                : UpdateHelper.StripSummaryMetadata(changelog);
+            if (ModMain.MyMsgBoxMarkdown(displayChangelog,
+                    Lang.Text("Main.UpdateLog.Title", ModBase.versionBranchName, ModBase.versionBaseName),
+                    Lang.Text("Common.Action.Confirm"), Lang.Text("Main.UpdateLog.FullChangelog")) == 2)
+                ModBase.OpenWebsite(PclMoonRelease.TagPage(ModBase.versionBaseName));
         }, "UpdateLog Output");
     }
 

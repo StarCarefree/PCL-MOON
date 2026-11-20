@@ -12,10 +12,28 @@ public static class UpdateManager
 {
     public static bool isUpdateWaitingRestart;
 
+    private static readonly UpdatesGitHubReleaseModel _githubSource = new();
+
     public static UpdatesWrapperModel remoteServer = new(new List<IUpdateSource>
     {
-        new UpdatesGitHubReleaseModel()
+        _githubSource
     });
+
+    /// <summary>
+    /// 按指定版本号获取对应的更新日志；拉取失败或未找到时返回 null。
+    /// </summary>
+    public static string? TryFetchVersionChangelog(string versionName)
+    {
+        try
+        {
+            return _githubSource.TryGetChangelogForVersion(versionName);
+        }
+        catch (Exception ex)
+        {
+            ModBase.Log(ex, $"[Update] 获取版本 {versionName} 的更新日志失败", ModBase.LogLevel.Debug);
+            return null;
+        }
+    }
 
     public static bool IsCurrentVersionBeta
     {
@@ -76,10 +94,10 @@ public static class UpdateManager
                     SystemInfo.IsArm64System ? UpdateArch.arm64 : UpdateArch.x64
                 );
 
-                ModBase.WriteFile($"{ModBase.pathTemp}CEUpdateLog.md", version.Changelog);
                 ModBase.Log($"[Update] 远程最新版本: {version.VersionName}, 当前版本: {ModBase.versionBaseName}");
                 if (!(SemVer.Parse(version.VersionName) > SemVer.Parse(ModBase.versionBaseName)))
                     return;
+                ModBase.WriteFile($"{ModBase.pathTemp}CEUpdateLog.md", version.Changelog);
                 if (type == UpdateEnums.UpdateType.PromptOnly)
                 {
                     ModBase.RunInUi(() =>
